@@ -1,0 +1,30 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# --- Virtual environments (the big one: torch wheel ~123 MB) ---
+.venv/
+venv/
+env/
+
+# --- Generated outputs / caches / DB (regeneratable) ---
+outputs/
+data/cache/
+data/sample/
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Model artifacts / large binaries ---
+*.ckpt
+*.pt
+*.pth
+lightning_logs/
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

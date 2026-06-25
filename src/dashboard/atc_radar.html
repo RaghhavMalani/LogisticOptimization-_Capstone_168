@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>India PortWatch — Approach Control</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#03070c;
+    font-family:ui-monospace,"SF Mono",Menlo,monospace;color:#7fe9c0;}
+  #c{display:block;width:100%;height:100%;}
+  .hud{position:fixed;font-size:10px;letter-spacing:2px;color:#3f8f74;pointer-events:none;}
+  #tl{top:12px;left:14px;}#tr{top:12px;right:14px;text-align:right;}
+  #bl{bottom:12px;left:14px;}#br{bottom:12px;right:14px;text-align:right;}
+  .big{font-size:15px;color:#9bffd8;letter-spacing:2px;}
+  .amber{color:#ffb020;}.red{color:#ff5a72;}.cy{color:#21e6c1;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="hud" id="tl"><div class="big" id="portName">CHENNAI</div>APPROACH CONTROL</div>
+<div class="hud" id="tr"><div class="big cy" id="contacts">0</div>CONTACTS</div>
+<div class="hud" id="bl">RANGE 40 NM · SWEEP 4s</div>
+<div class="hud" id="br">REGIME <span id="regime">—</span> · RISK <span id="risk">—</span></div>
+<script>
+const Q=new URLSearchParams(location.search);const P=window.RADAR_PARAMS||{};
+const g=(k,d)=>(P[k]!=null?P[k]:(Q.get(k)!=null?Q.get(k):d));
+const port=String(g("port","CHENNAI")).toUpperCase();
+const cong=Math.max(0,Math.min(100,+g("congestion",60)));
+const anchored=Math.max(0,Math.round(+g("anchored",Math.round(2+cong*0.1))));
+const regime=String(g("regime","CONGESTED")).toUpperCase();
+const risk=String(g("risk","High")).toUpperCase();
+document.getElementById("portName").textContent=port;
+document.getElementById("regime").textContent=regime;
+const rkEl=document.getElementById("risk");rkEl.textContent=risk;
+rkEl.className={LOW:"cy",MEDIUM:"amber",HIGH:"red"}[risk]||"amber";
+
+const cv=document.getElementById("c"),x=cv.getContext("2d");let W,H,R,cx,cy,dpr;
+function size(){dpr=Math.min(devicePixelRatio||1,2);W=cv.clientWidth;H=cv.clientHeight;
+  cv.width=W*dpr;cv.height=H*dpr;x.setTransform(dpr,0,0,dpr,0,0);
+  cx=W/2;cy=H/2;R=Math.min(W,H)/2-18;}
+addEventListener("resize",size);
+
+// contacts: inbound vessels approaching the port + anchored queue
+function mkInbound(){return{br:Math.random()*Math.PI*2,rng:0.85+Math.random()*0.15,
+  spd:0.0008+Math.random()*0.0010,cs:"MV"+(100+(Math.random()*899|0)),anchored:false};}
+const N_IN=Math.max(4,Math.round(6+cong*0.06));
+const contacts=[];for(let i=0;i<N_IN;i++)contacts.push(mkInbound());
+for(let i=0;i<anchored;i++){const a=Math.PI*(0.15+0.7*(i/Math.max(1,anchored)));
+  contacts.push({br:a,rng:0.55+Math.random()*0.18,spd:0,cs:"AT"+(10+i),anchored:true});}
+document.getElementById("contacts").textContent=contacts.length;
+
+let sweep=0;size();
+function ring(r,c,a){x.strokeStyle=c;x.globalAlpha=a;x.lineWidth=1;
+  x.beginPath();x.arc(cx,cy,r,0,7);x.stroke();x.globalAlpha=1;}
+function frame(){
+  x.fillStyle="rgba(3,7,12,0.28)";x.fillRect(0,0,W,H); // motion trails
+  // scope rings + bearings
+  for(let i=1;i<=4;i++)ring(R*i/4,"#0f5a3f",0.5);
+  x.strokeStyle="#0c4632";x.globalAlpha=0.6;
+  for(let a=0;a<12;a++){x.beginPath();x.moveTo(cx,cy);
+    x.lineTo(cx+Math.cos(a*Math.PI/6)*R,cy+Math.sin(a*Math.PI/6)*R);x.stroke();}
+  x.globalAlpha=1;
+  // sweep wedge
+  sweep+=0.026;const grad=x.createConicGradient?null:null;
+  for(let k=0;k<26;k++){const a=sweep-k*0.03;
+    x.strokeStyle="rgba(33,230,193,"+(0.18*(1-k/26))+")";x.lineWidth=2;
+    x.beginPath();x.moveTo(cx,cy);x.lineTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R);x.stroke();}
+  // leading edge
+  x.strokeStyle="rgba(155,255,216,0.9)";x.lineWidth=2;x.beginPath();
+  x.moveTo(cx,cy);x.lineTo(cx+Math.cos(sweep)*R,cy+Math.sin(sweep)*R);x.stroke();
+  // port at center
+  x.fillStyle="#21e6c1";x.beginPath();x.arc(cx,cy,5,0,7);x.fill();
+  x.fillStyle="#9bffd8";x.font="9px ui-monospace,monospace";x.fillText(port,cx+8,cy-6);
+  // contacts
+  for(const c of contacts){if(!c.anchored){c.rng-=c.spd;if(c.rng<0.06)Object.assign(c,mkInbound());}
+    const px=cx+Math.cos(c.br)*c.rng*R,py=cy+Math.sin(c.br)*c.rng*R;
+    let d=Math.abs(((sweep-c.br)%(Math.PI*2)));if(d>Math.PI)d=Math.PI*2-d;
+    const glow=Math.max(0.25,1-d/0.9);
+    const col=c.anchored?(cong>66?"#ff5a72":"#ffb020"):"#21e6c1";
+    x.globalAlpha=glow;x.fillStyle=col;x.beginPath();x.arc(px,py,c.anchored?2.6:2.2,0,7);x.fill();
+    if(!c.anchored){x.strokeStyle=col;x.globalAlpha=glow*0.7;x.beginPath();x.moveTo(px,py);
+      x.lineTo(px+Math.cos(c.br+Math.PI)*8,py+Math.sin(c.br+Math.PI)*8);x.stroke();}
+    if(glow>0.55){x.globalAlpha=glow;x.fillStyle=col;x.font="8px ui-monospace,monospace";
+      x.fillText(c.cs,px+5,py+2);}
+    x.globalAlpha=1;}
+  requestAnimationFrame(frame);
+}
+frame();
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+# Core prototype dependencies (lightweight, runs anywhere).
+# The full pipeline + baseline quantile forecaster only needs these.
+pandas>=1.5
+numpy>=1.23
+scikit-learn>=1.1
+
+# --- Optional ---------------------------------------------------------------
+# HSMM: if hmmlearn is installed the regime model uses a GaussianHMM;
+# otherwise it transparently falls back to a GaussianMixture. Uncomment to use.
+# hmmlearn>=0.3
+
+# Dashboard (optional UI): streamlit run src/dashboard/app.py
+# streamlit>=1.20
+
+# Plotting (benchmark/importance charts + notebooks):
+# matplotlib>=3.6
+
+# --- Feature stacks (install as needed) -------------------------------------
+# Dashboard + storage + streaming + plots:  pip install -r requirements-extras.txt
+# Real Temporal Fusion Transformer:         pip install -r requirements-tft.txt

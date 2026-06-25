@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>India PortWatch — Live Maritime Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+  :root{--cy:#21e6c1;--bl:#2fa7ff;--am:#ffb020;--rd:#ff3b6b;--tx:#bfe9ff;--mut:#5b7c9e;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:#03060d;color:var(--tx);
+    font-family:'Space Grotesk',system-ui,sans-serif;overflow:hidden;}
+  #map{position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 35%,#071426 0%,#03060d 70%);}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  /* cinematic overlays */
+  #vignette{position:absolute;inset:0;pointer-events:none;z-index:3;
+    background:radial-gradient(130% 100% at 50% 40%,transparent 45%,rgba(0,0,0,.78) 100%);}
+  #grain{position:absolute;inset:0;pointer-events:none;z-index:3;opacity:.05;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+  #scan{position:absolute;inset:0;pointer-events:none;z-index:3;opacity:.06;
+    background:repeating-linear-gradient(0deg,transparent 0 2px,#21e6c1 2px 3px);}
+  #top{position:absolute;top:0;left:0;right:0;height:60px;z-index:5;display:flex;align-items:center;
+    gap:22px;padding:0 22px;background:linear-gradient(180deg,rgba(3,8,16,.95),rgba(3,8,16,0));pointer-events:none;}
+  .logo{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:18px;letter-spacing:3px;color:var(--cy);
+    text-shadow:0 0 18px rgba(33,230,193,.55);}
+  .sub{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--mut);}
+  .tk{margin-left:auto;display:flex;gap:22px;}
+  .tk div{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mut);text-align:right;}
+  .tk b{display:block;font-size:15px;color:#eaf7ff;}
+  .up{color:var(--cy);}.dn{color:var(--rd);}
+  .glass{position:absolute;z-index:6;background:rgba(8,16,30,.66);
+    backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);
+    border:1px solid rgba(47,167,255,.22);border-radius:16px;
+    box-shadow:0 10px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.04);}
+  #stats{left:18px;top:76px;width:212px;padding:16px 18px;}
+  #stats h3{margin:0 0 12px;font-size:11px;letter-spacing:2px;color:var(--mut);font-weight:500;}
+  .stat{margin:11px 0;}
+  .stat .v{font-family:'JetBrains Mono',monospace;font-size:27px;color:#eaf7ff;}
+  .stat .l{font-size:10px;letter-spacing:1px;color:var(--mut);text-transform:uppercase;}
+  .leg{margin-top:16px;font-size:10px;color:var(--mut);}
+  .leg span{display:inline-flex;align-items:center;gap:5px;margin-right:10px;}
+  .pill{width:9px;height:9px;border-radius:50%;display:inline-block;}
+  #detail{right:-460px;top:76px;bottom:24px;width:410px;padding:20px 22px;overflow-y:auto;
+    transition:right .5s cubic-bezier(.2,.85,.2,1);}
+  #detail.open{right:18px;}
+  #detail .close{float:right;cursor:pointer;color:var(--mut);font-size:20px;pointer-events:all;}
+  #detail h2{margin:0;font-size:21px;color:#eaf7ff;}
+  .reg{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;margin-top:6px;}
+  .kgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0;}
+  .kpi{background:rgba(3,8,16,.6);border:1px solid rgba(47,167,255,.15);border-radius:10px;padding:10px 12px;}
+  .kpi .l{font-size:9px;letter-spacing:1px;color:var(--mut);text-transform:uppercase;}
+  .kpi .v{font-family:'JetBrains Mono',monospace;font-size:19px;color:#eaf7ff;margin-top:2px;}
+  .sec{font-size:11px;letter-spacing:2px;color:var(--mut);margin:14px 0 6px;}
+  .chip{display:inline-block;padding:2px 10px;border:1px solid;border-radius:3px;
+    font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;}
+  #hint{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:6;
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mut);
+    background:rgba(8,16,30,.7);padding:8px 18px;border-radius:20px;border:1px solid rgba(47,167,255,.2);
+    letter-spacing:1px;}
+  #load{position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;
+    background:#03060d;font-family:'JetBrains Mono',monospace;color:var(--cy);letter-spacing:4px;
+    animation:pulse 1.6s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="vignette"></div><div id="grain"></div><div id="scan"></div>
+<div id="top">
+  <div><div class="logo">&#9672; INDIA PORTWATCH</div><div class="sub">LIVE MARITIME INTELLIGENCE</div></div>
+  <div class="tk" id="tickers"></div>
+</div>
+<div class="glass" id="stats">
+  <h3>NATIONAL OVERVIEW</h3>
+  <div class="stat"><div class="v" id="s_ports">—</div><div class="l">ports tracked</div></div>
+  <div class="stat"><div class="v" id="s_sev" style="color:var(--rd)">—</div><div class="l">in severe regime</div></div>
+  <div class="stat"><div class="v" id="s_ves">—</div><div class="l">vessels inbound</div></div>
+  <div class="stat"><div class="v" id="s_var">—</div><div class="l">value-at-risk</div></div>
+  <div class="leg">
+    <span><span class="pill" style="background:#21e6c1"></span>normal</span>
+    <span><span class="pill" style="background:#ffb020"></span>congested</span>
+    <span><span class="pill" style="background:#ff3b6b"></span>severe</span></div>
+</div>
+<div class="glass" id="detail"><div id="detailBody"></div></div>
+<div id="hint">Click any port to open its forecast &amp; analytics</div>
+<div id="load">INITIALISING OPS GRID&hellip;</div>
+
+<script src="https://unpkg.com/deck.gl@9.0.27/dist.min.js"></script>
+<script>
+const REG={NORMAL:[33,230,193],CONGESTED:[255,176,32],SEVERE:[255,59,107]};
+const REGC={NORMAL:"#21e6c1",CONGESTED:"#ffb020",SEVERE:"#ff3b6b"};
+let DATA=null, deckgl=null, t=0, selected=null;
+const FLY=()=>new deck.FlyToInterpolator();
+
+fetch('./data.json').then(r=>r.json()).then(d=>{DATA=d;init();})
+  .catch(()=>{document.getElementById('load').textContent=
+    'data.json not found — run: python run_demo.py --web';});
+
+function init(){
+  document.getElementById('load').style.display='none';
+  const n=DATA.national||{};
+  s_ports.textContent=n.ports??DATA.ports.length;
+  s_sev.textContent=n.severe??DATA.ports.filter(p=>p.regime==='SEVERE').length;
+  s_ves.textContent=DATA.vessels.length;
+  s_var.textContent=n.value_at_risk?('₹'+Math.round(n.value_at_risk).toLocaleString()+' cr'):'—';
+  const T=DATA.tickers||{};
+  const tHtml=(lab,q,pre)=>q?`<div>${lab}<b>${pre}${q.value}</b><span class="${q.change_pct>=0?'up':'dn'}">${q.change_pct>=0?'▲':'▼'} ${q.change_pct}%</span></div>`:'';
+  document.getElementById('tickers').innerHTML=tHtml('BRENT',T.brent,'$')+tHtml('FREIGHT',T.freight,'');
+
+  const {DeckGL}=deck;
+  deckgl=new DeckGL({container:'map',controller:true,
+    initialViewState:{longitude:80,latitude:18,zoom:2.6,pitch:0,bearing:0},
+    layers:[]});
+  // cinematic fly-in
+  setTimeout(()=>deckgl.setProps({initialViewState:{longitude:80,latitude:18,zoom:3.8,
+    pitch:45,bearing:-12,transitionDuration:2600,transitionInterpolator:FLY()}}),300);
+  animate();
+}
+
+function basemap(){
+  const {TileLayer,BitmapLayer}=deck;
+  return new TileLayer({id:'base',
+    data:['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+          'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+          'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'],
+    minZoom:0,maxZoom:18,tileSize:256,opacity:0.85,
+    renderSubLayers:p=>{const{boundingBox}=p.tile;
+      return new BitmapLayer(p,{data:null,image:p.data,
+        bounds:[boundingBox[0][0],boundingBox[0][1],boundingBox[1][0],boundingBox[1][1]]});}});
+}
+
+function vesselComets(){
+  const out=[];
+  for(const v of DATA.vessels){
+    const base=(v.progress + t*0.02*(0.5+(v.eta_days?1/v.eta_days:0.1)))%1;
+    for(let k=0;k<6;k++){const p=base-k*0.018;if(p<0)continue;
+      out.push({pos:[v.src[0]+(v.dst[0]-v.src[0])*p, v.src[1]+(v.dst[1]-v.src[1])*p],
+        a:Math.round(235*(1-k/6)), r:18000*(1-k/9), reg:v.regime});}
+  }
+  return out;
+}
+
+function buildLayers(){
+  const {ScatterplotLayer,ArcLayer,TextLayer}=deck;
+  const ports=DATA.ports;
+  const pulse=1+0.28*Math.sin(t*0.1);
+  const routes=new ArcLayer({id:'routes',data:DATA.vessels,
+    getSourcePosition:d=>d.src,getTargetPosition:d=>d.dst,
+    getSourceColor:[47,167,255,8],getTargetColor:d=>[...(REG[d.regime]||REG.CONGESTED),70],
+    getWidth:1,greatCircle:true});
+  const comets=new ScatterplotLayer({id:'comets',data:vesselComets(),
+    getPosition:d=>d.pos,getRadius:d=>d.r,radiusUnits:'meters',
+    getFillColor:d=>[...(REG[d.reg]||REG.CONGESTED),d.a]});
+  const halo=new ScatterplotLayer({id:'halo',data:ports,getPosition:d=>[d.lon,d.lat],
+    getRadius:d=>(24000+(d.peak_q90||40)*1500)*pulse,radiusUnits:'meters',
+    getFillColor:d=>[...(REG[d.regime]||REG.CONGESTED),26]});
+  const halo2=new ScatterplotLayer({id:'halo2',data:ports,getPosition:d=>[d.lon,d.lat],
+    getRadius:d=>(14000+(d.peak_q90||40)*800)*pulse,radiusUnits:'meters',
+    getFillColor:d=>[...(REG[d.regime]||REG.CONGESTED),55]});
+  const dots=new ScatterplotLayer({id:'ports',data:ports,pickable:true,
+    getPosition:d=>[d.lon,d.lat],
+    getRadius:d=>9000+(d.cargo_mt||d.peak_q90||40)*700,radiusUnits:'meters',
+    getFillColor:d=>[...(REG[d.regime]||REG.CONGESTED),245],
+    stroked:true,lineWidthMinPixels:d=>selected&&selected.id===d.id?3:0.6,
+    getLineColor:d=>selected&&selected.id===d.id?[255,255,255,255]:[10,20,34,200],
+    onClick:i=>{if(i.object)openDetail(i.object);},
+    updateTriggers:{getLineColor:[selected&&selected.id],lineWidthMinPixels:[selected&&selected.id]}});
+  const labels=new TextLayer({id:'labels',data:ports,getPosition:d=>[d.lon,d.lat],
+    getText:d=>d.id,getSize:11,getColor:[191,233,255,220],getPixelOffset:[0,-24],
+    fontFamily:'JetBrains Mono, monospace',getTextAnchor:'middle',outlineWidth:2,
+    outlineColor:[3,6,13,255]});
+  return [basemap(),routes,halo,halo2,comets,dots,labels];
+}
+
+function animate(){t+=1;
+  if(deckgl) deckgl.setProps({layers:buildLayers()});
+  requestAnimationFrame(animate);}
+
+function spark(fc){
+  if(!fc||!fc.length)return '';
+  const W=350,H=92,pad=6;const xs=fc.map(p=>p.h);
+  const lo=Math.min(...fc.map(p=>p.q10)),hi=Math.max(...fc.map(p=>p.q90));
+  const X=h=>pad+(h-xs[0])/((xs[xs.length-1]-xs[0])||1)*(W-2*pad);
+  const Y=v=>H-pad-(v-lo)/((hi-lo)||1)*(H-2*pad);
+  const band=fc.map(p=>`${X(p.h)},${Y(p.q90)}`).concat(fc.slice().reverse().map(p=>`${X(p.h)},${Y(p.q10)}`)).join(' ');
+  const line=fc.map(p=>`${X(p.h)},${Y(p.q50)}`).join(' ');
+  return `<svg width="100%" viewBox="0 0 ${W} ${H}"><polygon points="${band}" fill="rgba(47,167,255,.18)"/>
+    <polyline points="${line}" fill="none" stroke="#2fa7ff" stroke-width="2.5"/></svg>`;
+}
+function kpi(l,v){return `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div></div>`;}
+
+function openDetail(p){
+  selected=p;const c=REGC[p.regime]||'#ffb020';
+  const rk={Low:'#21e6c1',Medium:'#ffb020',High:'#ff3b6b'}[p.risk]||'#ffb020';
+  document.getElementById('detailBody').innerHTML=`
+    <span class="close" onclick="closeDetail()">&times;</span>
+    <h2>${p.name}</h2>
+    <div class="reg"><span class="chip" style="color:${c};border-color:${c}">${p.regime}</span>
+      &nbsp;<span class="chip" style="color:${rk};border-color:${rk}">RISK ${String(p.risk).toUpperCase()}</span></div>
+    <div class="sec">1–10 DAY CONGESTION FORECAST</div>${spark(p.forecast)}
+    <div class="kgrid">
+      ${kpi('PEAK CONGEST P90',(p.peak_q90??'—'))}
+      ${kpi('EXPECTED REMAIN',(p.exp_remaining!=null?p.exp_remaining+'d':'—'))}
+      ${kpi('P(CONGESTED)',(p.congestion_prob!=null?p.congestion_prob:'—'))}
+      ${kpi('CARGO MT',(p.cargo_mt!=null?p.cargo_mt.toFixed(1):'—'))}
+      ${kpi('TURNAROUND',(p.turnaround_days!=null?p.turnaround_days.toFixed(1)+'d':'—'))}
+      ${kpi('VALUE-AT-RISK',(p.value_at_risk!=null?'₹'+Math.round(p.value_at_risk)+' cr':'—'))}
+    </div>
+    <div class="sec">INBOUND VESSELS</div>
+    <div class="mono" style="font-size:12px;color:#9fb6cc;line-height:1.7;">
+      ${DATA.vessels.filter(v=>v.to===p.id).map(v=>`&#9656; ${v.id} · ${v.from} · ETA +${v.eta_days}d`).join('<br>')||'none tracked'}
+    </div>`;
+  document.getElementById('detail').classList.add('open');
+  deckgl.setProps({initialViewState:{longitude:p.lon,latitude:p.lat,zoom:5.6,pitch:55,
+    bearing:-12,transitionDuration:1400,transitionInterpolator:FLY()}});
+}
+function closeDetail(){selected=null;document.getElementById('detail').classList.remove('open');
+  deckgl.setProps({initialViewState:{longitude:80,latitude:18,zoom:3.8,pitch:45,
+    bearing:-12,transitionDuration:1200,transitionInterpolator:FLY()}});}
+</script>
+</body>
+</html>

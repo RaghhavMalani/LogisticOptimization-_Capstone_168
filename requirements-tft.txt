@@ -1,0 +1,9 @@
+# Heavy deep-learning stack for training the real Temporal Fusion Transformer.
+# Install this ONLY when you are ready to replace the baseline with the TFT
+# (see the TODO(tft) plug-in point in src/forecasting/tft_model.py).
+#
+#   pip install -r requirements.txt -r requirements-tft.txt
+#
+torch>=2.0
+pytorch-forecasting>=1.0
+lightning>=2.0

@@ -1,0 +1,21 @@
+# Optional feature stacks beyond the lightweight core.
+# Everything here degrades gracefully if absent (the code falls back), but
+# install these to unlock the full system.
+
+# Dashboard (interactive UI)
+streamlit>=1.30
+plotly>=5.18
+
+# Benchmark & explainability plots
+matplotlib>=3.6
+
+# Storage layer (PostgreSQL; SQLite needs nothing extra)
+SQLAlchemy>=2.0
+psycopg2-binary>=2.9
+
+# Streaming layer (Kafka; in-memory bus needs nothing extra)
+kafka-python>=2.0
+
+# External data connectors (PortWatch / FRED / GDELT). Offline fallback works
+# without this, but install it to fetch live data.
+requests>=2.28

@@ -1,0 +1,23 @@
+[package]
+name = "portwatch-backend"
+version.workspace = true
+edition.workspace = true
+description = "India PortWatch — Rust API server for the port intelligence command center"
+
+[dependencies]
+axum = "0.7"
+tokio = { version = "1", features = ["full"] }
+tower-http = { version = "0.5", features = ["cors", "fs", "trace"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+csv = "1.3"
+chrono = { version = "0.4", features = ["serde"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+anyhow = "1"
+thiserror = "1"
+
+# NOTE: Polars was deliberately NOT used. The model outputs are small
+# (hundreds/thousands of rows), and the plain `csv` crate keeps the build
+# fast and the binary small. Swap the loader in services/data_loader.rs for
+# Polars/DuckDB when the outputs grow to Parquet scale.

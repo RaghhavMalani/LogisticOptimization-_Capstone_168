@@ -1,0 +1,1001 @@
+date,portname,n_total
+2026-06-21,Suez Canal,44
+2026-06-21,Panama Canal,34
+2026-06-21,Bosporus Strait,74
+2026-06-21,Bab el-Mandeb Strait,31
+2026-06-21,Malacca Strait,221
+2026-06-21,Strait of Hormuz,5
+2026-06-21,Cape of Good Hope,100
+2026-06-21,Gibraltar Strait,119
+2026-06-21,Dover Strait,169
+2026-06-21,Oresund Strait,37
+2026-06-21,Taiwan Strait,246
+2026-06-21,Korea Strait,229
+2026-06-21,Tsugaru Strait,46
+2026-06-21,Luzon Strait,105
+2026-06-21,Lombok Strait,35
+2026-06-21,Ombai Strait,12
+2026-06-21,Bohai Strait,161
+2026-06-21,Torres Strait,8
+2026-06-21,Sunda Strait,38
+2026-06-21,Makassar Strait,46
+2026-06-21,Magellan Strait,6
+2026-06-21,Yucatan Channel,65
+2026-06-21,Windward Passage,12
+2026-06-21,Mona Passage,18
+2026-06-21,Balabac Strait,12
+2026-06-21,Bering Strait,0
+2026-06-21,Mindoro Strait,60
+2026-06-21,Kerch Strait,10
+2026-06-20,Suez Canal,39
+2026-06-20,Panama Canal,31
+2026-06-20,Bosporus Strait,83
+2026-06-20,Bab el-Mandeb Strait,36
+2026-06-20,Malacca Strait,218
+2026-06-20,Strait of Hormuz,23
+2026-06-20,Cape of Good Hope,92
+2026-06-20,Gibraltar Strait,157
+2026-06-20,Dover Strait,151
+2026-06-20,Oresund Strait,47
+2026-06-20,Taiwan Strait,234
+2026-06-20,Korea Strait,193
+2026-06-20,Tsugaru Strait,49
+2026-06-20,Luzon Strait,107
+2026-06-20,Lombok Strait,40
+2026-06-20,Ombai Strait,11
+2026-06-20,Bohai Strait,160
+2026-06-20,Torres Strait,13
+2026-06-20,Sunda Strait,39
+2026-06-20,Makassar Strait,68
+2026-06-20,Magellan Strait,2
+2026-06-20,Yucatan Channel,47
+2026-06-20,Windward Passage,13
+2026-06-20,Mona Passage,4
+2026-06-20,Balabac Strait,9
+2026-06-20,Bering Strait,0
+2026-06-20,Mindoro Strait,48
+2026-06-20,Kerch Strait,14
+2026-06-19,Suez Canal,44
+2026-06-19,Panama Canal,32
+2026-06-19,Bosporus Strait,95
+2026-06-19,Bab el-Mandeb Strait,34
+2026-06-19,Malacca Strait,192
+2026-06-19,Strait of Hormuz,19
+2026-06-19,Cape of Good Hope,91
+2026-06-19,Gibraltar Strait,127
+2026-06-19,Dover Strait,161
+2026-06-19,Oresund Strait,37
+2026-06-19,Taiwan Strait,226
+2026-06-19,Korea Strait,204
+2026-06-19,Tsugaru Strait,50
+2026-06-19,Luzon Strait,83
+2026-06-19,Lombok Strait,34
+2026-06-19,Ombai Strait,9
+2026-06-19,Bohai Strait,155
+2026-06-19,Torres Strait,6
+2026-06-19,Sunda Strait,26
+2026-06-19,Makassar Strait,56
+2026-06-19,Magellan Strait,6
+2026-06-19,Yucatan Channel,46
+2026-06-19,Windward Passage,9
+2026-06-19,Mona Passage,11
+2026-06-19,Balabac Strait,7
+2026-06-19,Bering Strait,0
+2026-06-19,Mindoro Strait,57
+2026-06-19,Kerch Strait,21
+2026-06-18,Suez Canal,35
+2026-06-18,Panama Canal,32
+2026-06-18,Bosporus Strait,85
+2026-06-18,Bab el-Mandeb Strait,38
+2026-06-18,Malacca Strait,201
+2026-06-18,Strait of Hormuz,16
+2026-06-18,Cape of Good Hope,91
+2026-06-18,Gibraltar Strait,136
+2026-06-18,Dover Strait,140
+2026-06-18,Oresund Strait,33
+2026-06-18,Taiwan Strait,265
+2026-06-18,Korea Strait,213
+2026-06-18,Tsugaru Strait,45
+2026-06-18,Luzon Strait,91
+2026-06-18,Lombok Strait,38
+2026-06-18,Ombai Strait,12
+2026-06-18,Bohai Strait,164
+2026-06-18,Torres Strait,9
+2026-06-18,Sunda Strait,34
+2026-06-18,Makassar Strait,57
+2026-06-18,Magellan Strait,3
+2026-06-18,Yucatan Channel,45
+2026-06-18,Windward Passage,15
+2026-06-18,Mona Passage,14
+2026-06-18,Balabac Strait,17
+2026-06-18,Bering Strait,1
+2026-06-18,Mindoro Strait,57
+2026-06-18,Kerch Strait,5
+2026-06-17,Suez Canal,29
+2026-06-17,Panama Canal,22
+2026-06-17,Bosporus Strait,52
+2026-06-17,Bab el-Mandeb Strait,39
+2026-06-17,Malacca Strait,203
+2026-06-17,Strait of Hormuz,12
+2026-06-17,Cape of Good Hope,80
+2026-06-17,Gibraltar Strait,120
+2026-06-17,Dover Strait,157
+2026-06-17,Oresund Strait,38
+2026-06-17,Taiwan Strait,246
+2026-06-17,Korea Strait,211
+2026-06-17,Tsugaru Strait,55
+2026-06-17,Luzon Strait,110
+2026-06-17,Lombok Strait,35
+2026-06-17,Ombai Strait,14
+2026-06-17,Bohai Strait,154
+2026-06-17,Torres Strait,13
+2026-06-17,Sunda Strait,33
+2026-06-17,Makassar Strait,43
+2026-06-17,Magellan Strait,8
+2026-06-17,Yucatan Channel,49
+2026-06-17,Windward Passage,11
+2026-06-17,Mona Passage,8
+2026-06-17,Balabac Strait,6
+2026-06-17,Bering Strait,0
+2026-06-17,Mindoro Strait,62
+2026-06-17,Kerch Strait,12
+2026-06-16,Suez Canal,21
+2026-06-16,Panama Canal,24
+2026-06-16,Bosporus Strait,73
+2026-06-16,Bab el-Mandeb Strait,23
+2026-06-16,Malacca Strait,227
+2026-06-16,Strait of Hormuz,11
+2026-06-16,Cape of Good Hope,95
+2026-06-16,Gibraltar Strait,133
+2026-06-16,Dover Strait,155
+2026-06-16,Oresund Strait,44
+2026-06-16,Taiwan Strait,241
+2026-06-16,Korea Strait,207
+2026-06-16,Tsugaru Strait,76
+2026-06-16,Luzon Strait,95
+2026-06-16,Lombok Strait,39
+2026-06-16,Ombai Strait,7
+2026-06-16,Bohai Strait,172
+2026-06-16,Torres Strait,15
+2026-06-16,Sunda Strait,37
+2026-06-16,Makassar Strait,58
+2026-06-16,Magellan Strait,8
+2026-06-16,Yucatan Channel,44
+2026-06-16,Windward Passage,17
+2026-06-16,Mona Passage,7
+2026-06-16,Balabac Strait,17
+2026-06-16,Bering Strait,0
+2026-06-16,Mindoro Strait,39
+2026-06-16,Kerch Strait,8
+2026-06-15,Suez Canal,36
+2026-06-15,Panama Canal,23
+2026-06-15,Bosporus Strait,75
+2026-06-15,Bab el-Mandeb Strait,31
+2026-06-15,Malacca Strait,223
+2026-06-15,Strait of Hormuz,6
+2026-06-15,Cape of Good Hope,96
+2026-06-15,Gibraltar Strait,138
+2026-06-15,Dover Strait,141
+2026-06-15,Oresund Strait,38
+2026-06-15,Taiwan Strait,228
+2026-06-15,Korea Strait,212
+2026-06-15,Tsugaru Strait,46
+2026-06-15,Luzon Strait,114
+2026-06-15,Lombok Strait,33
+2026-06-15,Ombai Strait,10
+2026-06-15,Bohai Strait,146
+2026-06-15,Torres Strait,9
+2026-06-15,Sunda Strait,27
+2026-06-15,Makassar Strait,59
+2026-06-15,Magellan Strait,5
+2026-06-15,Yucatan Channel,52
+2026-06-15,Windward Passage,18
+2026-06-15,Mona Passage,7
+2026-06-15,Balabac Strait,6
+2026-06-15,Bering Strait,1
+2026-06-15,Mindoro Strait,50
+2026-06-15,Kerch Strait,6
+2026-06-14,Suez Canal,39
+2026-06-14,Panama Canal,24
+2026-06-14,Bosporus Strait,83
+2026-06-14,Bab el-Mandeb Strait,31
+2026-06-14,Malacca Strait,216
+2026-06-14,Strait of Hormuz,0
+2026-06-14,Cape of Good Hope,102
+2026-06-14,Gibraltar Strait,109
+2026-06-14,Dover Strait,164
+2026-06-14,Oresund Strait,28
+2026-06-14,Taiwan Strait,227
+2026-06-14,Korea Strait,212
+2026-06-14,Tsugaru Strait,48
+2026-06-14,Luzon Strait,100
+2026-06-14,Lombok Strait,45
+2026-06-14,Ombai Strait,10
+2026-06-14,Bohai Strait,149
+2026-06-14,Torres Strait,6
+2026-06-14,Sunda Strait,30
+2026-06-14,Makassar Strait,37
+2026-06-14,Magellan Strait,4
+2026-06-14,Yucatan Channel,45
+2026-06-14,Windward Passage,20
+2026-06-14,Mona Passage,9
+2026-06-14,Balabac Strait,14
+2026-06-14,Bering Strait,0
+2026-06-14,Mindoro Strait,48
+2026-06-14,Kerch Strait,10
+2026-06-13,Suez Canal,38
+2026-06-13,Panama Canal,21
+2026-06-13,Bosporus Strait,84
+2026-06-13,Bab el-Mandeb Strait,34
+2026-06-13,Malacca Strait,223
+2026-06-13,Strait of Hormuz,0
+2026-06-13,Cape of Good Hope,76
+2026-06-13,Gibraltar Strait,158
+2026-06-13,Dover Strait,168
+2026-06-13,Oresund Strait,54
+2026-06-13,Taiwan Strait,234
+2026-06-13,Korea Strait,236
+2026-06-13,Tsugaru Strait,55
+2026-06-13,Luzon Strait,83
+2026-06-13,Lombok Strait,41
+2026-06-13,Ombai Strait,9
+2026-06-13,Bohai Strait,167
+2026-06-13,Torres Strait,12
+2026-06-13,Sunda Strait,32
+2026-06-13,Makassar Strait,50
+2026-06-13,Magellan Strait,6
+2026-06-13,Yucatan Channel,56
+2026-06-13,Windward Passage,11
+2026-06-13,Mona Passage,10
+2026-06-13,Balabac Strait,14
+2026-06-13,Bering Strait,0
+2026-06-13,Mindoro Strait,65
+2026-06-13,Kerch Strait,6
+2026-06-12,Suez Canal,26
+2026-06-12,Panama Canal,23
+2026-06-12,Bosporus Strait,74
+2026-06-12,Bab el-Mandeb Strait,39
+2026-06-12,Malacca Strait,205
+2026-06-12,Strait of Hormuz,2
+2026-06-12,Cape of Good Hope,75
+2026-06-12,Gibraltar Strait,120
+2026-06-12,Dover Strait,165
+2026-06-12,Oresund Strait,40
+2026-06-12,Taiwan Strait,237
+2026-06-12,Korea Strait,209
+2026-06-12,Tsugaru Strait,59
+2026-06-12,Luzon Strait,80
+2026-06-12,Lombok Strait,35
+2026-06-12,Ombai Strait,13
+2026-06-12,Bohai Strait,159
+2026-06-12,Torres Strait,12
+2026-06-12,Sunda Strait,25
+2026-06-12,Makassar Strait,50
+2026-06-12,Magellan Strait,4
+2026-06-12,Yucatan Channel,44
+2026-06-12,Windward Passage,16
+2026-06-12,Mona Passage,11
+2026-06-12,Balabac Strait,7
+2026-06-12,Bering Strait,0
+2026-06-12,Mindoro Strait,56
+2026-06-12,Kerch Strait,6
+2026-06-11,Suez Canal,31
+2026-06-11,Panama Canal,23
+2026-06-11,Bosporus Strait,68
+2026-06-11,Bab el-Mandeb Strait,37
+2026-06-11,Malacca Strait,213
+2026-06-11,Strait of Hormuz,2
+2026-06-11,Cape of Good Hope,80
+2026-06-11,Gibraltar Strait,138
+2026-06-11,Dover Strait,153
+2026-06-11,Oresund Strait,40
+2026-06-11,Taiwan Strait,240
+2026-06-11,Korea Strait,189
+2026-06-11,Tsugaru Strait,57
+2026-06-11,Luzon Strait,95
+2026-06-11,Lombok Strait,38
+2026-06-11,Ombai Strait,7
+2026-06-11,Bohai Strait,170
+2026-06-11,Torres Strait,10
+2026-06-11,Sunda Strait,26
+2026-06-11,Makassar Strait,63
+2026-06-11,Magellan Strait,3
+2026-06-11,Yucatan Channel,46
+2026-06-11,Windward Passage,20
+2026-06-11,Mona Passage,10
+2026-06-11,Balabac Strait,8
+2026-06-11,Bering Strait,0
+2026-06-11,Mindoro Strait,60
+2026-06-11,Kerch Strait,5
+2026-06-10,Suez Canal,38
+2026-06-10,Panama Canal,25
+2026-06-10,Bosporus Strait,82
+2026-06-10,Bab el-Mandeb Strait,29
+2026-06-10,Malacca Strait,218
+2026-06-10,Strait of Hormuz,2
+2026-06-10,Cape of Good Hope,102
+2026-06-10,Gibraltar Strait,125
+2026-06-10,Dover Strait,167
+2026-06-10,Oresund Strait,41
+2026-06-10,Taiwan Strait,249
+2026-06-10,Korea Strait,213
+2026-06-10,Tsugaru Strait,55
+2026-06-10,Luzon Strait,85
+2026-06-10,Lombok Strait,31
+2026-06-10,Ombai Strait,10
+2026-06-10,Bohai Strait,170
+2026-06-10,Torres Strait,12
+2026-06-10,Sunda Strait,32
+2026-06-10,Makassar Strait,55
+2026-06-10,Magellan Strait,6
+2026-06-10,Yucatan Channel,61
+2026-06-10,Windward Passage,16
+2026-06-10,Mona Passage,12
+2026-06-10,Balabac Strait,15
+2026-06-10,Bering Strait,0
+2026-06-10,Mindoro Strait,64
+2026-06-10,Kerch Strait,11
+2026-06-09,Suez Canal,43
+2026-06-09,Panama Canal,24
+2026-06-09,Bosporus Strait,94
+2026-06-09,Bab el-Mandeb Strait,38
+2026-06-09,Malacca Strait,236
+2026-06-09,Strait of Hormuz,4
+2026-06-09,Cape of Good Hope,86
+2026-06-09,Gibraltar Strait,119
+2026-06-09,Dover Strait,157
+2026-06-09,Oresund Strait,36
+2026-06-09,Taiwan Strait,262
+2026-06-09,Korea Strait,211
+2026-06-09,Tsugaru Strait,48
+2026-06-09,Luzon Strait,79
+2026-06-09,Lombok Strait,54
+2026-06-09,Ombai Strait,8
+2026-06-09,Bohai Strait,170
+2026-06-09,Torres Strait,7
+2026-06-09,Sunda Strait,43
+2026-06-09,Makassar Strait,57
+2026-06-09,Magellan Strait,5
+2026-06-09,Yucatan Channel,51
+2026-06-09,Windward Passage,17
+2026-06-09,Mona Passage,5
+2026-06-09,Balabac Strait,21
+2026-06-09,Bering Strait,0
+2026-06-09,Mindoro Strait,40
+2026-06-09,Kerch Strait,11
+2026-06-08,Suez Canal,48
+2026-06-08,Panama Canal,30
+2026-06-08,Bosporus Strait,80
+2026-06-08,Bab el-Mandeb Strait,30
+2026-06-08,Malacca Strait,221
+2026-06-08,Strait of Hormuz,8
+2026-06-08,Cape of Good Hope,96
+2026-06-08,Gibraltar Strait,137
+2026-06-08,Dover Strait,163
+2026-06-08,Oresund Strait,42
+2026-06-08,Taiwan Strait,217
+2026-06-08,Korea Strait,208
+2026-06-08,Tsugaru Strait,61
+2026-06-08,Luzon Strait,86
+2026-06-08,Lombok Strait,38
+2026-06-08,Ombai Strait,7
+2026-06-08,Bohai Strait,164
+2026-06-08,Torres Strait,10
+2026-06-08,Sunda Strait,23
+2026-06-08,Makassar Strait,51
+2026-06-08,Magellan Strait,4
+2026-06-08,Yucatan Channel,45
+2026-06-08,Windward Passage,21
+2026-06-08,Mona Passage,9
+2026-06-08,Balabac Strait,8
+2026-06-08,Bering Strait,0
+2026-06-08,Mindoro Strait,64
+2026-06-08,Kerch Strait,7
+2026-06-07,Suez Canal,39
+2026-06-07,Panama Canal,30
+2026-06-07,Bosporus Strait,66
+2026-06-07,Bab el-Mandeb Strait,34
+2026-06-07,Malacca Strait,189
+2026-06-07,Strait of Hormuz,2
+2026-06-07,Cape of Good Hope,95
+2026-06-07,Gibraltar Strait,115
+2026-06-07,Dover Strait,161
+2026-06-07,Oresund Strait,38
+2026-06-07,Taiwan Strait,233
+2026-06-07,Korea Strait,201
+2026-06-07,Tsugaru Strait,41
+2026-06-07,Luzon Strait,71
+2026-06-07,Lombok Strait,41
+2026-06-07,Ombai Strait,7
+2026-06-07,Bohai Strait,170
+2026-06-07,Torres Strait,15
+2026-06-07,Sunda Strait,21
+2026-06-07,Makassar Strait,74
+2026-06-07,Magellan Strait,2
+2026-06-07,Yucatan Channel,59
+2026-06-07,Windward Passage,16
+2026-06-07,Mona Passage,11
+2026-06-07,Balabac Strait,13
+2026-06-07,Bering Strait,1
+2026-06-07,Mindoro Strait,52
+2026-06-07,Kerch Strait,12
+2026-06-06,Suez Canal,41
+2026-06-06,Panama Canal,30
+2026-06-06,Bosporus Strait,80
+2026-06-06,Bab el-Mandeb Strait,39
+2026-06-06,Malacca Strait,220
+2026-06-06,Strait of Hormuz,3
+2026-06-06,Cape of Good Hope,92
+2026-06-06,Gibraltar Strait,136
+2026-06-06,Dover Strait,168
+2026-06-06,Oresund Strait,45
+2026-06-06,Taiwan Strait,259
+2026-06-06,Korea Strait,223
+2026-06-06,Tsugaru Strait,61
+2026-06-06,Luzon Strait,80
+2026-06-06,Lombok Strait,35
+2026-06-06,Ombai Strait,10
+2026-06-06,Bohai Strait,152
+2026-06-06,Torres Strait,6
+2026-06-06,Sunda Strait,29
+2026-06-06,Makassar Strait,54
+2026-06-06,Magellan Strait,7
+2026-06-06,Yucatan Channel,61
+2026-06-06,Windward Passage,14
+2026-06-06,Mona Passage,12
+2026-06-06,Balabac Strait,13
+2026-06-06,Bering Strait,0
+2026-06-06,Mindoro Strait,56
+2026-06-06,Kerch Strait,12
+2026-06-05,Suez Canal,41
+2026-06-05,Panama Canal,32
+2026-06-05,Bosporus Strait,77
+2026-06-05,Bab el-Mandeb Strait,25
+2026-06-05,Malacca Strait,186
+2026-06-05,Strait of Hormuz,3
+2026-06-05,Cape of Good Hope,101
+2026-06-05,Gibraltar Strait,108
+2026-06-05,Dover Strait,139
+2026-06-05,Oresund Strait,47
+2026-06-05,Taiwan Strait,261
+2026-06-05,Korea Strait,239
+2026-06-05,Tsugaru Strait,34
+2026-06-05,Luzon Strait,74
+2026-06-05,Lombok Strait,41
+2026-06-05,Ombai Strait,10
+2026-06-05,Bohai Strait,172
+2026-06-05,Torres Strait,9
+2026-06-05,Sunda Strait,33
+2026-06-05,Makassar Strait,47
+2026-06-05,Magellan Strait,3
+2026-06-05,Yucatan Channel,42
+2026-06-05,Windward Passage,20
+2026-06-05,Mona Passage,8
+2026-06-05,Balabac Strait,9
+2026-06-05,Bering Strait,0
+2026-06-05,Mindoro Strait,53
+2026-06-05,Kerch Strait,19
+2026-06-04,Suez Canal,44
+2026-06-04,Panama Canal,25
+2026-06-04,Bosporus Strait,88
+2026-06-04,Bab el-Mandeb Strait,45
+2026-06-04,Malacca Strait,211
+2026-06-04,Strait of Hormuz,3
+2026-06-04,Cape of Good Hope,69
+2026-06-04,Gibraltar Strait,130
+2026-06-04,Dover Strait,155
+2026-06-04,Oresund Strait,48
+2026-06-04,Taiwan Strait,266
+2026-06-04,Korea Strait,217
+2026-06-04,Tsugaru Strait,44
+2026-06-04,Luzon Strait,78
+2026-06-04,Lombok Strait,38
+2026-06-04,Ombai Strait,5
+2026-06-04,Bohai Strait,178
+2026-06-04,Torres Strait,8
+2026-06-04,Sunda Strait,30
+2026-06-04,Makassar Strait,56
+2026-06-04,Magellan Strait,2
+2026-06-04,Yucatan Channel,57
+2026-06-04,Windward Passage,11
+2026-06-04,Mona Passage,12
+2026-06-04,Balabac Strait,16
+2026-06-04,Bering Strait,0
+2026-06-04,Mindoro Strait,64
+2026-06-04,Kerch Strait,24
+2026-06-03,Suez Canal,24
+2026-06-03,Panama Canal,28
+2026-06-03,Bosporus Strait,71
+2026-06-03,Bab el-Mandeb Strait,29
+2026-06-03,Malacca Strait,210
+2026-06-03,Strait of Hormuz,10
+2026-06-03,Cape of Good Hope,75
+2026-06-03,Gibraltar Strait,111
+2026-06-03,Dover Strait,151
+2026-06-03,Oresund Strait,34
+2026-06-03,Taiwan Strait,249
+2026-06-03,Korea Strait,213
+2026-06-03,Tsugaru Strait,70
+2026-06-03,Luzon Strait,93
+2026-06-03,Lombok Strait,40
+2026-06-03,Ombai Strait,12
+2026-06-03,Bohai Strait,137
+2026-06-03,Torres Strait,9
+2026-06-03,Sunda Strait,36
+2026-06-03,Makassar Strait,68
+2026-06-03,Magellan Strait,4
+2026-06-03,Yucatan Channel,52
+2026-06-03,Windward Passage,10
+2026-06-03,Mona Passage,7
+2026-06-03,Balabac Strait,12
+2026-06-03,Bering Strait,0
+2026-06-03,Mindoro Strait,65
+2026-06-03,Kerch Strait,16
+2026-06-02,Suez Canal,43
+2026-06-02,Panama Canal,27
+2026-06-02,Bosporus Strait,60
+2026-06-02,Bab el-Mandeb Strait,36
+2026-06-02,Malacca Strait,193
+2026-06-02,Strait of Hormuz,10
+2026-06-02,Cape of Good Hope,85
+2026-06-02,Gibraltar Strait,131
+2026-06-02,Dover Strait,158
+2026-06-02,Oresund Strait,42
+2026-06-02,Taiwan Strait,267
+2026-06-02,Korea Strait,201
+2026-06-02,Tsugaru Strait,72
+2026-06-02,Luzon Strait,78
+2026-06-02,Lombok Strait,34
+2026-06-02,Ombai Strait,13
+2026-06-02,Bohai Strait,169
+2026-06-02,Torres Strait,14
+2026-06-02,Sunda Strait,31
+2026-06-02,Makassar Strait,54
+2026-06-02,Magellan Strait,5
+2026-06-02,Yucatan Channel,48
+2026-06-02,Windward Passage,15
+2026-06-02,Mona Passage,17
+2026-06-02,Balabac Strait,16
+2026-06-02,Bering Strait,0
+2026-06-02,Mindoro Strait,76
+2026-06-02,Kerch Strait,3
+2026-06-01,Suez Canal,40
+2026-06-01,Panama Canal,30
+2026-06-01,Bosporus Strait,88
+2026-06-01,Bab el-Mandeb Strait,38
+2026-06-01,Malacca Strait,205
+2026-06-01,Strait of Hormuz,5
+2026-06-01,Cape of Good Hope,101
+2026-06-01,Gibraltar Strait,118
+2026-06-01,Dover Strait,153
+2026-06-01,Oresund Strait,32
+2026-06-01,Taiwan Strait,316
+2026-06-01,Korea Strait,229
+2026-06-01,Tsugaru Strait,49
+2026-06-01,Luzon Strait,70
+2026-06-01,Lombok Strait,41
+2026-06-01,Ombai Strait,11
+2026-06-01,Bohai Strait,174
+2026-06-01,Torres Strait,5
+2026-06-01,Sunda Strait,18
+2026-06-01,Makassar Strait,59
+2026-06-01,Magellan Strait,4
+2026-06-01,Yucatan Channel,63
+2026-06-01,Windward Passage,25
+2026-06-01,Mona Passage,10
+2026-06-01,Balabac Strait,8
+2026-06-01,Bering Strait,0
+2026-06-01,Mindoro Strait,58
+2026-06-01,Kerch Strait,8
+2026-05-31,Suez Canal,29
+2026-05-31,Panama Canal,29
+2026-05-31,Bosporus Strait,64
+2026-05-31,Bab el-Mandeb Strait,30
+2026-05-31,Malacca Strait,203
+2026-05-31,Strait of Hormuz,10
+2026-05-31,Cape of Good Hope,96
+2026-05-31,Gibraltar Strait,145
+2026-05-31,Dover Strait,157
+2026-05-31,Oresund Strait,41
+2026-05-31,Taiwan Strait,294
+2026-05-31,Korea Strait,254
+2026-05-31,Tsugaru Strait,56
+2026-05-31,Luzon Strait,60
+2026-05-31,Lombok Strait,38
+2026-05-31,Ombai Strait,8
+2026-05-31,Bohai Strait,158
+2026-05-31,Torres Strait,10
+2026-05-31,Sunda Strait,31
+2026-05-31,Makassar Strait,42
+2026-05-31,Magellan Strait,4
+2026-05-31,Yucatan Channel,71
+2026-05-31,Windward Passage,12
+2026-05-31,Mona Passage,11
+2026-05-31,Balabac Strait,15
+2026-05-31,Bering Strait,0
+2026-05-31,Mindoro Strait,73
+2026-05-31,Kerch Strait,6
+2026-05-30,Suez Canal,40
+2026-05-30,Panama Canal,34
+2026-05-30,Bosporus Strait,87
+2026-05-30,Bab el-Mandeb Strait,31
+2026-05-30,Malacca Strait,196
+2026-05-30,Strait of Hormuz,4
+2026-05-30,Cape of Good Hope,117
+2026-05-30,Gibraltar Strait,134
+2026-05-30,Dover Strait,171
+2026-05-30,Oresund Strait,47
+2026-05-30,Taiwan Strait,251
+2026-05-30,Korea Strait,233
+2026-05-30,Tsugaru Strait,38
+2026-05-30,Luzon Strait,61
+2026-05-30,Lombok Strait,36
+2026-05-30,Ombai Strait,6
+2026-05-30,Bohai Strait,191
+2026-05-30,Torres Strait,10
+2026-05-30,Sunda Strait,44
+2026-05-30,Makassar Strait,43
+2026-05-30,Magellan Strait,4
+2026-05-30,Yucatan Channel,47
+2026-05-30,Windward Passage,19
+2026-05-30,Mona Passage,10
+2026-05-30,Balabac Strait,16
+2026-05-30,Bering Strait,0
+2026-05-30,Mindoro Strait,64
+2026-05-30,Kerch Strait,4
+2026-05-29,Suez Canal,41
+2026-05-29,Panama Canal,33
+2026-05-29,Bosporus Strait,60
+2026-05-29,Bab el-Mandeb Strait,28
+2026-05-29,Malacca Strait,198
+2026-05-29,Strait of Hormuz,3
+2026-05-29,Cape of Good Hope,84
+2026-05-29,Gibraltar Strait,130
+2026-05-29,Dover Strait,151
+2026-05-29,Oresund Strait,32
+2026-05-29,Taiwan Strait,246
+2026-05-29,Korea Strait,238
+2026-05-29,Tsugaru Strait,37
+2026-05-29,Luzon Strait,83
+2026-05-29,Lombok Strait,41
+2026-05-29,Ombai Strait,5
+2026-05-29,Bohai Strait,162
+2026-05-29,Torres Strait,6
+2026-05-29,Sunda Strait,31
+2026-05-29,Makassar Strait,52
+2026-05-29,Magellan Strait,5
+2026-05-29,Yucatan Channel,64
+2026-05-29,Windward Passage,16
+2026-05-29,Mona Passage,9
+2026-05-29,Balabac Strait,6
+2026-05-29,Bering Strait,0
+2026-05-29,Mindoro Strait,56
+2026-05-29,Kerch Strait,3
+2026-05-28,Suez Canal,43
+2026-05-28,Panama Canal,29
+2026-05-28,Bosporus Strait,82
+2026-05-28,Bab el-Mandeb Strait,35
+2026-05-28,Malacca Strait,204
+2026-05-28,Strait of Hormuz,3
+2026-05-28,Cape of Good Hope,94
+2026-05-28,Gibraltar Strait,142
+2026-05-28,Dover Strait,160
+2026-05-28,Oresund Strait,31
+2026-05-28,Taiwan Strait,246
+2026-05-28,Korea Strait,234
+2026-05-28,Tsugaru Strait,42
+2026-05-28,Luzon Strait,94
+2026-05-28,Lombok Strait,39
+2026-05-28,Ombai Strait,6
+2026-05-28,Bohai Strait,156
+2026-05-28,Torres Strait,10
+2026-05-28,Sunda Strait,28
+2026-05-28,Makassar Strait,74
+2026-05-28,Magellan Strait,6
+2026-05-28,Yucatan Channel,51
+2026-05-28,Windward Passage,10
+2026-05-28,Mona Passage,17
+2026-05-28,Balabac Strait,12
+2026-05-28,Bering Strait,0
+2026-05-28,Mindoro Strait,50
+2026-05-28,Kerch Strait,8
+2026-05-27,Suez Canal,27
+2026-05-27,Panama Canal,33
+2026-05-27,Bosporus Strait,88
+2026-05-27,Bab el-Mandeb Strait,38
+2026-05-27,Malacca Strait,211
+2026-05-27,Strait of Hormuz,5
+2026-05-27,Cape of Good Hope,76
+2026-05-27,Gibraltar Strait,120
+2026-05-27,Dover Strait,148
+2026-05-27,Oresund Strait,42
+2026-05-27,Taiwan Strait,223
+2026-05-27,Korea Strait,203
+2026-05-27,Tsugaru Strait,51
+2026-05-27,Luzon Strait,76
+2026-05-27,Lombok Strait,36
+2026-05-27,Ombai Strait,15
+2026-05-27,Bohai Strait,146
+2026-05-27,Torres Strait,12
+2026-05-27,Sunda Strait,35
+2026-05-27,Makassar Strait,36
+2026-05-27,Magellan Strait,1
+2026-05-27,Yucatan Channel,46
+2026-05-27,Windward Passage,14
+2026-05-27,Mona Passage,11
+2026-05-27,Balabac Strait,15
+2026-05-27,Bering Strait,0
+2026-05-27,Mindoro Strait,68
+2026-05-27,Kerch Strait,9
+2026-05-26,Suez Canal,37
+2026-05-26,Panama Canal,31
+2026-05-26,Bosporus Strait,95
+2026-05-26,Bab el-Mandeb Strait,22
+2026-05-26,Malacca Strait,237
+2026-05-26,Strait of Hormuz,2
+2026-05-26,Cape of Good Hope,81
+2026-05-26,Gibraltar Strait,140
+2026-05-26,Dover Strait,144
+2026-05-26,Oresund Strait,32
+2026-05-26,Taiwan Strait,246
+2026-05-26,Korea Strait,179
+2026-05-26,Tsugaru Strait,48
+2026-05-26,Luzon Strait,98
+2026-05-26,Lombok Strait,42
+2026-05-26,Ombai Strait,4
+2026-05-26,Bohai Strait,153
+2026-05-26,Torres Strait,12
+2026-05-26,Sunda Strait,27
+2026-05-26,Makassar Strait,52
+2026-05-26,Magellan Strait,3
+2026-05-26,Yucatan Channel,53
+2026-05-26,Windward Passage,20
+2026-05-26,Mona Passage,10
+2026-05-26,Balabac Strait,10
+2026-05-26,Bering Strait,0
+2026-05-26,Mindoro Strait,61
+2026-05-26,Kerch Strait,15
+2026-05-25,Suez Canal,46
+2026-05-25,Panama Canal,30
+2026-05-25,Bosporus Strait,91
+2026-05-25,Bab el-Mandeb Strait,35
+2026-05-25,Malacca Strait,207
+2026-05-25,Strait of Hormuz,6
+2026-05-25,Cape of Good Hope,93
+2026-05-25,Gibraltar Strait,138
+2026-05-25,Dover Strait,147
+2026-05-25,Oresund Strait,29
+2026-05-25,Taiwan Strait,209
+2026-05-25,Korea Strait,202
+2026-05-25,Tsugaru Strait,54
+2026-05-25,Luzon Strait,84
+2026-05-25,Lombok Strait,22
+2026-05-25,Ombai Strait,14
+2026-05-25,Bohai Strait,160
+2026-05-25,Torres Strait,7
+2026-05-25,Sunda Strait,35
+2026-05-25,Makassar Strait,57
+2026-05-25,Magellan Strait,4
+2026-05-25,Yucatan Channel,55
+2026-05-25,Windward Passage,25
+2026-05-25,Mona Passage,11
+2026-05-25,Balabac Strait,12
+2026-05-25,Bering Strait,0
+2026-05-25,Mindoro Strait,55
+2026-05-25,Kerch Strait,18
+2026-05-24,Suez Canal,33
+2026-05-24,Panama Canal,34
+2026-05-24,Bosporus Strait,85
+2026-05-24,Bab el-Mandeb Strait,43
+2026-05-24,Malacca Strait,225
+2026-05-24,Strait of Hormuz,4
+2026-05-24,Cape of Good Hope,105
+2026-05-24,Gibraltar Strait,131
+2026-05-24,Dover Strait,172
+2026-05-24,Oresund Strait,36
+2026-05-24,Taiwan Strait,229
+2026-05-24,Korea Strait,212
+2026-05-24,Tsugaru Strait,49
+2026-05-24,Luzon Strait,98
+2026-05-24,Lombok Strait,33
+2026-05-24,Ombai Strait,8
+2026-05-24,Bohai Strait,163
+2026-05-24,Torres Strait,13
+2026-05-24,Sunda Strait,28
+2026-05-24,Makassar Strait,57
+2026-05-24,Magellan Strait,2
+2026-05-24,Yucatan Channel,55
+2026-05-24,Windward Passage,19
+2026-05-24,Mona Passage,15
+2026-05-24,Balabac Strait,11
+2026-05-24,Bering Strait,0
+2026-05-24,Mindoro Strait,58
+2026-05-24,Kerch Strait,10
+2026-05-23,Suez Canal,41
+2026-05-23,Panama Canal,35
+2026-05-23,Bosporus Strait,88
+2026-05-23,Bab el-Mandeb Strait,38
+2026-05-23,Malacca Strait,194
+2026-05-23,Strait of Hormuz,9
+2026-05-23,Cape of Good Hope,76
+2026-05-23,Gibraltar Strait,129
+2026-05-23,Dover Strait,198
+2026-05-23,Oresund Strait,49
+2026-05-23,Taiwan Strait,215
+2026-05-23,Korea Strait,204
+2026-05-23,Tsugaru Strait,39
+2026-05-23,Luzon Strait,107
+2026-05-23,Lombok Strait,39
+2026-05-23,Ombai Strait,8
+2026-05-23,Bohai Strait,174
+2026-05-23,Torres Strait,12
+2026-05-23,Sunda Strait,30
+2026-05-23,Makassar Strait,53
+2026-05-23,Magellan Strait,4
+2026-05-23,Yucatan Channel,49
+2026-05-23,Windward Passage,18
+2026-05-23,Mona Passage,9
+2026-05-23,Balabac Strait,16
+2026-05-23,Bering Strait,0
+2026-05-23,Mindoro Strait,46
+2026-05-23,Kerch Strait,7
+2026-05-22,Suez Canal,37
+2026-05-22,Panama Canal,30
+2026-05-22,Bosporus Strait,81
+2026-05-22,Bab el-Mandeb Strait,36
+2026-05-22,Malacca Strait,219
+2026-05-22,Strait of Hormuz,5
+2026-05-22,Cape of Good Hope,104
+2026-05-22,Gibraltar Strait,140
+2026-05-22,Dover Strait,167
+2026-05-22,Oresund Strait,51
+2026-05-22,Taiwan Strait,228
+2026-05-22,Korea Strait,222
+2026-05-22,Tsugaru Strait,52
+2026-05-22,Luzon Strait,96
+2026-05-22,Lombok Strait,45
+2026-05-22,Ombai Strait,6
+2026-05-22,Bohai Strait,173
+2026-05-22,Torres Strait,8
+2026-05-22,Sunda Strait,34
+2026-05-22,Makassar Strait,32
+2026-05-22,Magellan Strait,5
+2026-05-22,Yucatan Channel,52
+2026-05-22,Windward Passage,18
+2026-05-22,Mona Passage,10
+2026-05-22,Balabac Strait,7
+2026-05-22,Bering Strait,0
+2026-05-22,Mindoro Strait,60
+2026-05-22,Kerch Strait,12
+2026-05-21,Suez Canal,35
+2026-05-21,Panama Canal,37
+2026-05-21,Bosporus Strait,79
+2026-05-21,Bab el-Mandeb Strait,33
+2026-05-21,Malacca Strait,212
+2026-05-21,Strait of Hormuz,4
+2026-05-21,Cape of Good Hope,108
+2026-05-21,Gibraltar Strait,118
+2026-05-21,Dover Strait,168
+2026-05-21,Oresund Strait,39
+2026-05-21,Taiwan Strait,223
+2026-05-21,Korea Strait,195
+2026-05-21,Tsugaru Strait,50
+2026-05-21,Luzon Strait,97
+2026-05-21,Lombok Strait,31
+2026-05-21,Ombai Strait,12
+2026-05-21,Bohai Strait,166
+2026-05-21,Torres Strait,6
+2026-05-21,Sunda Strait,27
+2026-05-21,Makassar Strait,56
+2026-05-21,Magellan Strait,5
+2026-05-21,Yucatan Channel,53
+2026-05-21,Windward Passage,14
+2026-05-21,Mona Passage,16
+2026-05-21,Balabac Strait,7
+2026-05-21,Bering Strait,0
+2026-05-21,Mindoro Strait,59
+2026-05-21,Kerch Strait,16
+2026-05-20,Suez Canal,39
+2026-05-20,Panama Canal,39
+2026-05-20,Bosporus Strait,99
+2026-05-20,Bab el-Mandeb Strait,33
+2026-05-20,Malacca Strait,207
+2026-05-20,Strait of Hormuz,12
+2026-05-20,Cape of Good Hope,111
+2026-05-20,Gibraltar Strait,141
+2026-05-20,Dover Strait,172
+2026-05-20,Oresund Strait,39
+2026-05-20,Taiwan Strait,247
+2026-05-20,Korea Strait,219
+2026-05-20,Tsugaru Strait,55
+2026-05-20,Luzon Strait,96
+2026-05-20,Lombok Strait,29
+2026-05-20,Ombai Strait,5
+2026-05-20,Bohai Strait,139
+2026-05-20,Torres Strait,9
+2026-05-20,Sunda Strait,35
+2026-05-20,Makassar Strait,46
+2026-05-20,Magellan Strait,9
+2026-05-20,Yucatan Channel,52
+2026-05-20,Windward Passage,9
+2026-05-20,Mona Passage,10
+2026-05-20,Balabac Strait,15
+2026-05-20,Bering Strait,1
+2026-05-20,Mindoro Strait,57
+2026-05-20,Kerch Strait,14
+2026-05-19,Suez Canal,40
+2026-05-19,Panama Canal,31
+2026-05-19,Bosporus Strait,59
+2026-05-19,Bab el-Mandeb Strait,40
+2026-05-19,Malacca Strait,200
+2026-05-19,Strait of Hormuz,6
+2026-05-19,Cape of Good Hope,73
+2026-05-19,Gibraltar Strait,155
+2026-05-19,Dover Strait,170
+2026-05-19,Oresund Strait,37
+2026-05-19,Taiwan Strait,230
+2026-05-19,Korea Strait,209
+2026-05-19,Tsugaru Strait,55
+2026-05-19,Luzon Strait,82
+2026-05-19,Lombok Strait,41
+2026-05-19,Ombai Strait,14
+2026-05-19,Bohai Strait,149
+2026-05-19,Torres Strait,15
+2026-05-19,Sunda Strait,31
+2026-05-19,Makassar Strait,49
+2026-05-19,Magellan Strait,7
+2026-05-19,Yucatan Channel,51
+2026-05-19,Windward Passage,14
+2026-05-19,Mona Passage,11
+2026-05-19,Balabac Strait,12
+2026-05-19,Bering Strait,0
+2026-05-19,Mindoro Strait,54
+2026-05-19,Kerch Strait,22
+2026-05-18,Suez Canal,34
+2026-05-18,Panama Canal,30
+2026-05-18,Bosporus Strait,100
+2026-05-18,Bab el-Mandeb Strait,44
+2026-05-18,Malacca Strait,196
+2026-05-18,Strait of Hormuz,2
+2026-05-18,Cape of Good Hope,90
+2026-05-18,Gibraltar Strait,131
+2026-05-18,Dover Strait,144
+2026-05-18,Oresund Strait,54
+2026-05-18,Taiwan Strait,279
+2026-05-18,Korea Strait,200
+2026-05-18,Tsugaru Strait,55
+2026-05-18,Luzon Strait,106
+2026-05-18,Lombok Strait,38
+2026-05-18,Ombai Strait,8
+2026-05-18,Bohai Strait,153
+2026-05-18,Torres Strait,9
+2026-05-18,Sunda Strait,35
+2026-05-18,Makassar Strait,61
+2026-05-18,Magellan Strait,2
+2026-05-18,Yucatan Channel,58
+2026-05-18,Windward Passage,18
+2026-05-18,Mona Passage,9
+2026-05-18,Balabac Strait,16
+2026-05-18,Bering Strait,0
+2026-05-18,Mindoro Strait,34
+2026-05-18,Kerch Strait,49
+2026-05-17,Suez Canal,31
+2026-05-17,Panama Canal,33
+2026-05-17,Bosporus Strait,86
+2026-05-17,Bab el-Mandeb Strait,29
+2026-05-17,Malacca Strait,213
+2026-05-17,Strait of Hormuz,2
+2026-05-17,Cape of Good Hope,98
+2026-05-17,Gibraltar Strait,120
+2026-05-17,Dover Strait,179
+2026-05-17,Oresund Strait,34
+2026-05-17,Taiwan Strait,280
+2026-05-17,Korea Strait,212
+2026-05-17,Tsugaru Strait,51
+2026-05-17,Luzon Strait,65
+2026-05-17,Lombok Strait,38
+2026-05-17,Ombai Strait,10
+2026-05-17,Bohai Strait,151
+2026-05-17,Torres Strait,11
+2026-05-17,Sunda Strait,40
+2026-05-17,Makassar Strait,40

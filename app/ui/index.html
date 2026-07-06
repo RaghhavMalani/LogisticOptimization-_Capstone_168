@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>India PortWatch</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;overflow:hidden;font-family:'Space Grotesk',system-ui,sans-serif;
+    background:linear-gradient(160deg,#ecdcbb 0%,#d3e4d7 35%,#aacfe0 70%,#8fbad8 100%);color:#1b332c;}
+  #c{position:fixed;inset:0;display:block;}
+  .chrome{position:fixed;z-index:5;}
+  #brand{top:22px;left:26px;}
+  #brand .l{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:16px;letter-spacing:3px;color:#1f3b34;}
+  #brand .s{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:4px;color:#5a6f63;margin-top:2px;}
+  #stat{top:20px;right:26px;display:flex;gap:8px;}
+  .scard{background:rgba(255,255,255,.55);backdrop-filter:blur(10px);border:1px solid rgba(31,59,52,.16);
+    border-radius:14px;padding:8px 13px;font-family:'JetBrains Mono',monospace;text-align:center;}
+  .scard .v{font-size:17px;color:#15302a;font-weight:600;}
+  .scard .l{font-size:8px;letter-spacing:1px;color:#5a6f63;margin-top:1px;}
+  #title{left:26px;bottom:30px;max-width:520px;}
+  #title h1{font-size:38px;font-weight:500;line-height:1.05;letter-spacing:-.5px;}
+  #title p{margin-top:10px;font-size:14px;color:#3c5249;max-width:420px;line-height:1.5;}
+  #title button{margin-top:16px;background:#1f3b34;color:#eaf3ee;border:none;border-radius:24px;
+    padding:11px 22px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;cursor:pointer;
+    box-shadow:0 8px 24px rgba(20,40,35,.25);}
+  #title button:hover{background:#2c5247;}
+  #hint{right:26px;bottom:26px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:#4a6055;text-align:right;}
+  .panel{position:fixed;z-index:6;top:0;right:-460px;height:100%;width:420px;overflow-y:auto;
+    background:rgba(255,255,255,.72);backdrop-filter:blur(24px) saturate(1.2);
+    border-left:1px solid rgba(31,59,52,.14);padding:28px;transition:right .55s cubic-bezier(.2,.85,.2,1);
+    box-shadow:-20px 0 70px rgba(20,40,35,.18);}
+  .panel.open{right:0;}
+  .x{position:absolute;top:20px;right:24px;cursor:pointer;color:#5a6f63;font-size:24px;}
+  .panel h2{font-size:25px;font-weight:500;}
+  .reg{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;margin-top:8px;}
+  .chip{display:inline-block;padding:3px 12px;border-radius:20px;font-family:'JetBrains Mono',monospace;
+    font-size:10px;letter-spacing:1px;font-weight:600;}
+  .kgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:18px;}
+  .kpi{background:rgba(255,255,255,.55);border-radius:13px;padding:11px 13px;}
+  .kpi .l{font-size:9px;letter-spacing:1px;color:#5a6f63;text-transform:uppercase;}
+  .kpi .v{font-family:'JetBrains Mono',monospace;font-size:20px;color:#15302a;margin-top:3px;}
+  .sec{font-size:10px;letter-spacing:2px;color:#5a6f63;margin:20px 0 8px;font-weight:600;}
+  .rec{background:rgba(31,59,52,.07);border-left:3px solid #1f8f6b;border-radius:0 10px 10px 0;
+    padding:12px 14px;font-size:13px;line-height:1.5;color:#22433a;}
+  select,input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(31,59,52,.2);
+    background:rgba(255,255,255,.7);font-family:'JetBrains Mono',monospace;font-size:13px;color:#1b332c;margin-top:6px;}
+  .planrow{margin-top:14px;}
+  .planout{margin-top:16px;background:rgba(33,160,122,.1);border-radius:14px;padding:16px;font-size:13px;line-height:1.6;}
+  .big{font-family:'JetBrains Mono',monospace;font-size:22px;color:#15302a;}
+  #load{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;letter-spacing:5px;color:#2c4a40;background:linear-gradient(160deg,#ecdcbb,#aacfe0);}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="chrome" id="brand"><div class="l">&#9672; INDIA PORTWATCH</div><div class="s">PREDICTIVE PORT INTELLIGENCE</div></div>
+<div class="chrome" id="stat"></div>
+<div class="chrome" id="title"><h1>The ports of India,<br>forecast 10 days ahead.</h1>
+  <p>HSMM regimes + TFT forecasts of congestion, delay &amp; disruption risk — with port optimization and vessel routing.</p>
+  <button onclick="openPlanner()">&#9683; PLAN A SHIPMENT</button></div>
+<div class="chrome" id="hint">DRAG TO ORBIT &middot; SCROLL TO ZOOM &middot; CLICK A PORT</div>
+<div class="panel" id="portPanel"><div id="pbody"></div></div>
+<div class="panel" id="planPanel"><div id="plbody"></div></div>
+<div id="load">SHAPING THE COASTLINE&hellip;</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const FALLBACK={
+ economic:{lsci:108.4,iip:142.1,trend:"+2.3% MoM",freight:1487},
+ ports:[
+  {id:"JNPT",name:"Jawaharlal Nehru (Nhava Sheva)",lat:18.95,lon:72.95,region:"West",regime:"CONGESTED",risk:"High",peak_q90:78,exp_remaining:3,congestion_prob:0.70,dwell_days:3.2,value_at_risk:42,cargo_mt:6.1,
+   rec:"Add a handling shift and stagger arrivals on Day +3–4; pre-clear yard space; advise lines of 12–18h waiting."},
+  {id:"MUNDRA",name:"Mundra (APSEZ)",lat:22.74,lon:69.70,region:"West",regime:"DISRUPTED",risk:"High",peak_q90:84,exp_remaining:4,congestion_prob:0.80,dwell_days:3.9,value_at_risk:55,cargo_mt:7.4,
+   rec:"Activate congestion protocol: prioritise berth allocation, add yard shifts, divert non-priority calls."},
+  {id:"KANDLA",name:"Deendayal (Kandla)",lat:23.02,lon:70.22,region:"West",regime:"NORMAL",risk:"Low",peak_q90:42,exp_remaining:2,congestion_prob:0.20,dwell_days:1.8,value_at_risk:14,cargo_mt:9.8,
+   rec:"Normal operations; maintain standard staffing."},
+  {id:"COCHIN",name:"Cochin",lat:9.97,lon:76.27,region:"South",regime:"CONGESTED",risk:"Medium",peak_q90:63,exp_remaining:2,congestion_prob:0.50,dwell_days:2.6,value_at_risk:21,cargo_mt:3.1,
+   rec:"Monitor closely; pre-position pilots/tugs for high-risk days."},
+  {id:"CHENNAI",name:"Chennai",lat:13.10,lon:80.30,region:"East",regime:"DISRUPTED",risk:"High",peak_q90:80,exp_remaining:3,congestion_prob:0.75,dwell_days:3.4,value_at_risk:38,cargo_mt:5.0,
+   rec:"Congestion protocol; reroute spillover to Kamarajar/Krishnapatnam; extend gate hours."},
+  {id:"VIZAG",name:"Visakhapatnam",lat:17.69,lon:83.22,region:"East",regime:"NORMAL",risk:"Low",peak_q90:48,exp_remaining:2,congestion_prob:0.25,dwell_days:2.0,value_at_risk:16,cargo_mt:6.5,
+   rec:"Normal operations; spare capacity available for diverted calls."},
+  {id:"PARADIP",name:"Paradip",lat:20.26,lon:86.67,region:"East",regime:"CONGESTED",risk:"Medium",peak_q90:66,exp_remaining:2,congestion_prob:0.55,dwell_days:2.8,value_at_risk:24,cargo_mt:8.5,
+   rec:"Monitor; pre-position resources for high-risk days."},
+  {id:"KOLKATA",name:"Kolkata / Haldia",lat:22.55,lon:88.31,region:"East",regime:"DISRUPTED",risk:"High",peak_q90:75,exp_remaining:3,congestion_prob:0.70,dwell_days:3.3,value_at_risk:33,cargo_mt:5.0,
+   rec:"Activate congestion protocol; tidal-window scheduling; advise 13–19h buffer."},
+  {id:"TUTICORIN",name:"Tuticorin",lat:8.75,lon:78.20,region:"South",regime:"NORMAL",risk:"Low",peak_q90:45,exp_remaining:2,congestion_prob:0.30,dwell_days:2.1,value_at_risk:12,cargo_mt:4.0,
+   rec:"Normal operations; good alternative for southern diversions."}
+]};
+function mkForecast(p){const a=[];let v=p.peak_q90-16;for(let h=1;h<=10;h++){
+  v+=Math.sin(h/2.2)*4+(Math.random()*3-1.5);a.push({h,q10:Math.max(0,v-12),q50:Math.round(v),q90:Math.min(100,Math.round(v+12)),delay:Math.round(v*0.5)});}return a;}
+
+const INDIA=[[73.75,34.32],[74.0,34.8],[73.85,35.4],[74.6,35.95],[75.8,36.9],[76.9,36.55],[77.6,35.95],[78.4,35.6],[79.4,35.4],[80.3,35.0],[80.0,34.35],[79.2,34.05],[78.81,33.51],[79.21,32.99],[79.18,32.48],[78.46,32.62],[78.74,31.52],[79.72,30.88],[81.11,30.18],[80.48,29.73],[80.09,28.79],[81.06,28.42],[82.0,27.93],[83.3,27.36],[84.68,27.23],[85.25,26.73],[86.02,26.63],[87.23,26.4],[88.06,26.41],[88.17,26.81],[88.04,27.45],[88.12,27.88],[88.73,28.09],[88.81,27.3],[88.84,27.1],[89.74,26.72],[90.37,26.88],[91.22,26.81],[92.03,26.84],[92.1,27.45],[91.7,27.77],[92.5,27.9],[93.41,28.64],[94.57,29.28],[95.4,29.03],[96.12,29.45],[96.59,28.83],[96.25,28.41],[97.33,28.26],[97.4,27.88],[97.05,27.7],[97.13,27.08],[96.42,27.26],[95.12,26.57],[95.16,26.0],[94.6,25.16],[94.55,24.68],[94.11,23.85],[93.33,24.08],[93.29,23.04],[93.06,22.7],[93.17,22.28],[92.67,22.04],[92.15,23.63],[91.87,23.62],[91.71,22.99],[91.16,23.5],[91.47,24.07],[91.92,24.13],[92.38,24.98],[91.8,25.15],[90.87,25.13],[89.92,25.27],[89.83,25.97],[89.36,26.01],[88.56,26.45],[88.21,25.77],[88.93,25.24],[88.31,24.87],[88.08,24.5],[88.7,24.23],[88.53,23.63],[88.88,22.88],[89.03,22.06],[88.89,21.69],[88.21,21.7],[86.98,21.5],[87.03,20.74],[86.5,20.15],[85.06,19.48],[83.94,18.3],[83.19,17.67],[82.19,17.02],[82.19,16.56],[81.69,16.31],[80.79,15.95],[80.32,15.9],[80.03,15.14],[80.23,13.84],[80.29,13.01],[79.86,12.06],[79.86,10.36],[79.34,10.31],[78.89,9.55],[79.19,9.22],[78.28,8.93],[77.94,8.25],[77.54,7.97],[76.59,8.9],[76.13,10.3],[75.75,11.31],[75.4,11.78],[74.86,12.74],[74.62,13.99],[74.44,14.62],[73.53,15.99],[73.12,17.93],[72.82,19.21],[72.82,20.42],[72.63,21.36],[71.18,20.76],[70.47,20.88],[69.16,22.09],[69.64,22.45],[69.35,22.84],[68.18,23.69],[68.84,24.36],[71.04,24.36],[70.84,25.22],[70.28,25.72],[70.17,26.49],[69.51,26.94],[70.62,27.99],[71.78,27.91],[72.82,28.96],[73.45,29.98],[74.42,30.98],[74.41,31.69],[75.26,32.27],[74.45,32.76],[74.1,33.44],[73.75,34.32]];
+const B={lon0:66,lon1:98,lat0:6,lat1:38},SC=46;
+function proj(lon,lat){return [((lon-B.lon0)/(B.lon1-B.lon0)-0.5)*SC,-((lat-B.lat0)/(B.lat1-B.lat0)-0.5)*SC];}
+const REGC={NORMAL:0x21e6a0,CONGESTED:0xffb020,DISRUPTED:0xff5a72,SEVERE:0xff5a72};
+const REGCSS={NORMAL:'#1f8f6b',CONGESTED:'#c98a12',DISRUPTED:'#d4455c',SEVERE:'#d4455c'};
+
+let DATA=null;
+fetch('./data.json').then(r=>r.json()).then(d=>{DATA=d.ports?d:FALLBACK;boot();}).catch(()=>{DATA=FALLBACK;boot();});
+
+let scene,cam,renderer,diorama,ports3d=[],ships=[],raycaster,mouse,t=0,selected=null,drag=false,lx=0,ly=0;
+let oceanGeo,baseO;
+// camera tween state (cinematic zoom in/out like RouteEngine)
+let cur={ang:0.6,dist:170,h:95,tx:0,ty:2,tz:0};
+let goal={ang:0.7,dist:74,h:42,tx:0,ty:2,tz:0};
+function goalOverview(){goal={ang:goal.ang,dist:74,h:42,tx:0,ty:2,tz:0};selected=null;}
+function goalPort(p){const s=proj(p.lon,p.lat);
+  goal={ang:goal.ang,dist:30,h:17,tx:s[0],ty:5,tz:s[1]};}
+const ease=(a,b,k)=>a+(b-a)*k;
+
+function boot(){
+  DATA.ports.forEach(p=>{if(!p.forecast)p.forecast=mkForecast(p);});
+  renderStat();
+  const cv=document.getElementById('c');
+  renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  scene=new THREE.Scene();scene.fog=new THREE.Fog(0xc2d6d6,95,200);
+  cam=new THREE.PerspectiveCamera(40,1,0.1,1000);
+  scene.add(new THREE.HemisphereLight(0xfff3df,0x4a6b78,1.1));
+  const sun=new THREE.DirectionalLight(0xffe9c4,1.25);sun.position.set(45,75,35);scene.add(sun);
+  const rim=new THREE.DirectionalLight(0x9fd0ff,0.45);rim.position.set(-50,30,-40);scene.add(rim);
+  diorama=new THREE.Group();scene.add(diorama);
+  buildDisc();buildOcean();buildLand();buildPorts();buildShips();
+  raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();
+  cv.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX;ly=e.clientY;});
+  addEventListener('pointerup',()=>drag=false);
+  addEventListener('pointermove',e=>{if(drag){goal.ang-=(e.clientX-lx)*0.005;
+    goal.h=Math.max(12,Math.min(95,goal.h-(e.clientY-ly)*0.2));lx=e.clientX;ly=e.clientY;}});
+  addEventListener('wheel',e=>{goal.dist=Math.max(18,Math.min(140,goal.dist+e.deltaY*0.06));},{passive:true});
+  cv.addEventListener('click',onClick);addEventListener('resize',resize);resize();
+  document.getElementById('load').style.display='none';animate();
+}
+function renderStat(){const n=DATA.ports;const sev=n.filter(p=>p.regime==='DISRUPTED'||p.regime==='SEVERE').length;
+  const var_=n.reduce((s,p)=>s+(p.value_at_risk||0),0);const e=DATA.economic||{};
+  document.getElementById('stat').innerHTML=
+    `<div class="scard"><div class="v">${n.length}</div><div class="l">PORTS</div></div>
+     <div class="scard"><div class="v" style="color:#d4455c">${sev}</div><div class="l">DISRUPTED</div></div>
+     <div class="scard"><div class="v">₹${var_}cr</div><div class="l">AT RISK</div></div>
+     <div class="scard"><div class="v">${e.lsci??'—'}</div><div class="l">LSCI</div></div>`;}
+
+function buildDisc(){const d=new THREE.Mesh(new THREE.CylinderGeometry(33,28,7,7),
+  new THREE.MeshStandardMaterial({color:0x3a4a55,flatShading:true,roughness:1}));d.position.y=-3.6;diorama.add(d);}
+function buildOcean(){const g=new THREE.CircleGeometry(32,80);g.rotateX(-Math.PI/2);
+  const m=new THREE.MeshStandardMaterial({color:0x49b6cf,flatShading:true,transparent:true,opacity:0.95,roughness:0.4});
+  const o=new THREE.Mesh(g,m);o.position.y=0.1;diorama.add(o);oceanGeo=g;baseO=g.attributes.position.array.slice();}
+function buildLand(){
+  const shape=new THREE.Shape();
+  INDIA.forEach((p,i)=>{const s=proj(p[0],p[1]);i?shape.lineTo(s[0],s[1]):shape.moveTo(s[0],s[1]);});
+  const geo=new THREE.ExtrudeGeometry(shape,{depth:1.8,bevelEnabled:false});geo.rotateX(-Math.PI/2);
+  const land=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:0x8fae54,flatShading:true,roughness:0.95}));
+  land.position.y=0.4;diorama.add(land);
+  // gentle low-poly hills scattered inside the landmass
+  const cm=[0x6f9a3f,0x5d8a36,0x9bb150];
+  for(let i=0;i<28;i++){const p=INDIA[(Math.random()*INDIA.length)|0];const s=proj(p[0],p[1]);
+    const jx=(Math.random()-0.5)*5,jz=(Math.random()-0.5)*5,h=1.4+Math.random()*2.6;
+    const c=new THREE.Mesh(new THREE.ConeGeometry(0.6+Math.random()*0.5,h,5),
+      new THREE.MeshStandardMaterial({color:cm[(Math.random()*3)|0],flatShading:true,roughness:1}));
+    c.position.set(s[0]+jx,2.2+h/2,s[1]+jz);diorama.add(c);}
+}
+function glow(hex){const cv=document.createElement('canvas');cv.width=cv.height=64;const x=cv.getContext('2d');
+  const c='#'+hex.toString(16).padStart(6,'0');const g=x.createRadialGradient(32,32,0,32,32,32);
+  g.addColorStop(0,c);g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,64,64);
+  return new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),blending:THREE.AdditiveBlending,depthWrite:false,transparent:true}));}
+function buildPorts(){ports3d=[];DATA.ports.forEach(p=>{const s=proj(p.lon,p.lat);const col=REGC[p.regime]||0xffb020;
+  const g=new THREE.Group();g.position.set(s[0],2.2,s[1]);
+  const beam=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.5,6.5,10),
+    new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:0.9,transparent:true,opacity:0.85}));
+  beam.position.y=3.3;g.add(beam);
+  const orb=new THREE.Mesh(new THREE.SphereGeometry(0.85,16,16),
+    new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:1.2}));orb.position.y=7;g.add(orb);
+  const h=glow(col);h.scale.set(6.5,6.5,1);h.position.y=7;g.add(h);
+  g.userData={port:p,orb};diorama.add(g);ports3d.push(g);});}
+function buildShips(){ships=[];DATA.ports.forEach(p=>{const s=proj(p.lon,p.lat);
+  for(let k=0;k<2;k++){const sh=new THREE.Group();
+    sh.add(new THREE.Mesh(new THREE.BoxGeometry(1.5,0.45,0.65),new THREE.MeshStandardMaterial({color:0xf2efe6,flatShading:true})));
+    const d=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.4,0.4),new THREE.MeshStandardMaterial({color:0xcf6a4a,flatShading:true}));d.position.y=0.4;sh.add(d);
+    const a=Math.random()*6.28,r=11+Math.random()*15;sh.userData={cx:s[0],cz:s[1],a,r,sp:0.0006+Math.random()*0.001};
+    diorama.add(sh);ships.push(sh);}});}
+function onClick(e){mouse.x=(e.clientX/innerWidth)*2-1;mouse.y=-(e.clientY/innerHeight)*2+1;
+  raycaster.setFromCamera(mouse,cam);
+  const hits=raycaster.intersectObjects(ports3d.map(g=>g.children).flat());
+  if(hits.length){let g=hits[0].object;while(g.parent&&!(g.userData&&g.userData.port))g=g.parent;
+    if(g.userData&&g.userData.port)openPort(g.userData.port);}}
+function resize(){renderer.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();}
+function animate(){t++;requestAnimationFrame(animate);
+  const pos=oceanGeo.attributes.position;for(let i=0;i<pos.count;i++){const x=baseO[i*3],z=baseO[i*3+2];
+    pos.array[i*3+1]=Math.sin(x*0.12+t*0.03)*0.45+Math.cos(z*0.14+t*0.025)*0.45;}pos.needsUpdate=true;
+  ports3d.forEach((g,i)=>g.userData.orb.scale.setScalar(1+0.18*Math.sin(t*0.06+i)));
+  ships.forEach(sh=>{sh.userData.a+=sh.userData.sp;const u=sh.userData;
+    sh.position.set(u.cx+Math.cos(u.a)*u.r,0.5+Math.sin(t*0.05+u.r)*0.12,u.cz+Math.sin(u.a)*u.r);sh.rotation.y=-u.a;});
+  // slow auto-orbit only at the overview (not while focused on a port / dragging)
+  if(!selected && !drag) goal.ang+=0.0012;
+  const k=0.06;
+  cur.ang=ease(cur.ang,goal.ang,k);cur.dist=ease(cur.dist,goal.dist,k);
+  cur.h=ease(cur.h,goal.h,k);cur.tx=ease(cur.tx,goal.tx,k);
+  cur.ty=ease(cur.ty,goal.ty,k);cur.tz=ease(cur.tz,goal.tz,k);
+  cam.position.set(cur.tx+Math.cos(cur.ang)*cur.dist,cur.ty+cur.h,cur.tz+Math.sin(cur.ang)*cur.dist);
+  cam.lookAt(cur.tx,cur.ty,cur.tz);
+  renderer.render(scene,cam);}
+
+// ---- analytics helpers (the "ML/optimizer" surfaced) -----------------------
+function bestWindow(p){let b=p.forecast[0];p.forecast.forEach(f=>{if(f.q50<b.q50)b=f;});
+  const buffer=Math.max(6,Math.round((p.peak_q90||50)*0.3));return {day:b.h,q50:b.q50,buffer};}
+function altPort(p){const others=DATA.ports.filter(o=>o.id!==p.id);
+  others.sort((a,b)=>a.peak_q90-b.peak_q90);const a=others[0];
+  return (a&&a.peak_q90<p.peak_q90-15)?a:null;}
+function spark(fc){const W=344,H=78,pad=6;const lo=Math.min(...fc.map(p=>p.q10)),hi=Math.max(...fc.map(p=>p.q90));
+  const X=h=>pad+(h-1)/9*(W-2*pad),Y=v=>H-pad-(v-lo)/((hi-lo)||1)*(H-2*pad);
+  const band=fc.map(p=>X(p.h)+','+Y(p.q90)).concat(fc.slice().reverse().map(p=>X(p.h)+','+Y(p.q10))).join(' ');
+  const line=fc.map(p=>X(p.h)+','+Y(p.q50)).join(' ');const bw=bestWindowSvg(fc,X,Y,H);
+  return `<svg width="100%" viewBox="0 0 ${W} ${H}"><polygon points="${band}" fill="rgba(33,160,122,.16)"/>
+    ${bw}<polyline points="${line}" fill="none" stroke="#1f8f6b" stroke-width="2.5"/></svg>`;}
+function bestWindowSvg(fc,X,Y,H){let b=fc[0];fc.forEach(f=>{if(f.q50<b.q50)b=f;});
+  return `<line x1="${X(b.h)}" y1="6" x2="${X(b.h)}" y2="${H-6}" stroke="#1f8f6b" stroke-dasharray="3" opacity="0.6"/>`;}
+
+function openPort(p){closePlanner();selected=p;goalPort(p);
+  const c=REGCSS[p.regime]||'#c98a12';const bw=bestWindow(p);const e=DATA.economic||{};
+  document.getElementById('pbody').innerHTML=`<span class="x" onclick="closePort()">&times;</span>
+   <h2>${p.name}</h2>
+   <div class="reg"><span class="chip" style="background:${c}22;color:${c}">${p.regime}</span>
+     &nbsp;<span class="chip" style="background:#0001;color:#1b332c">RISK ${String(p.risk).toUpperCase()}</span></div>
+   <div class="sec">TFT 1–10 DAY CONGESTION FORECAST</div>${spark(p.forecast)}
+   <div class="kgrid">
+     <div class="kpi"><div class="l">Peak congestion P90</div><div class="v">${p.peak_q90}</div></div>
+     <div class="kpi"><div class="l">Regime remain</div><div class="v">${p.exp_remaining}d</div></div>
+     <div class="kpi"><div class="l">P(congested)</div><div class="v">${p.congestion_prob}</div></div>
+     <div class="kpi"><div class="l">Dwell time</div><div class="v">${p.dwell_days}d</div></div>
+     <div class="kpi"><div class="l">Cargo</div><div class="v">${p.cargo_mt??'—'} MT</div></div>
+     <div class="kpi"><div class="l">Value at risk</div><div class="v">₹${p.value_at_risk}cr</div></div>
+   </div>
+   ${p.portcalls!=null?`<div class="sec">IMF PORTWATCH — LIVE ACTIVITY</div>
+   <div class="kgrid">
+     <div class="kpi"><div class="l">Vessel calls / day</div><div class="v">${p.portcalls}</div></div>
+     <div class="kpi"><div class="l">Container calls</div><div class="v">${p.containers??'—'}</div></div>
+     <div class="kpi"><div class="l">Import (t)</div><div class="v">${(p.import_tonnes||0).toLocaleString()}</div></div>
+     <div class="kpi"><div class="l">Export (t)</div><div class="v">${(p.export_tonnes||0).toLocaleString()}</div></div>
+   </div>`:''}
+   <div class="sec">PORT OPTIMIZER — RECOMMENDED ACTION</div>
+   <div class="rec">${p.rec||'Monitor conditions.'}</div>
+   <div class="sec">BEST BERTHING WINDOW</div>
+   <div class="rec" style="border-left-color:#2f7fd4">Lowest predicted congestion on <b>Day +${bw.day}</b>
+     (index ${bw.q50}). Recommended schedule buffer <b>${bw.buffer}h</b>.</div>
+   <div class="sec">ECONOMIC CONTEXT</div>
+   <div style="font-size:13px;color:#3c5249">Liner connectivity (LSCI) ${e.lsci??'—'} · Industrial output (IIP) ${e.iip??'—'} · ${e.trend??''} · Freight ${e.freight??'—'}</div>`;
+  document.getElementById('portPanel').classList.add('open');}
+function closePort(){goalOverview();document.getElementById('portPanel').classList.remove('open');}
+
+// ---- vessel route planner (for shipping companies) -------------------------
+function openPlanner(){closePort();
+  const opts=DATA.ports.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  document.getElementById('plbody').innerHTML=`<span class="x" onclick="closePlanner()">&times;</span>
+   <h2>Plan a shipment</h2>
+   <p style="font-size:13px;color:#3c5249;margin-top:6px">For carriers &amp; shippers dispatching a vessel to India in the next 10 days.</p>
+   <div class="planrow"><div class="sec">DESTINATION PORT</div>
+     <select id="destSel" onchange="runPlan()">${opts}</select></div>
+   <div class="planrow"><div class="sec">EARLIEST ARRIVAL (DAYS FROM NOW)</div>
+     <input id="ed" type="number" min="1" max="10" value="1" onchange="runPlan()"/></div>
+   <div id="planout"></div>`;
+  document.getElementById('planPanel').classList.add('open');runPlan();}
+function closePlanner(){goalOverview();document.getElementById('planPanel').classList.remove('open');}
+function runPlan(){const id=document.getElementById('destSel').value;const ed=+document.getElementById('ed').value||1;
+  const p=DATA.ports.find(x=>x.id===id);if(!p)return;
+  const win=p.forecast.filter(f=>f.h>=ed);let b=win[0]||p.forecast[0];win.forEach(f=>{if(f.q50<b.q50)b=f;});
+  const buffer=Math.max(6,Math.round((p.peak_q90||50)*0.3));const c=REGCSS[p.regime];
+  const alt=altPort(p);const eta=Math.round((b.delay!=null?b.delay:b.q50*0.5));
+  let advisory;
+  if(p.peak_q90>=75) advisory=`<b style="color:#d4455c">High berth-waiting risk.</b> ${alt?`Consider diverting to <b>${alt.name}</b> (peak ${alt.peak_q90} vs ${p.peak_q90}).`:'Add schedule buffer.'}`;
+  else if(p.peak_q90>=55) advisory=`Moderate risk — proceed with buffer; monitor Day +${b.h}.`;
+  else advisory=`<b style="color:#1f8f6b">Favourable.</b> Proceed as planned.`;
+  document.getElementById('planout').innerHTML=`<div class="planout">
+     <div class="sec" style="margin-top:0">RECOMMENDED ARRIVAL</div>
+     <div class="big">Day +${b.h}</div>
+     <div style="font-size:12px;color:#3c5249;margin-top:2px">lowest predicted congestion (index ${b.q50})</div>
+     <div class="kgrid" style="margin-top:14px">
+       <div class="kpi"><div class="l">Est. ETA delay</div><div class="v">${eta}h</div></div>
+       <div class="kpi"><div class="l">Buffer to hold</div><div class="v">${buffer}h</div></div>
+       <div class="kpi"><div class="l">Regime</div><div class="v" style="font-size:13px;color:${c}">${p.regime}</div></div>
+       <div class="kpi"><div class="l">Berth-wait risk</div><div class="v" style="font-size:13px">${p.risk}</div></div>
+     </div>
+     <div class="sec">ADVISORY</div><div style="font-size:13px;line-height:1.6">${advisory}</div>
+   </div>`;}
+</script>
+</body>
+</html>

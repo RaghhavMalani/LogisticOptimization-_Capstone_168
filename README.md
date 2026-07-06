@@ -127,7 +127,9 @@ $env:KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
 
 ```bash
 python run_demo.py                       # auto data + auto model (TFT if torch, else baseline)
-python run_demo.py --source sample       # synthetic multi-port data (best for a live demo)
+python run_demo.py --source portwatch    # REAL IMF PortWatch satellite-AIS data (12 Indian ports)
+python run_demo.py --refresh-portwatch --source portwatch   # re-fetch live PortWatch first
+python run_demo.py --source sample       # synthetic multi-port data (fully controllable)
 python run_demo.py --model baseline      # force the fast quantile baseline
 python run_demo.py --model tft --epochs 40   # force/train the real TFT
 python run_demo.py --benchmark --explain # model comparison + feature importance + plots
@@ -266,12 +268,14 @@ via the fixed seed in `src/utils/config.py`.)
 
 ## 7. Limitations (especially AIS)
 
-- **AIS availability is the key open problem.** Reliable AIS is expensive and
-  inconsistent, so the Port-Ops expert runs in **proxy mode** by default,
-  synthesising vessel activity from observed congestion and reporting low
-  `ais_confidence`. This is a stand-in, not a measurement — congestion features
-  derived this way should be read with that caveat. The planned fix is Google
-  Earth Engine / satellite-derived vessel-activity proxies (see Next steps).
+- **AIS is now partially solved via IMF PortWatch.** `--source portwatch` feeds
+  real satellite-AIS-derived daily port calls + import/export tonnes for 12
+  Indian ports (Port-Ops expert PORTWATCH mode, `ais_confidence` 0.75). What is
+  still a proxy: `congestion_index` is a call-pressure index and `delay_hours`
+  is derived from it, because no public feed reports measured berth delays --
+  wiring port-authority dwell data (Sagar Setu / DGQI) is the fix. Raw vessel
+  tracks (GEE Sentinel-1 or commercial AIS) would raise confidence to 0.9.
+  The full API catalogue lives in `docs/DATA_SOURCES.md`.
 - **The shipped CSVs are national, not port-level** (except DGQI dwell times).
   In `--source real` mode the national weather/news/economic series are
   broadcast across ports, so cross-port differences come mainly from DGQI and
@@ -288,6 +292,11 @@ via the fixed seed in `src/utils/config.py`.)
 ---
 
 ## 8. Next steps for Phase 3
+
+0. **Extend the PortWatch history.** The cache ships ~4 months x 8 major ports;
+   run `python -m app.data.portwatch` (pagination bug now fixed) to pull a year+
+   for all 16 mapped ports, which materially helps the TFT and the HSMM
+   duration estimates.
 
 1. **Satellite AIS proxy.** Implement a Google Earth Engine ingestion path
    (vessel/anchorage detections) and feed it into `port_ops_expert` as a real —

@@ -8,64 +8,55 @@
 <style>
   :root{--cy:#21e6c1;--bl:#2fa7ff;--am:#ffb020;--rd:#ff3b6b;--tx:#bfe9ff;--mut:#5b7c9e;}
   *{box-sizing:border-box;}
-  html,body{margin:0;height:100%;background:#03060d;color:var(--tx);
+  html,body{margin:0;height:100%;background:#02040a;color:var(--tx);
     font-family:'Space Grotesk',system-ui,sans-serif;overflow:hidden;}
-  #map{position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 35%,#071426 0%,#03060d 70%);}
+  #scene{position:absolute;inset:0;z-index:1;display:block;cursor:grab;}
+  #vignette{position:absolute;inset:0;pointer-events:none;z-index:2;
+    background:radial-gradient(130% 100% at 55% 50%,transparent 55%,rgba(0,0,0,.8) 100%);}
   .mono{font-family:'JetBrains Mono',monospace;}
-  /* cinematic overlays */
-  #vignette{position:absolute;inset:0;pointer-events:none;z-index:3;
-    background:radial-gradient(130% 100% at 50% 40%,transparent 45%,rgba(0,0,0,.78) 100%);}
-  #grain{position:absolute;inset:0;pointer-events:none;z-index:3;opacity:.05;mix-blend-mode:overlay;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
-  #scan{position:absolute;inset:0;pointer-events:none;z-index:3;opacity:.06;
-    background:repeating-linear-gradient(0deg,transparent 0 2px,#21e6c1 2px 3px);}
-  #top{position:absolute;top:0;left:0;right:0;height:60px;z-index:5;display:flex;align-items:center;
-    gap:22px;padding:0 22px;background:linear-gradient(180deg,rgba(3,8,16,.95),rgba(3,8,16,0));pointer-events:none;}
-  .logo{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:18px;letter-spacing:3px;color:var(--cy);
-    text-shadow:0 0 18px rgba(33,230,193,.55);}
-  .sub{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--mut);}
-  .tk{margin-left:auto;display:flex;gap:22px;}
+  #top{position:absolute;top:0;left:0;right:0;height:62px;z-index:5;display:flex;align-items:center;
+    gap:22px;padding:0 24px;background:linear-gradient(180deg,rgba(2,4,10,.96),transparent);pointer-events:none;}
+  .logo{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:19px;letter-spacing:3px;color:var(--cy);
+    text-shadow:0 0 22px rgba(33,230,193,.6);}
+  .sub{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:4px;color:var(--mut);}
+  .tk{margin-left:auto;display:flex;gap:24px;}
   .tk div{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mut);text-align:right;}
-  .tk b{display:block;font-size:15px;color:#eaf7ff;}
+  .tk b{display:block;font-size:16px;color:#eaf7ff;}
   .up{color:var(--cy);}.dn{color:var(--rd);}
-  .glass{position:absolute;z-index:6;background:rgba(8,16,30,.66);
-    backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);
-    border:1px solid rgba(47,167,255,.22);border-radius:16px;
-    box-shadow:0 10px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.04);}
-  #stats{left:18px;top:76px;width:212px;padding:16px 18px;}
-  #stats h3{margin:0 0 12px;font-size:11px;letter-spacing:2px;color:var(--mut);font-weight:500;}
-  .stat{margin:11px 0;}
-  .stat .v{font-family:'JetBrains Mono',monospace;font-size:27px;color:#eaf7ff;}
-  .stat .l{font-size:10px;letter-spacing:1px;color:var(--mut);text-transform:uppercase;}
-  .leg{margin-top:16px;font-size:10px;color:var(--mut);}
-  .leg span{display:inline-flex;align-items:center;gap:5px;margin-right:10px;}
-  .pill{width:9px;height:9px;border-radius:50%;display:inline-block;}
-  #detail{right:-460px;top:76px;bottom:24px;width:410px;padding:20px 22px;overflow-y:auto;
-    transition:right .5s cubic-bezier(.2,.85,.2,1);}
-  #detail.open{right:18px;}
-  #detail .close{float:right;cursor:pointer;color:var(--mut);font-size:20px;pointer-events:all;}
-  #detail h2{margin:0;font-size:21px;color:#eaf7ff;}
+  .glass{position:absolute;z-index:6;background:rgba(8,16,32,.62);
+    backdrop-filter:blur(18px) saturate(1.3);-webkit-backdrop-filter:blur(18px) saturate(1.3);
+    border:1px solid rgba(47,167,255,.22);border-radius:18px;
+    box-shadow:0 14px 50px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.05);}
+  #stats{left:20px;top:80px;width:216px;padding:18px 20px;}
+  #stats h3{margin:0 0 14px;font-size:11px;letter-spacing:2px;color:var(--mut);font-weight:500;}
+  .stat{margin:12px 0;}.stat .v{font-family:'JetBrains Mono',monospace;font-size:28px;color:#eaf7ff;line-height:1;}
+  .stat .l{font-size:10px;letter-spacing:1px;color:var(--mut);text-transform:uppercase;margin-top:3px;}
+  .leg{margin-top:18px;font-size:10px;}.leg span{display:inline-flex;align-items:center;gap:5px;margin-right:10px;}
+  .pill{width:9px;height:9px;border-radius:50%;display:inline-block;box-shadow:0 0 8px currentColor;}
+  #detail{right:-480px;top:80px;bottom:26px;width:420px;padding:22px 24px;overflow-y:auto;
+    transition:right .55s cubic-bezier(.2,.85,.2,1);}
+  #detail.open{right:20px;}
+  .close{float:right;cursor:pointer;color:var(--mut);font-size:22px;}
+  #detail h2{margin:0;font-size:22px;color:#eaf7ff;}
   .reg{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;margin-top:6px;}
-  .kgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0;}
-  .kpi{background:rgba(3,8,16,.6);border:1px solid rgba(47,167,255,.15);border-radius:10px;padding:10px 12px;}
+  .kgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0;}
+  .kpi{background:rgba(2,6,16,.6);border:1px solid rgba(47,167,255,.15);border-radius:10px;padding:10px 12px;}
   .kpi .l{font-size:9px;letter-spacing:1px;color:var(--mut);text-transform:uppercase;}
   .kpi .v{font-family:'JetBrains Mono',monospace;font-size:19px;color:#eaf7ff;margin-top:2px;}
-  .sec{font-size:11px;letter-spacing:2px;color:var(--mut);margin:14px 0 6px;}
+  .sec{font-size:11px;letter-spacing:2px;color:var(--mut);margin:16px 0 6px;}
   .chip{display:inline-block;padding:2px 10px;border:1px solid;border-radius:3px;
     font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;}
-  #hint{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:6;
+  #hint{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);z-index:6;
     font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mut);
-    background:rgba(8,16,30,.7);padding:8px 18px;border-radius:20px;border:1px solid rgba(47,167,255,.2);
-    letter-spacing:1px;}
+    background:rgba(8,16,30,.7);padding:8px 18px;border-radius:20px;border:1px solid rgba(47,167,255,.2);letter-spacing:1px;}
   #load{position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;
-    background:#03060d;font-family:'JetBrains Mono',monospace;color:var(--cy);letter-spacing:4px;
-    animation:pulse 1.6s ease-in-out infinite;}
-  @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+    background:#02040a;font-family:'JetBrains Mono',monospace;color:var(--cy);letter-spacing:5px;animation:pulse 1.6s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:.45}50%{opacity:1}}
 </style>
 </head>
 <body>
-<div id="map"></div>
-<div id="vignette"></div><div id="grain"></div><div id="scan"></div>
+<canvas id="scene"></canvas>
+<div id="vignette"></div>
 <div id="top">
   <div><div class="logo">&#9672; INDIA PORTWATCH</div><div class="sub">LIVE MARITIME INTELLIGENCE</div></div>
   <div class="tk" id="tickers"></div>
@@ -77,120 +68,147 @@
   <div class="stat"><div class="v" id="s_ves">—</div><div class="l">vessels inbound</div></div>
   <div class="stat"><div class="v" id="s_var">—</div><div class="l">value-at-risk</div></div>
   <div class="leg">
-    <span><span class="pill" style="background:#21e6c1"></span>normal</span>
-    <span><span class="pill" style="background:#ffb020"></span>congested</span>
-    <span><span class="pill" style="background:#ff3b6b"></span>severe</span></div>
+    <span style="color:#21e6c1"><span class="pill" style="background:#21e6c1"></span>normal</span>
+    <span style="color:#ffb020"><span class="pill" style="background:#ffb020"></span>congested</span>
+    <span style="color:#ff3b6b"><span class="pill" style="background:#ff3b6b"></span>severe</span></div>
 </div>
 <div class="glass" id="detail"><div id="detailBody"></div></div>
-<div id="hint">Click any port to open its forecast &amp; analytics</div>
+<div id="hint">Hover a port for details &middot; click to open its forecast</div>
 <div id="load">INITIALISING OPS GRID&hellip;</div>
 
-<script src="https://unpkg.com/deck.gl@9.0.27/dist.min.js"></script>
 <script>
-const REG={NORMAL:[33,230,193],CONGESTED:[255,176,32],SEVERE:[255,59,107]};
 const REGC={NORMAL:"#21e6c1",CONGESTED:"#ffb020",SEVERE:"#ff3b6b"};
-let DATA=null, deckgl=null, t=0, selected=null;
-const FLY=()=>new deck.FlyToInterpolator();
+const REGRGB={NORMAL:[33,230,193],CONGESTED:[255,176,32],SEVERE:[255,59,107]};
+// Inlined simplified India mainland outline (lon,lat) — no external data needed.
+const INDIA=[[68.0,23.8],[68.5,24.3],[70.0,25.0],[70.6,27.7],[72.6,28.0],[74.0,29.0],
+[74.6,31.0],[75.8,32.3],[77.0,32.9],[78.4,32.6],[79.0,31.0],[80.2,30.3],[81.0,30.2],
+[82.8,29.0],[84.0,28.9],[85.8,28.0],[88.0,27.9],[88.7,27.3],[89.5,26.7],[90.3,26.9],
+[92.0,27.5],[94.0,27.6],[95.4,27.0],[96.5,27.3],[97.3,28.2],[96.2,26.6],[95.2,26.0],
+[94.6,25.2],[94.1,23.8],[93.4,24.0],[93.3,22.9],[92.6,22.0],[91.8,23.2],[91.0,23.7],
+[89.1,22.0],[88.2,21.7],[87.0,21.0],[86.5,20.1],[85.0,19.5],[83.3,17.8],[82.2,16.6],
+[80.9,15.9],[80.3,13.5],[80.0,12.0],[79.8,10.3],[78.5,9.5],[77.5,8.1],[76.5,8.9],
+[75.7,11.6],[74.5,14.8],[73.5,16.0],[72.9,17.9],[72.6,20.0],[72.7,21.7],[70.0,20.9],
+[69.0,22.2],[68.2,22.4],[68.0,23.8]];
+const B={lon0:66.5,lon1:99,lat0:5,lat1:37};
+let DATA=null,W,H,kx,ky,ox,oy,t=0,hoverIdx=-1,selIdx=-1,vessels=[];
+const cv=document.getElementById('scene'),x=cv.getContext('2d');
 
-fetch('./data.json').then(r=>r.json()).then(d=>{DATA=d;init();})
-  .catch(()=>{document.getElementById('load').textContent=
-    'data.json not found — run: python run_demo.py --web';});
+function fit(){W=cv.width=innerWidth;H=cv.height=innerHeight;
+  const lonR=(B.lon1-B.lon0),latR=(B.lat1-B.lat0),cosw=0.93;
+  ky=Math.min((H-150)/latR,(W-360)/(lonR*cosw));kx=ky*cosw;
+  const mapW=lonR*kx,mapH=latR*ky;ox=(W-mapW)/2+40;oy=(H-mapH)/2+30;}
+function P(lon,lat){return [ox+(lon-B.lon0)*kx, oy+(B.lat1-lat)*ky];}
+addEventListener('resize',fit);
 
-function init(){
-  document.getElementById('load').style.display='none';
+fetch('./data.json').then(r=>r.json()).then(d=>{DATA=d;start();})
+  .catch(()=>{document.getElementById('load').textContent='data.json not found — run: python run_demo.py --web';});
+
+function start(){
+  document.getElementById('load').style.display='none';fit();
   const n=DATA.national||{};
   s_ports.textContent=n.ports??DATA.ports.length;
   s_sev.textContent=n.severe??DATA.ports.filter(p=>p.regime==='SEVERE').length;
   s_ves.textContent=DATA.vessels.length;
   s_var.textContent=n.value_at_risk?('₹'+Math.round(n.value_at_risk).toLocaleString()+' cr'):'—';
   const T=DATA.tickers||{};
-  const tHtml=(lab,q,pre)=>q?`<div>${lab}<b>${pre}${q.value}</b><span class="${q.change_pct>=0?'up':'dn'}">${q.change_pct>=0?'▲':'▼'} ${q.change_pct}%</span></div>`:'';
-  document.getElementById('tickers').innerHTML=tHtml('BRENT',T.brent,'$')+tHtml('FREIGHT',T.freight,'');
-
-  const {DeckGL}=deck;
-  deckgl=new DeckGL({container:'map',controller:true,
-    initialViewState:{longitude:80,latitude:18,zoom:2.6,pitch:0,bearing:0},
-    layers:[]});
-  // cinematic fly-in
-  setTimeout(()=>deckgl.setProps({initialViewState:{longitude:80,latitude:18,zoom:3.8,
-    pitch:45,bearing:-12,transitionDuration:2600,transitionInterpolator:FLY()}}),300);
-  animate();
+  const th=(l,q,p)=>q?`<div>${l}<b>${p}${q.value}</b><span class="${q.change_pct>=0?'up':'dn'}">${q.change_pct>=0?'▲':'▼'} ${q.change_pct}%</span></div>`:'';
+  document.getElementById('tickers').innerHTML=th('BRENT',T.brent,'$')+th('FREIGHT',T.freight,'');
+  // vessels approach from the seaward side of each port
+  const byId={};DATA.ports.forEach(p=>byId[p.id]=p);
+  vessels=DATA.vessels.map(v=>{const p=byId[v.to]||DATA.ports[0];
+    let ang=p.region==='West'?Math.PI*(0.85+Math.random()*0.3)
+      :p.region==='East'?(-0.25+Math.random()*0.5)
+      :Math.PI*(0.45+Math.random()*0.3);
+    const R=7+Math.random()*7;
+    return {to:v.to,reg:v.regime,id:v.id,
+      sx:p.lon+Math.cos(ang)*R*0.93, sy:p.lat+Math.sin(ang)*R,
+      ex:p.lon,ey:p.lat,t:Math.random(),sp:0.0016+Math.random()*0.0022};});
+  cv.addEventListener('mousemove',onMove);
+  cv.addEventListener('click',onClick);
+  loop();
 }
 
-function basemap(){
-  const {TileLayer,BitmapLayer}=deck;
-  return new TileLayer({id:'base',
-    data:['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-          'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-          'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'],
-    minZoom:0,maxZoom:18,tileSize:256,opacity:0.85,
-    renderSubLayers:p=>{const{boundingBox}=p.tile;
-      return new BitmapLayer(p,{data:null,image:p.data,
-        bounds:[boundingBox[0][0],boundingBox[0][1],boundingBox[1][0],boundingBox[1][1]]});}});
+function loop(){t++;draw();requestAnimationFrame(loop);}
+
+function rings(){return (DATA.india_geo&&DATA.india_geo.length)?DATA.india_geo:[INDIA];}
+function pathRings(){x.beginPath();
+  rings().forEach(r=>{r.forEach((p,i)=>{const s=P(p[0],p[1]);i?x.lineTo(s[0],s[1]):x.moveTo(s[0],s[1]);});x.closePath();});}
+
+function draw(){
+  // deep-ocean gradient
+  const g=x.createRadialGradient(W*0.52,H*0.52,60,W*0.52,H*0.52,Math.max(W,H)*0.75);
+  g.addColorStop(0,'#0b1d38');g.addColorStop(0.45,'#06122a');g.addColorStop(1,'#02040a');
+  x.fillStyle=g;x.fillRect(0,0,W,H);
+  // graticule
+  x.strokeStyle='rgba(47,167,255,0.045)';x.lineWidth=1;
+  for(let lo=70;lo<=95;lo+=5){const a=P(lo,B.lat0),b=P(lo,B.lat1);x.beginPath();x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1]);x.stroke();}
+  for(let la=10;la<=35;la+=5){const a=P(B.lon0,la),b=P(B.lon1,la);x.beginPath();x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1]);x.stroke();}
+  // shipping lanes (faint)
+  x.strokeStyle='rgba(47,167,255,0.07)';x.lineWidth=1;
+  for(const v of vessels){const a=P(v.sx,v.sy),b=P(v.ex,v.ey);
+    x.beginPath();x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1]);x.stroke();}
+  // atmosphere glow behind landmass
+  x.save();pathRings();x.shadowBlur=70;x.shadowColor='rgba(33,230,193,0.45)';
+  x.fillStyle='rgba(20,70,80,0.35)';x.fill();x.restore();
+  // landmass fill + neon coastline
+  x.save();pathRings();
+  const lg=x.createLinearGradient(0,oy,0,oy+(B.lat1-B.lat0)*ky);
+  lg.addColorStop(0,'#11465a');lg.addColorStop(1,'#0a2a40');
+  x.fillStyle=lg;x.fill();
+  x.shadowBlur=14;x.shadowColor='rgba(80,240,210,0.7)';
+  x.lineWidth=1.6;x.strokeStyle='rgba(90,245,215,0.8)';x.stroke();x.restore();
+  // radar sweep
+  const c=P(81,22);const sw=(t*0.011)%(Math.PI*2);
+  for(let k=0;k<46;k++){const a=sw-k*0.022;
+    x.strokeStyle='rgba(33,230,193,'+(0.045*(1-k/46))+')';x.lineWidth=2;
+    x.beginPath();x.moveTo(c[0],c[1]);x.lineTo(c[0]+Math.cos(a)*Math.max(W,H),c[1]+Math.sin(a)*Math.max(W,H));x.stroke();}
+  // vessels (comets) heading to ports
+  for(const v of vessels){v.t+=v.sp;if(v.t>1)v.t=0;const col=REGRGB[v.reg]||REGRGB.CONGESTED;
+    for(let k=0;k<7;k++){const tt=v.t-k*0.018;if(tt<0)continue;
+      const l2=v.sx+(v.ex-v.sx)*tt,a2=v.sy+(v.ey-v.sy)*tt,s2=P(l2,a2);
+      x.fillStyle='rgba('+col[0]+','+col[1]+','+col[2]+','+(0.85*(1-k/7))+')';
+      x.beginPath();x.arc(s2[0],s2[1],3.1*(1-k/8),0,7);x.fill();}}
+  // ports: sonar pulse + halo + glowing core + label
+  DATA.ports.forEach((p,i)=>{const s=P(p.lon,p.lat);p._sx=s[0];p._sy=s[1];
+    const col=REGRGB[p.regime]||REGRGB.CONGESTED;const csz=7+(p.cargo_mt||p.peak_q90||40)/11;
+    const pulse=1+0.3*Math.sin(t*0.07+i);
+    // expanding sonar ring
+    const sr=((t*0.9+i*40)%150)/150;
+    x.strokeStyle='rgba('+col[0]+','+col[1]+','+col[2]+','+(0.5*(1-sr))+')';x.lineWidth=1.4;
+    x.beginPath();x.arc(s[0],s[1],csz+sr*46,0,7);x.stroke();
+    // soft halo
+    x.beginPath();x.fillStyle='rgba('+col[0]+','+col[1]+','+col[2]+',0.12)';
+    x.arc(s[0],s[1],(csz+11)*pulse,0,7);x.fill();
+    if(i===hoverIdx||i===selIdx){x.strokeStyle='rgba(255,255,255,0.95)';x.lineWidth=2;
+      x.beginPath();x.arc(s[0],s[1],csz+9,0,7);x.stroke();}
+    x.save();x.shadowBlur=18;x.shadowColor='rgb('+col[0]+','+col[1]+','+col[2]+')';
+    x.fillStyle='rgb('+col[0]+','+col[1]+','+col[2]+')';
+    x.beginPath();x.arc(s[0],s[1],csz,0,7);x.fill();x.restore();
+    // label (alternate above/below to avoid overlap)
+    const above=(i%2===0);
+    x.fillStyle=(i===hoverIdx)?'#eaf7ff':'rgba(190,225,255,0.8)';
+    x.font='9px JetBrains Mono, monospace';x.textAlign='center';
+    x.fillText(p.id,s[0],above?s[1]-csz-7:s[1]+csz+13);});
 }
 
-function vesselComets(){
-  const out=[];
-  for(const v of DATA.vessels){
-    const base=(v.progress + t*0.02*(0.5+(v.eta_days?1/v.eta_days:0.1)))%1;
-    for(let k=0;k<6;k++){const p=base-k*0.018;if(p<0)continue;
-      out.push({pos:[v.src[0]+(v.dst[0]-v.src[0])*p, v.src[1]+(v.dst[1]-v.src[1])*p],
-        a:Math.round(235*(1-k/6)), r:18000*(1-k/9), reg:v.regime});}
-  }
-  return out;
-}
+function nearest(mx,my){let best=-1,bd=22;DATA.ports.forEach((p,i)=>{
+  const d=Math.hypot(p._sx-mx,p._sy-my);if(d<bd){bd=d;best=i;}});return best;}
+function onMove(e){const r=cv.getBoundingClientRect();hoverIdx=nearest(e.clientX-r.left,e.clientY-r.top);
+  cv.style.cursor=hoverIdx>=0?'pointer':'grab';}
+function onClick(e){const r=cv.getBoundingClientRect();const i=nearest(e.clientX-r.left,e.clientY-r.top);
+  if(i>=0){selIdx=i;openDetail(DATA.ports[i]);}}
 
-function buildLayers(){
-  const {ScatterplotLayer,ArcLayer,TextLayer}=deck;
-  const ports=DATA.ports;
-  const pulse=1+0.28*Math.sin(t*0.1);
-  const routes=new ArcLayer({id:'routes',data:DATA.vessels,
-    getSourcePosition:d=>d.src,getTargetPosition:d=>d.dst,
-    getSourceColor:[47,167,255,8],getTargetColor:d=>[...(REG[d.regime]||REG.CONGESTED),70],
-    getWidth:1,greatCircle:true});
-  const comets=new ScatterplotLayer({id:'comets',data:vesselComets(),
-    getPosition:d=>d.pos,getRadius:d=>d.r,radiusUnits:'meters',
-    getFillColor:d=>[...(REG[d.reg]||REG.CONGESTED),d.a]});
-  const halo=new ScatterplotLayer({id:'halo',data:ports,getPosition:d=>[d.lon,d.lat],
-    getRadius:d=>(24000+(d.peak_q90||40)*1500)*pulse,radiusUnits:'meters',
-    getFillColor:d=>[...(REG[d.regime]||REG.CONGESTED),26]});
-  const halo2=new ScatterplotLayer({id:'halo2',data:ports,getPosition:d=>[d.lon,d.lat],
-    getRadius:d=>(14000+(d.peak_q90||40)*800)*pulse,radiusUnits:'meters',
-    getFillColor:d=>[...(REG[d.regime]||REG.CONGESTED),55]});
-  const dots=new ScatterplotLayer({id:'ports',data:ports,pickable:true,
-    getPosition:d=>[d.lon,d.lat],
-    getRadius:d=>9000+(d.cargo_mt||d.peak_q90||40)*700,radiusUnits:'meters',
-    getFillColor:d=>[...(REG[d.regime]||REG.CONGESTED),245],
-    stroked:true,lineWidthMinPixels:d=>selected&&selected.id===d.id?3:0.6,
-    getLineColor:d=>selected&&selected.id===d.id?[255,255,255,255]:[10,20,34,200],
-    onClick:i=>{if(i.object)openDetail(i.object);},
-    updateTriggers:{getLineColor:[selected&&selected.id],lineWidthMinPixels:[selected&&selected.id]}});
-  const labels=new TextLayer({id:'labels',data:ports,getPosition:d=>[d.lon,d.lat],
-    getText:d=>d.id,getSize:11,getColor:[191,233,255,220],getPixelOffset:[0,-24],
-    fontFamily:'JetBrains Mono, monospace',getTextAnchor:'middle',outlineWidth:2,
-    outlineColor:[3,6,13,255]});
-  return [basemap(),routes,halo,halo2,comets,dots,labels];
-}
-
-function animate(){t+=1;
-  if(deckgl) deckgl.setProps({layers:buildLayers()});
-  requestAnimationFrame(animate);}
-
-function spark(fc){
-  if(!fc||!fc.length)return '';
-  const W=350,H=92,pad=6;const xs=fc.map(p=>p.h);
+function spark(fc){if(!fc||!fc.length)return '';
+  const Wd=352,Hd=92,pad=6,xs=fc.map(p=>p.h);
   const lo=Math.min(...fc.map(p=>p.q10)),hi=Math.max(...fc.map(p=>p.q90));
-  const X=h=>pad+(h-xs[0])/((xs[xs.length-1]-xs[0])||1)*(W-2*pad);
-  const Y=v=>H-pad-(v-lo)/((hi-lo)||1)*(H-2*pad);
+  const X=h=>pad+(h-xs[0])/((xs[xs.length-1]-xs[0])||1)*(Wd-2*pad);
+  const Y=v=>Hd-pad-(v-lo)/((hi-lo)||1)*(Hd-2*pad);
   const band=fc.map(p=>`${X(p.h)},${Y(p.q90)}`).concat(fc.slice().reverse().map(p=>`${X(p.h)},${Y(p.q10)}`)).join(' ');
   const line=fc.map(p=>`${X(p.h)},${Y(p.q50)}`).join(' ');
-  return `<svg width="100%" viewBox="0 0 ${W} ${H}"><polygon points="${band}" fill="rgba(47,167,255,.18)"/>
-    <polyline points="${line}" fill="none" stroke="#2fa7ff" stroke-width="2.5"/></svg>`;
-}
+  return `<svg width="100%" viewBox="0 0 ${Wd} ${Hd}"><polygon points="${band}" fill="rgba(47,167,255,.18)"/>
+    <polyline points="${line}" fill="none" stroke="#2fa7ff" stroke-width="2.5"/></svg>`;}
 function kpi(l,v){return `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div></div>`;}
-
-function openDetail(p){
-  selected=p;const c=REGC[p.regime]||'#ffb020';
+function openDetail(p){const c=REGC[p.regime]||'#ffb020';
   const rk={Low:'#21e6c1',Medium:'#ffb020',High:'#ff3b6b'}[p.risk]||'#ffb020';
   document.getElementById('detailBody').innerHTML=`
     <span class="close" onclick="closeDetail()">&times;</span>
@@ -210,13 +228,8 @@ function openDetail(p){
     <div class="mono" style="font-size:12px;color:#9fb6cc;line-height:1.7;">
       ${DATA.vessels.filter(v=>v.to===p.id).map(v=>`&#9656; ${v.id} · ${v.from} · ETA +${v.eta_days}d`).join('<br>')||'none tracked'}
     </div>`;
-  document.getElementById('detail').classList.add('open');
-  deckgl.setProps({initialViewState:{longitude:p.lon,latitude:p.lat,zoom:5.6,pitch:55,
-    bearing:-12,transitionDuration:1400,transitionInterpolator:FLY()}});
-}
-function closeDetail(){selected=null;document.getElementById('detail').classList.remove('open');
-  deckgl.setProps({initialViewState:{longitude:80,latitude:18,zoom:3.8,pitch:45,
-    bearing:-12,transitionDuration:1200,transitionInterpolator:FLY()}});}
+  document.getElementById('detail').classList.add('open');}
+function closeDetail(){selIdx=-1;document.getElementById('detail').classList.remove('open');}
 </script>
 </body>
 </html>

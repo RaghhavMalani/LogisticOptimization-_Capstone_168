@@ -7,13 +7,16 @@ the pipeline expects:
 
 Source selection
 ----------------
-  * source="sample"  -> generate (or read) the synthetic multi-port dataset.
-  * source="real"    -> best-effort adapter over the preprocessed CSVs that
-                        ship in data/preprocessed/. Those are national daily
-                        z-scored series (+ monthly DGQI dwell times per port),
-                        so we broadcast the national series across ports and use
-                        DGQI as a real port-level congestion proxy.
-  * source="auto"    -> use real CSVs if found, else fall back to sample.
+  * source="sample"    -> generate (or read) the synthetic multi-port dataset.
+  * source="portwatch" -> REAL daily port-level data from the cached IMF
+                          PortWatch satellite-AIS feed (vessel calls +
+                          import/export tonnes per Indian port per day). The
+                          best real source available: true per-port daily
+                          signal, refreshable via `python -m app.data.portwatch`.
+  * source="real"      -> best-effort adapter over the preprocessed CSVs that
+                          ship in data/preprocessed/ (national 2020-22 series +
+                          monthly DGQI dwell times broadcast across ports).
+  * source="auto"      -> portwatch cache if present, else real CSVs, else sample.
 
 The real adapter is intentionally conservative: any signal it cannot build is
 simply omitted, and downstream experts degrade gracefully (lower confidence).
@@ -53,9 +56,18 @@ def load_raw_bundle(source: str = "auto", cfg: DemoConfig | None = None
 
     if source == "sample":
         return _load_sample(cfg)
+    if source == "portwatch":
+        return _load_portwatch()
     if source == "real":
         return _load_real(cfg)
     if source == "auto":
+        if _portwatch_available():
+            try:
+                bundle = _load_portwatch()
+                log.info("Loaded REAL IMF PortWatch data (auto).")
+                return bundle
+            except Exception as exc:  # pragma: no cover - defensive
+                log.warning("PortWatch load failed (%s); trying next source.", exc)
         if _real_available():
             try:
                 bundle = _load_real(cfg)
@@ -64,7 +76,26 @@ def load_raw_bundle(source: str = "auto", cfg: DemoConfig | None = None
             except Exception as exc:  # pragma: no cover - defensive
                 log.warning("Real data load failed (%s); falling back to sample.", exc)
         return _load_sample(cfg)
-    raise ValueError(f"Unknown source '{source}' (use sample|real|auto)")
+    raise ValueError(f"Unknown source '{source}' (use sample|portwatch|real|auto)")
+
+
+# ---------------------------------------------------------------------------
+# PortWatch path (real satellite-AIS daily port activity)
+# ---------------------------------------------------------------------------
+def _portwatch_available() -> bool:
+    try:
+        from src.ingestion import portwatch_source
+        return portwatch_source.available()
+    except Exception:  # pragma: no cover
+        return False
+
+
+def _load_portwatch() -> Dict[str, pd.DataFrame]:
+    from src.ingestion import portwatch_source
+    bundle = portwatch_source.load_bundle()
+    for k in _REQUIRED_KEYS:
+        bundle.setdefault(k, pd.DataFrame(columns=[PORT_ID, DATE]))
+    return bundle
 
 
 # ---------------------------------------------------------------------------

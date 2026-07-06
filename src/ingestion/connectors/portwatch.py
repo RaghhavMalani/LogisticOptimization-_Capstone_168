@@ -33,9 +33,17 @@ from src.utils.logging_utils import get_logger
 
 log = get_logger(__name__)
 
-# Optional: full ArcGIS query URL, e.g.
-#   https://services9.arcgis.com/<org>/arcgis/rest/services/Daily_Chokepoints_Data/FeatureServer/0/query
-PORTWATCH_CHOKEPOINTS_URL = os.environ.get("PORTWATCH_CHOKEPOINTS_URL")
+# Live IMF PortWatch ArcGIS endpoint (public, no key). Override via env if needed.
+PORTWATCH_CHOKEPOINTS_URL = os.environ.get(
+    "PORTWATCH_CHOKEPOINTS_URL",
+    "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/ArcGIS/rest/services/"
+    "Daily_Chokepoints_Data/FeatureServer/0/query")
+
+# Map PortWatch chokepoint names -> our internal ids.
+_PW_NAME_MAP = {
+    "suez": "SUEZ", "bab": "BAB_EL_MANDEB", "hormuz": "HORMUZ",
+    "malacca": "MALACCA", "panama": "PANAMA", "good hope": "GOOD_HOPE",
+}
 
 # Chokepoints most relevant to Indian maritime trade.
 # reroute_days = extra steaming time if the chokepoint is unusable.
@@ -102,17 +110,54 @@ def fetch_chokepoint_status(days: int = 30) -> pd.DataFrame:
     from src.utils import provenance
     if PORTWATCH_CHOKEPOINTS_URL:
         data = cached_json(
-            PORTWATCH_CHOKEPOINTS_URL, key="portwatch_chokepoints",
-            params={"where": "1=1", "outFields": "*", "f": "json",
-                    "resultRecordCount": 2000})
-        df = _parse_arcgis(data)
+            PORTWATCH_CHOKEPOINTS_URL, key="portwatch_chokepoints", ttl=6 * 3600,
+            params={"where": "1=1", "outFields": "date,portname,n_total",
+                    "orderByFields": "date DESC", "resultRecordCount": 4000,
+                    "f": "json"})
+        df = _parse_live(data)
         if df is not None and not df.empty:
             provenance.record("Chokepoints (IMF PortWatch)", provenance.LIVE)
+            log.info("PortWatch: live chokepoint data (%d points).", len(df))
             return df
         log.warning("PortWatch live parse empty; using synthetic snapshot.")
     provenance.record("Chokepoints (IMF PortWatch)", provenance.SYNTHETIC,
-                      "set PORTWATCH_CHOKEPOINTS_URL to go live")
+                      "PortWatch unreachable")
     return _synthetic_status(days)
+
+
+def _parse_live(data) -> pd.DataFrame | None:
+    """Parse the live PortWatch schema into latest transit vs. baseline."""
+    if not data or not data.get("features"):
+        return None
+    rows = [f.get("attributes", {}) for f in data["features"]]
+    raw = pd.DataFrame(rows)
+    if raw.empty or "portname" not in raw.columns or "n_total" not in raw.columns:
+        return None
+    raw["date"] = pd.to_datetime(raw["date"], errors="coerce")
+    raw["n_total"] = pd.to_numeric(raw["n_total"], errors="coerce")
+    raw = raw.dropna(subset=["date", "n_total"])
+    out = []
+    for name, g in raw.groupby("portname"):
+        g = g.sort_values("date")
+        baseline = float(g["n_total"].tail(90).mean())
+        latest = float(g["n_total"].iloc[-1])
+        cur7 = float(g["n_total"].tail(7).mean())   # smooth the latest reading
+        factor = cur7 / baseline if baseline else 1.0
+        cid = _match_id(name)
+        out.append({"chokepoint": cid or name, "name": name,
+                    "date": g["date"].iloc[-1], "transit_calls": round(cur7, 1),
+                    "baseline": round(baseline, 1),
+                    "vs_baseline_pct": round((factor - 1) * 100, 1),
+                    "status": _status(factor)})
+    return pd.DataFrame(out)
+
+
+def _match_id(name: str):
+    n = (name or "").lower()
+    for key, cid in _PW_NAME_MAP.items():
+        if key in n:
+            return cid
+    return None
 
 
 def _parse_arcgis(data) -> pd.DataFrame | None:

@@ -1,15 +1,19 @@
 """Port Ops / AIS-Proxy Expert Module.
 
 Converts AIS-like (or satellite-derived) vessel-activity data into port
-congestion features. Because reliable AIS is hard to source right now, this
-expert supports two modes:
+congestion features. Three modes, chosen automatically from the input columns:
 
-  * REAL  : `port_ops_raw` is provided with vessel activity columns. We compute
-            queue / turnaround proxies directly and report high ais_confidence.
-  * PROXY : `port_ops_raw` is missing/empty. We synthesise plausible vessel
-            activity from the observed congestion series (a satellite/AIS
-            *fallback*) and report low ais_confidence so the rest of the system
-            knows the AIS signal is imputed.
+  * REAL      : `port_ops_raw` has full vessel-activity columns. We compute
+                queue / turnaround proxies directly, high ais_confidence (0.9).
+  * PORTWATCH : `port_ops_raw` has PortWatch columns (portcalls/import/export)
+                -- real satellite-AIS-derived daily aggregates from the IMF
+                PortWatch feed. Features are derived from call pressure vs. each
+                port's own (strictly backward) baseline. ais_confidence 0.75:
+                real measurements, but daily aggregates rather than raw tracks.
+  * PROXY     : `port_ops_raw` is missing/empty. We synthesise plausible vessel
+                activity from the observed congestion series and report low
+                ais_confidence (0.35) so the rest of the system knows the AIS
+                signal is imputed.
 
 Output columns (per the project spec)
 -------------------------------------
@@ -23,7 +27,7 @@ import numpy as np
 import pandas as pd
 
 from src.utils.config import DATE, PORT_ID, RANDOM_SEED
-from src.experts.base import minmax01, sort_key
+from src.experts.base import logistic, minmax01, sort_key
 from src.utils.logging_utils import get_logger
 
 log = get_logger(__name__)
@@ -34,6 +38,9 @@ _OUT_COLS = [PORT_ID, DATE, "vessel_density", "avg_speed_near_port",
 
 _AIS_COLS = ["vessel_density", "avg_speed_near_port", "anchorage_count",
              "arrival_count", "departure_count"]
+
+# Columns that identify the IMF PortWatch satellite-AIS daily feed.
+_PORTWATCH_COLS = ["portcalls", "import", "export"]
 
 
 def _derive_proxies(df: pd.DataFrame) -> pd.DataFrame:
@@ -52,6 +59,49 @@ def _derive_proxies(df: pd.DataFrame) -> pd.DataFrame:
 
     for c in ["queue_proxy", "turnaround_proxy"]:
         out[c] = out[c].round(4)
+    return out
+
+
+def _features_from_portwatch(raw: pd.DataFrame) -> pd.DataFrame:
+    """PORTWATCH mode: real AIS-derived daily aggregates -> expert features.
+
+    All baselines are expanding statistics shifted one day, so the feature for
+    day t never uses information from day t or later (leakage-safe).
+    """
+    parts = []
+    for pid, g in sort_key(raw).groupby(PORT_ID, sort=False):
+        g = g.copy()
+        calls = g["portcalls"].astype(float)
+        tonnes = (g["import"].astype(float).fillna(0)
+                  + g["export"].astype(float).fillna(0))
+
+        calls7 = calls.rolling(7, min_periods=1).mean()
+        base = calls7.expanding(min_periods=14).mean().shift(1)
+        ratio = (calls7 / base).replace([np.inf, -np.inf], np.nan)
+
+        g["arrival_count"] = calls
+        # PortWatch counts completed calls; use them for departures too (a call
+        # implies both an arrival and, shortly after, a departure).
+        g["departure_count"] = calls
+        g["vessel_density"] = calls7
+        # Queue buildup: calls in excess of the port's usual level.
+        g["anchorage_count"] = (calls - base).clip(lower=0).fillna(0)
+        g["avg_speed_near_port"] = np.nan  # not observable from daily counts
+
+        # queue_proxy: 0.5 at baseline pressure, ->1 as calls approach ~2x usual.
+        g["queue_proxy"] = logistic(ratio.fillna(1.0), center=1.15, scale=0.25)
+        # turnaround_proxy: efficiency drop = fewer tonnes moved per call than
+        # the port's own historical norm while pressure is elevated.
+        eff7 = (tonnes / calls.clip(lower=1)).rolling(7, min_periods=1).mean()
+        eff_base = eff7.expanding(min_periods=14).mean().shift(1)
+        eff_ratio = (eff_base / eff7.clip(lower=1)).replace(
+            [np.inf, -np.inf], np.nan)
+        slow = logistic(eff_ratio.fillna(1.0), center=1.10, scale=0.25)
+        g["turnaround_proxy"] = (0.6 * g["queue_proxy"] + 0.4 * slow).clip(0, 1)
+        parts.append(g)
+    out = pd.concat(parts, ignore_index=True)
+    for c in ["queue_proxy", "turnaround_proxy"]:
+        out[c] = out[c].astype(float).round(4)
     return out
 
 
@@ -82,15 +132,26 @@ def run(port_ops_raw: pd.DataFrame | None,
     from src.utils import provenance
     have_ais = (port_ops_raw is not None and not port_ops_raw.empty
                 and all(c in port_ops_raw.columns for c in _AIS_COLS))
-    provenance.record("AIS / vessel activity", provenance.SYNTHETIC,
-                      "AIS-like sample" if have_ais else
-                      "proxy from congestion; wire GEE Sentinel-1 to go real")
+    have_portwatch = (not have_ais and port_ops_raw is not None
+                      and not port_ops_raw.empty
+                      and all(c in port_ops_raw.columns for c in _PORTWATCH_COLS))
+    provenance.record(
+        "AIS / vessel activity",
+        provenance.LIVE if have_portwatch else provenance.SYNTHETIC,
+        "IMF PortWatch satellite-AIS daily feed" if have_portwatch else
+        "AIS-like sample" if have_ais else
+        "proxy from congestion; wire GEE Sentinel-1 to go real")
 
     if have_ais:
         log.info("Port-ops expert: using REAL/sample AIS-like data.")
         df = sort_key(port_ops_raw)
         feats = _derive_proxies(df)
         feats["ais_confidence"] = 0.9
+    elif have_portwatch:
+        log.info("Port-ops expert: PORTWATCH mode (real satellite-AIS "
+                 "daily port calls + trade volumes).")
+        feats = _features_from_portwatch(port_ops_raw)
+        feats["ais_confidence"] = 0.75
     elif observed is not None and not observed.empty and "congestion_index" in observed:
         log.warning("Port-ops expert: no AIS data -> PROXY mode "
                     "(synthesising vessel activity from observed congestion).")

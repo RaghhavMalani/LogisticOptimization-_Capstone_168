@@ -65,7 +65,13 @@ log = get_logger("run_demo")
 
 def main():
     p = argparse.ArgumentParser(description="Run the logistics forecast demo.")
-    p.add_argument("--source", default="auto", choices=["auto", "sample", "real"])
+    p.add_argument("--source", default="auto",
+                   choices=["auto", "sample", "portwatch", "real"],
+                   help="portwatch = real IMF PortWatch satellite-AIS daily "
+                        "port data (auto prefers it when cached)")
+    p.add_argument("--refresh-portwatch", action="store_true",
+                   help="re-fetch the PortWatch cache from the live ArcGIS "
+                        "API before running (needs network access)")
     p.add_argument("--model", default="auto", choices=["auto", "tft", "baseline"])
     p.add_argument("--epochs", type=int, default=40, help="TFT max epochs")
     p.add_argument("--horizon", type=int, default=FORECAST_HORIZON_DAYS)
@@ -91,6 +97,12 @@ def main():
 
     # ------------------------------------------------------------------ data
     section(log, "STEP 1  Load & validate raw data")
+    if args.refresh_portwatch:
+        try:
+            from app.data import portwatch as pw_fetch
+            pw_fetch.fetch_all()
+        except Exception as exc:  # pragma: no cover
+            log.warning("PortWatch refresh failed (using cache): %s", exc)
     if args.source in ("sample", "auto"):
         try:
             write_sample_data(cfg)
@@ -292,10 +304,17 @@ def main():
     # ------------------------------------------------------ data provenance
     try:
         from src.utils import provenance
-        provenance.record("Port observed series",
-                          provenance.LIVE if args.source == "real"
-                          else provenance.SYNTHETIC,
-                          "DGQI/real" if args.source == "real" else "synthetic sample")
+        _src_used = args.source
+        if _src_used == "auto":
+            from src.ingestion.load_data import _portwatch_available, _real_available
+            _src_used = ("portwatch" if _portwatch_available()
+                         else "real" if _real_available() else "sample")
+        provenance.record(
+            "Port observed series",
+            provenance.LIVE if _src_used in ("portwatch", "real")
+            else provenance.SYNTHETIC,
+            {"portwatch": "IMF PortWatch satellite-AIS",
+             "real": "DGQI/real"}.get(_src_used, "synthetic sample"))
         provenance.save()
         log.info("Data readiness: %.0f%% of sources live/cached.",
                  provenance.readiness_score() * 100)

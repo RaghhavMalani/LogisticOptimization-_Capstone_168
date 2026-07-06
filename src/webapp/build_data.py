@@ -135,6 +135,7 @@ def generate(seed: int = 42) -> Path:
                     "freight": _latest_quote(freight, "freight_index")},
         "national": _national(forecast, regimes, var),
         "provenance": _provenance(),
+        "india_geo": _india_geo(),
     }
     WEBAPP_DIR.mkdir(parents=True, exist_ok=True)
     out = WEBAPP_DIR / "data.json"
@@ -154,6 +155,50 @@ def _national(forecast, regimes, var):
     if not var.empty and "value_at_risk_inr_cr" in var.columns:
         d["value_at_risk"] = round(float(var["value_at_risk_inr_cr"].sum()), 0)
     return d
+
+
+def _india_geo():
+    """Fetch a real India boundary once (Python has internet) and embed it, so
+    the browser never has to fetch map geometry. Returns a list of rings."""
+    from src.ingestion.connectors.base import cached_text
+    sources = [
+        ("https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/"
+         "geojson/ne_50m_admin_0_countries.geojson", "ne50_countries"),
+        ("https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/"
+         "ne_110m_admin_0_countries.geojson", "ne110_countries"),
+    ]
+    gj = None
+    for url, key in sources:
+        try:
+            txt = cached_text(url, key=key, ttl=30 * 24 * 3600)
+            if txt:
+                gj = json.loads(txt)
+                break
+        except Exception:
+            continue
+    try:
+        if not gj:
+            return None
+        for f in gj.get("features", []):
+            pr = f.get("properties", {})
+            nm = (pr.get("NAME") or pr.get("name") or pr.get("ADMIN") or "").lower()
+            if nm == "india":
+                geom = f["geometry"]
+                polys = (geom["coordinates"] if geom["type"] == "MultiPolygon"
+                         else [geom["coordinates"]])
+                rings = []
+                for poly in polys:
+                    outer = poly[0]
+                    if len(outer) >= 6:
+                        step = max(1, len(outer) // 220)
+                        rings.append([[round(c[0], 3), round(c[1], 3)]
+                                      for c in outer[::step]])
+                rings.sort(key=len, reverse=True)
+                log.info("Embedded real India boundary (%d rings).", len(rings))
+                return rings[:6]
+    except Exception as exc:  # pragma: no cover
+        log.warning("India geo fetch failed (%s); web app uses fallback outline.", exc)
+    return None
 
 
 def _provenance():

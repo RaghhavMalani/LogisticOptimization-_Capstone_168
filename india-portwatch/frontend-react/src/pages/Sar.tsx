@@ -2,8 +2,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api, Pin, PortLive, SarReport, fmt } from "../api";
-import { PortAreaMap } from "../maps";
 import { KV, Panel } from "../ui";
+import { SarIntelVisual } from "../visuals";
 
 export default function Sar({ setMode }: { setMode: (m: string) => void }) {
   const { portId = "JNPT" } = useParams();
@@ -29,36 +29,10 @@ export default function Sar({ setMode }: { setMode: (m: string) => void }) {
           <div className="sub mono">{sar.mode} · scene {sar.scene_time}</div></div>
       </div>
       <div className="terminal-grid">
-        <Panel title="Scene — anchorage and queue zones">
-          <div className="area-wrap" style={{ height: 420 }}>
-            <PortAreaMap port={pin} live={live} />
-            <div className="sweep" />
-            <div className="area-overlay">
-              <span className="chip mock">{sar.mode}</span>
-              <span className="chip">DETECTIONS {sar.vessel_detections}</span>
-            </div>
-          </div>
+        <Panel title="SAR scene — anchorage and queue intelligence">
+          <SarIntelVisual sar={sar} pin={pin} live={live} />
         </Panel>
         <div className="grid" style={{ alignContent: "start" }}>
-          <div className="sar-scene">
-            <div className="sar-zone" />
-            {Array.from({ length: Math.min(34, sar.vessel_detections) }, (_, i) => (
-              <span
-                key={i}
-                className={`sar-dot ${i % 5 === 0 ? "hot" : ""}`}
-                style={{
-                  left: `${18 + ((i * 37) % 68)}%`,
-                  top: `${18 + ((i * 23) % 64)}%`,
-                }}
-              />
-            ))}
-            <div className="scene-readout">
-              <div className="small">SENTINEL-1 / GOOGLE EARTH ENGINE PROXY</div>
-              <div className="big">{sar.vessel_detections}</div>
-              <div className="small">bright-object vessel detections</div>
-            </div>
-            <div className="proxy-label">AIS FALLBACK: PROXY / DEMO WHEN LIVE AIS IS MISSING</div>
-          </div>
           <div className="terminal-band">
             <span className="label">COMMAND</span><strong>SAR {sar.port_id}</strong>
             <span className="label">SCENE</span><strong>{sar.scene_time}</strong>

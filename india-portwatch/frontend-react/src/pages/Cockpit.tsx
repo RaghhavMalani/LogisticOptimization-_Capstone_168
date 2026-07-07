@@ -1,16 +1,15 @@
 /* Port Operations Cockpit — single-port control room. */
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { motion } from "framer-motion";
 import {
   api, Briefing, Envelope, NewsEvent, Pin, Port, PortForecast, PortIntel,
   PortLive, RegimeTimeline, SarReport, WxReport, fmt,
 } from "../api";
-import { PortAreaMap } from "../maps";
 import {
   AiBriefing, Badge, DriverCards, ExpertCards, KV, Metric, Panel,
-  RegimeProbs, RiskTiles, UtilRing,
+  RegimeProbs, RiskTiles,
 } from "../ui";
+import { PortOpsVisual } from "../visuals";
 
 export default function Cockpit({ setMode }: { setMode: (m: string) => void }) {
   const { portId = "JNPT" } = useParams();
@@ -90,31 +89,9 @@ export default function Cockpit({ setMode }: { setMode: (m: string) => void }) {
 
       <div className="grid mt" style={{ gridTemplateColumns: "1.4fr 1fr" }}>
         <Panel title="Port digital twin — live vessel field" custom={0}>
-          <div className="area-wrap">
-            {live && <PortAreaMap port={pin} live={live} />}
-            <div className="sweep" />
-            <div className="area-overlay">
-              <span className="chip mock">AIS/SATELLITE PROXY MODE</span>
-              {live && <>
-                <span className="chip">QUEUE {live.queue_count}</span>
-                <span className="chip">WX {live.weather_badge}</span>
-                <span className="chip">AIS CONF {live.ais_confidence.toFixed(2)}</span>
-              </>}
-            </div>
-            {live && <UtilRing value={live.berth_utilization} />}
-            {live && (
-              <div className="berth-bar">BERTH / CAPACITY UTILISATION{" "}
-                <b className="mono">{(live.berth_utilization * 100).toFixed(0)}%</b>
-                <div className="track">
-                  <motion.div className="fill" initial={{ width: 0 }}
-                    animate={{ width: `${live.berth_utilization * 100}%` }}
-                    transition={{ duration: 1 }} />
-                </div>
-              </div>
-            )}
-          </div>
+          <PortOpsVisual pin={pin} live={live} sar={sar} />
           <div className="spark-note">
-            Amber ring marks anchorage. Squares mark anchored or berthed proxy vessels. Dots mark moving proxy vessels.
+            Anchorage, queue lanes, berth occupancy and proxy vessel movement are rendered from live/SAR-derived operating signals.
           </div>
           {live && (
             <div className="grid cols-2 mt">

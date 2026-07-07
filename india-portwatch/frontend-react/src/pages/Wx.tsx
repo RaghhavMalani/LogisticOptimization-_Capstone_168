@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api, WxReport, fmt } from "../api";
 import { Badge, KV, Panel } from "../ui";
+import { WeatherIntelVisual } from "../visuals";
 
 function D({ k, v, u = "", tone = "" }: { k: string; v: React.ReactNode; u?: string; tone?: string }) {
   return <div className="datum"><div className="k">{k}</div>
@@ -33,14 +34,7 @@ export default function Wx({ setMode }: { setMode: (m: string) => void }) {
 
       <div className="terminal-grid">
         <div>
-          <div className="weather-scene">
-            <div className="scene-readout">
-              <div className="small">WIND FIELD / PRECIPITATION / SEA STATE</div>
-              <div className="big">{fmt.n1(wx.wind_kt)} kt</div>
-              <div className="small">{wx.wind_dir} / rainfall {fmt.n1(wx.rainfall_mm)} mm / wave {fmt.n1(wx.wave_m)} m</div>
-            </div>
-            <div className="storm-core" />
-          </div>
+          <WeatherIntelVisual wx={wx} />
           <div className="terminal-band mt">
             <span className="label">COMMAND</span><strong>WX {wx.port_id}</strong>
             <span className="label">CYCLONE/STORM RISK</span><strong>{wx.cyclone_risk}</strong>

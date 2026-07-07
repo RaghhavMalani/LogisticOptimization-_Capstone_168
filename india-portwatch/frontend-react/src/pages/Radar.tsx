@@ -1,10 +1,9 @@
 /* National Port Radar: FlightRadar-style landing screen for Indian ports. */
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { api, Alert, Pin, Vessel, fmt } from "../api";
-import { RadarMap } from "../maps";
-import { Badge, Metric, Panel, StressGauge } from "../ui";
+import { Metric } from "../ui";
+import { MaritimeRadarVisual } from "../visuals";
 
 export default function Radar({ setMode }: { setMode: (m: string) => void }) {
   const nav = useNavigate();
@@ -64,81 +63,23 @@ export default function Radar({ setMode }: { setMode: (m: string) => void }) {
         </div>
       </div>
 
-      <div className="terminal-grid">
-        <div>
-          <div className="radar-hero">
-            <div className="map-topline">
-              <span className="chip real">LIVE MODEL OUTPUTS</span>
-              <span className="chip">WEATHER OVERLAY</span>
-              <span className="chip mock">SAR/AIS PROXY VESSELS</span>
-              <span className="chip">CHOKEPOINT ROUTES</span>
-            </div>
-            <RadarMap pins={pins} vessels={vessels} onSelect={(id) => nav(`/ports/${id}`)} height="calc(100vh - 286px)" />
-            <div className="weather-map-overlay" aria-hidden="true">
-              <span className="rain-band band-west" />
-              <span className="rain-band band-east" />
-              <span className="cyclone-swirl" />
-            </div>
-          </div>
-          <div className="feedband">
-            <span className="t">SYSTEM FEED</span>
-            {top.slice(0, 3).map((p) => (
-              <span key={p.port_id}>{p.port_id}: congestion {p.congestion_now.toFixed(0)} · delay {p.delay_hours.toFixed(1)}h · transition {(p.transition_risk * 100).toFixed(0)}%</span>
-            ))}
-          </div>
-          <div className="grid cols-4 mt">
-            <Metric i={0} label="SEVERE PORTS" value={severe.length} tone={severe.length ? "red" : ""}
-              delta={severe.map((p) => p.port_id).join(" · ") || "none"} />
-            <Metric i={1} label="CONGESTED PORTS" value={congested.length} tone={congested.length ? "amber" : ""} />
-            <Metric i={2} label="MEAN CONGESTION" value={fmt.n1(stress)}
-              tone={stress >= 60 ? "red" : stress >= 45 ? "amber" : ""} />
-            <Metric i={3} label="VESSELS IN FIELD" value={vessels.length} delta="proxy signal" />
-          </div>
+      <div className="radar-stage">
+        <div className="radar-hero">
+          <MaritimeRadarVisual pins={pins} vessels={vessels} onSelect={(id) => nav(`/ports/${id}`)} />
         </div>
-        <div className="grid" style={{ alignContent: "start" }}>
-          <Panel title="National logistics stress" custom={0}>
-            <StressGauge value={stress} />
-            <div className="ops-note mt">
-              Weighted port congestion is {fmt.n1(stress)}. Severe nodes, chokepoint exposure and proxy vessel density are combined into the operator view.
-            </div>
-          </Panel>
-          <Panel title="Top 5 ports at risk" custom={1}>
-            {top.map((p, i) => (
-              <motion.div className="kv" key={p.port_id} initial={{ opacity: 0, x: 8 }}
-                animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.08 }}>
-                <span className="k"><span className="muted mono">{i + 1}.</span>{" "}
-                  <Link to={`/ports/${p.port_id}`}>{p.name}</Link></span>
-                <span className="v">{fmt.n1(p.congestion_now)} <Badge level={p.regime} /></span>
-              </motion.div>
-            ))}
-          </Panel>
-          <Panel title="Active alerts" custom={2}>
-            <div style={{ maxHeight: 260, overflowY: "auto" }}>
-              {alerts.map((a, i) => (
-                <div className="kv" key={i}>
-                  <span className="k"><Badge level={a.level === "severe" ? "SEVERE" : a.level === "warning" ? "MEDIUM" : "INFO"} /></span>
-                  <span style={{ fontSize: 12, textAlign: "left", flex: 1, marginLeft: 8 }}>
-                    <Link to={`/ports/${a.port_id}`}>{a.port_id}</Link>{" "}
-                    <span className="muted">{a.message}</span></span>
-                </div>
-              ))}
-              {!alerts.length && <div className="muted">No active alerts.</div>}
-            </div>
-          </Panel>
-          <Panel title="Chokepoint watch" custom={3}>
-            <div className="chokepoint-list">
-              <div className="chokepoint-row"><span>Hormuz Strait</span><b>CONGESTED</b></div>
-              <div className="chokepoint-row"><span>Bab-el-Mandeb</span><b>CONGESTED</b></div>
-              <div className="chokepoint-row"><span>Malacca Strait</span><b>SEVERE</b></div>
-              <div className="chokepoint-row"><span>Suez Canal</span><b>NORMAL</b></div>
-            </div>
-          </Panel>
-          <Panel title="Model pipeline" custom={4}>
-            <div className="mono small muted" style={{ lineHeight: 1.9 }}>
-              Weather - News/NLP - Port Ops - Demand<br />
-              to HSMM Regime - TFT 10-Day Forecast - Decision Layer
-            </div>
-          </Panel>
+        <div className="feedband">
+          <span className="t">SYSTEM FEED</span>
+          {top.slice(0, 4).map((p) => (
+            <span key={p.port_id}>{p.port_id}: congestion {p.congestion_now.toFixed(0)} / delay {p.delay_hours.toFixed(1)}h / transition {(p.transition_risk * 100).toFixed(0)}%</span>
+          ))}
+        </div>
+        <div className="grid cols-4 mt">
+          <Metric i={0} label="SEVERE PORTS" value={severe.length} tone={severe.length ? "red" : ""}
+            delta={severe.map((p) => p.port_id).join(" / ") || "none"} />
+          <Metric i={1} label="CONGESTED PORTS" value={congested.length} tone={congested.length ? "amber" : ""} />
+          <Metric i={2} label="MEAN CONGESTION" value={fmt.n1(stress)}
+            tone={stress >= 60 ? "red" : stress >= 45 ? "amber" : ""} />
+          <Metric i={3} label="VESSELS IN FIELD" value={vessels.length} delta="proxy signal" />
         </div>
       </div>
     </>

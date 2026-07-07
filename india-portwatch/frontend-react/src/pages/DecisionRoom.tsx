@@ -4,6 +4,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { api, Briefing, ScenarioPreset, ScenarioResult, fmt } from "../api";
 import { AiBriefing, Badge, KV, Metric, Panel } from "../ui";
+import { ScenarioImpactVisual } from "../visuals";
 
 export default function DecisionRoom({ setMode }: { setMode: (m: string) => void }) {
   const [searchParams] = useSearchParams();
@@ -96,6 +97,9 @@ export default function DecisionRoom({ setMode }: { setMode: (m: string) => void
                 <div className="mt">
                   <AiBriefing text={res.national_summary} action={res.recommended_response[0]} />
                 </div>
+                <Panel title="Before / after impact map" className="mt">
+                  <ScenarioImpactVisual result={res} />
+                </Panel>
                 <div className="grid cols-3 mt">
                   {res.affected_ports.slice(0, 3).map((p, i) => (
                     <motion.div key={p.port_id} className="panel" initial={{ opacity: 0, scale: .95 }}

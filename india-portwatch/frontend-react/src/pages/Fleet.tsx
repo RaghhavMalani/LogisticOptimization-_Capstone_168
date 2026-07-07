@@ -1,15 +1,18 @@
 /* Ship Manager Fleet Board — operations console, not a dataframe. */
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { api, Ship, ShipRec } from "../api";
+import { api, Pin, Ship, ShipRec } from "../api";
 import { AiBriefing, Badge, KV, Panel } from "../ui";
+import { FleetRoutingVisual } from "../visuals";
 
 export default function Fleet({ setMode }: { setMode: (m: string) => void }) {
   const [ships, setShips] = useState<Ship[]>([]);
   const [rec, setRec] = useState<ShipRec | null>(null);
+  const [pins, setPins] = useState<Pin[]>([]);
 
   useEffect(() => {
     api.ships().then((s) => { setShips(s.data); setMode(s.data_mode); });
+    api.pins().then((p) => setPins(p.data)).catch(() => {});
   }, []);
 
   const pick = async (id: string) =>
@@ -24,6 +27,9 @@ export default function Fleet({ setMode }: { setMode: (m: string) => void }) {
           <div className="sub">{ships.length} vessels tracked · select a vessel for the full advisory</div>
         </div>
       </div>
+      <Panel title="Fleet routing and arrival recommendation" className="mt">
+        <FleetRoutingVisual ships={ships} rec={rec} pins={pins} />
+      </Panel>
       <div className="grid" style={{ gridTemplateColumns: "1.8fr 1fr" }}>
         <div>
           <div className="fleet-head">

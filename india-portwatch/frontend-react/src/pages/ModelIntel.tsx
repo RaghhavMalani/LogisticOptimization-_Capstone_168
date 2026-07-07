@@ -8,6 +8,7 @@ import {
   PortIntel, RegimeTimeline, fmt,
 } from "../api";
 import { Badge, ExpertCards, KV, Panel } from "../ui";
+import { ModelFlowVisual } from "../visuals";
 
 export default function ModelIntel({ setMode }: { setMode: (m: string) => void }) {
   const routeParams = useParams();
@@ -76,28 +77,7 @@ export default function ModelIntel({ setMode }: { setMode: (m: string) => void }
       </div>
 
       <Panel title="Visible AI chain">
-        <div className="model-flow">
-          <div className="flow-node">
-            <div className="step">EXPERTS</div>
-            <div className="name">Weather / News / SAR / Demand</div>
-            <div className="value">{intel?.expert_outputs.length ?? "--"}</div>
-          </div>
-          <div className="flow-node hot">
-            <div className="step">HSMM REGIME</div>
-            <div className="name">{regime?.current.current_regime ?? "Waiting"}</div>
-            <div className="value">{regime ? `${(regime.current.p_severe * 100).toFixed(0)}%` : "--"}</div>
-          </div>
-          <div className="flow-node">
-            <div className="step">TFT FORECAST</div>
-            <div className="name">10-day quantile horizon</div>
-            <div className="value">{briefing ? `D+${briefing.peak_congestion_day}` : forecast ? "10D" : "--"}</div>
-          </div>
-          <div className="flow-node">
-            <div className="step">DECISION LAYER</div>
-            <div className="name">{briefing?.recommended_action ?? "Awaiting briefing"}</div>
-            <div className="value">{briefing ? fmt.n1(briefing.peak_delay_hours) + "h" : "--"}</div>
-          </div>
-        </div>
+        <ModelFlowVisual intel={intel} regime={regime} forecast={forecast} briefing={briefing} />
       </Panel>
 
       <Panel title="Pipeline health" className="mt">

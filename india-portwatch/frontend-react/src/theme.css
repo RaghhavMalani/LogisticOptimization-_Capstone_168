@@ -422,3 +422,117 @@ table.ops td{padding:8px 10px;border-bottom:1px solid rgba(28,42,69,.5);font-fam
   .topbar{gap:12px}.brand-sub,.top-right .chip:first-child{display:none}
   .grid.cols-3,.grid.cols-4,.kpi-strip,.intel-strip,.wx-grid{grid-template-columns:1fr 1fr}
 }
+
+/* high-fidelity visual intelligence surfaces */
+.ops-visual{position:relative;border:1px solid rgba(69,185,255,.18);border-radius:8px;overflow:hidden;
+  background:#050914;box-shadow:inset 0 0 38px rgba(69,185,255,.08),0 0 28px rgba(0,0,0,.26)}
+.ops-visual svg{display:block;width:100%;height:100%}
+.radar-visual svg{height:clamp(500px,64vh,760px)}
+.port-ops-visual svg,.weather-intel-visual svg,.sar-intel-visual svg,.model-intel-visual svg,
+.scenario-impact-visual svg,.fleet-routing-visual svg{height:clamp(360px,46vh,540px)}
+.visual-toolbar{position:absolute;top:12px;left:12px;z-index:4;display:flex;gap:8px;flex-wrap:wrap}
+.visual-toolbar button{background:rgba(5,8,18,.78);border:1px solid var(--line2);color:var(--muted);
+  border-radius:6px;padding:6px 9px;font:10px var(--mono);letter-spacing:.8px;text-transform:uppercase;cursor:pointer}
+.visual-toolbar button.active{color:var(--mint);border-color:rgba(46,230,199,.55);box-shadow:0 0 14px rgba(46,230,199,.16)}
+.visual-status-strip{position:absolute;left:12px;right:12px;bottom:12px;display:flex;gap:8px;flex-wrap:wrap;z-index:4}
+.visual-status-strip span{background:rgba(5,8,18,.8);border:1px solid rgba(24,49,77,.85);border-radius:6px;
+  padding:5px 8px;color:var(--muted);font:10px var(--mono);letter-spacing:.7px}
+
+.land-mass{fill:#132232;stroke:#8fb3d4;stroke-width:1.2;opacity:.88;filter:drop-shadow(0 0 12px rgba(69,185,255,.18))}
+.coastline{fill:none;stroke:#d6e7f8;stroke-width:1.4;opacity:.55}
+.subcontinent-shade{fill:#0b1625;stroke:#28405c;stroke-width:1;opacity:.74}
+.sea-stream{fill:none;stroke:#2ee6c7;stroke-width:1.2;stroke-dasharray:5 12;opacity:.36;animation:streamFlow 8s linear infinite}
+@keyframes streamFlow{to{stroke-dashoffset:-120}}
+.weather-layer ellipse{fill:url(#seaGlow);stroke:none;filter:blur(8px);opacity:.65}
+.weather-layer ellipse:first-child{fill:#2ee6c7}
+.weather-layer ellipse:nth-child(2){fill:#45b9ff}
+.cyclone-map circle{fill:rgba(255,77,99,.11);stroke:rgba(255,77,99,.68);stroke-width:2;filter:drop-shadow(0 0 18px rgba(255,77,99,.45))}
+.cyclone-map path{fill:none;stroke:#ffb020;stroke-width:4;stroke-linecap:round;animation:spin 12s linear infinite;transform-origin:center}
+.route-line{fill:none;stroke:#45b9ff;stroke-width:1.8;stroke-dasharray:8 10;opacity:.55;animation:routeMarch 5s linear infinite}
+@keyframes routeMarch{to{stroke-dashoffset:-90}}
+.choke-node circle{fill:#45b9ff;stroke:#dbe8f6;stroke-width:1.4;filter:drop-shadow(0 0 10px #45b9ff)}
+.choke-node rect{fill:rgba(5,8,18,.78);stroke:rgba(69,185,255,.35)}
+.choke-node text{font:11px var(--mono);fill:#dbe8f6}
+.choke-node text.normal{fill:var(--green)}.choke-node text.congested{fill:var(--amber)}.choke-node text.severe{fill:var(--red)}
+.vessel-proxy{fill:#b8e4ff;opacity:.78;filter:drop-shadow(0 0 5px #45b9ff);animation:vesselBlink 2.4s ease-in-out infinite}
+.vessel-proxy.anchored{fill:var(--amber)}.vessel-proxy.berthed{fill:var(--green)}.vessel-proxy.departing{fill:#8fb3d4}
+@keyframes vesselBlink{50%{opacity:.24;transform:scale(.76)}}
+.port-live-node{cursor:pointer}
+.port-live-node .risk-halo{opacity:.15;filter:url(#softGlow);animation:portHalo 2.8s ease-in-out infinite}
+.port-live-node .risk-ring{fill:none;stroke-width:2.2;opacity:.8;animation:portPulse 2.6s ease-in-out infinite}
+.port-live-node .risk-core{stroke:#e8f1fb;stroke-width:1.8}
+.port-live-node text{font:11px var(--mono);fill:#f1f7ff;text-shadow:0 1px 3px #000;paint-order:stroke;stroke:#050914;stroke-width:2px}
+.port-live-node text.score{fill:var(--mint)}
+.port-live-node.normal .risk-halo,.port-live-node.normal .risk-core{fill:var(--green)}
+.port-live-node.normal .risk-ring{stroke:var(--green)}
+.port-live-node.congested .risk-halo,.port-live-node.congested .risk-core{fill:var(--amber)}
+.port-live-node.congested .risk-ring{stroke:var(--amber)}
+.port-live-node.severe .risk-halo,.port-live-node.severe .risk-core{fill:var(--red)}
+.port-live-node.severe .risk-ring{stroke:var(--red)}
+.port-live-node.unknown .risk-halo,.port-live-node.unknown .risk-core{fill:var(--purple)}
+.port-live-node.unknown .risk-ring{stroke:var(--purple)}
+.port-live-node.major .risk-halo{opacity:.26}
+@keyframes portHalo{50%{opacity:.32;transform:scale(1.18)}}@keyframes portPulse{50%{transform:scale(1.1);opacity:.48}}
+
+.port-land{fill:#101f2d;stroke:#8fb3d4;stroke-width:1.1}
+.breakwater{fill:none;stroke:#8fb3d4;stroke-width:5;stroke-linecap:round;opacity:.74}
+.breakwater.secondary{stroke-width:3;opacity:.48}
+.anchorage-zone{fill:rgba(255,176,32,.07);stroke:rgba(255,176,32,.76);stroke-width:2;stroke-dasharray:9 8}
+.queue-zone{fill:rgba(255,77,99,.06);stroke:rgba(255,77,99,.68);stroke-width:2;stroke-dasharray:6 9}
+.zone-label{font:11px var(--mono);fill:#ffb020;letter-spacing:1.2px}
+.berth-slot rect:first-child{fill:#0d2033;stroke:#28405c;stroke-width:1}
+.berth-slot .berth-fill{fill:var(--green);opacity:.78}
+.berth-slot.warm .berth-fill{fill:var(--amber)}.berth-slot.hot .berth-fill{fill:var(--red)}
+.berth-slot text{font:11px var(--mono);fill:#9fb3cc}
+.approach-lane{fill:none;stroke:#2ee6c7;stroke-width:2;stroke-dasharray:10 12;opacity:.6;animation:routeMarch 4.5s linear infinite}
+.queued-vessel path{fill:#45b9ff;stroke:#dbe8f6;stroke-width:.6;filter:drop-shadow(0 0 7px #45b9ff);animation:vesselBlink 2s ease-in-out infinite}
+.port-readout rect{fill:rgba(5,8,18,.78);stroke:rgba(69,185,255,.32)}
+.port-readout text{font:12px var(--mono);fill:#9fb3cc}.port-readout .green{fill:var(--green)}.port-readout .amber{fill:var(--amber)}.port-readout .red{fill:var(--red)}
+.port-readout text:nth-child(3),.port-readout.right text:nth-child(3){font-size:28px;fill:var(--mint)}
+
+.wx-coast{fill:#101f2d;stroke:#8fb3d4;stroke-width:1.1}
+.wind-stream{fill:none;stroke:#7ee7ff;stroke-width:1.8;stroke-linecap:round;stroke-dasharray:14 16;opacity:.54;animation:streamFlow 4.6s linear infinite}
+.precip-layer ellipse{fill:#45b9ff;filter:url(#wxBlur)}
+.precip-layer ellipse:nth-child(2){fill:#ffb020}.precip-layer ellipse:nth-child(3){fill:#2ee6c7}
+.wx-storm circle{fill:rgba(255,77,99,.12);stroke:rgba(255,77,99,.72);stroke-width:2;filter:drop-shadow(0 0 22px rgba(255,77,99,.48))}
+.wx-storm path{fill:none;stroke:#ffb020;stroke-width:5;stroke-linecap:round;animation:spin 10s linear infinite;transform-origin:center}
+.wind-compass circle{fill:rgba(5,8,18,.72);stroke:rgba(69,185,255,.4)}
+.wind-compass path{fill:var(--mint);filter:drop-shadow(0 0 10px var(--mint))}
+.wind-compass text,.weather-readouts text,.wave-meter text,.visibility-meter text{font:12px var(--mono);fill:#dbe8f6}
+.weather-readouts rect{fill:rgba(5,8,18,.78);stroke:rgba(69,185,255,.32)}
+.weather-readouts text:first-of-type{fill:var(--mint);letter-spacing:1.6px}
+.wave-meter rect{fill:#18314d}.wave-meter rect:nth-child(n+7){fill:#ffb020}
+.visibility-meter rect:first-child{fill:#18314d}.visibility-meter .fill{fill:linear-gradient(90deg,var(--red),var(--amber),var(--green));fill:var(--green)}
+
+.sar-coast{fill:#111e2a;stroke:#8fb3d4;stroke-width:1.1}
+.sar-anchorage{fill:url(#sarGlow);stroke:rgba(255,176,32,.72);stroke-width:2;stroke-dasharray:9 7}
+.sar-queue{fill:rgba(255,77,99,.06);stroke:rgba(255,77,99,.65);stroke-width:2;stroke-dasharray:5 8}
+.sar-scan{stroke:#2ee6c7;stroke-width:26;opacity:.08}.sar-scan.secondary{stroke:#45b9ff;opacity:.06}
+.sar-detection circle:first-child{fill:#d7fff7;filter:drop-shadow(0 0 9px #2ee6c7)}.sar-detection.hot circle:first-child{fill:#ffb020;filter:drop-shadow(0 0 11px #ffb020)}
+.sar-detection .det-ring{fill:none;stroke:#2ee6c7;stroke-width:1;opacity:.65}
+.sar-compare rect,.sar-labels rect{fill:rgba(5,8,18,.78);stroke:rgba(69,185,255,.3)}
+.sar-compare text,.sar-labels text{font:12px var(--mono);fill:#dbe8f6}.sar-compare text:first-of-type,.sar-labels text:first-child{fill:var(--mint);letter-spacing:1.3px}
+
+.ai-flow-line{fill:none;stroke:url(#flowGrad);stroke-width:6;stroke-linecap:round;stroke-dasharray:18 14;opacity:.64;animation:routeMarch 4s linear infinite}
+.expert-node rect,.model-core-node rect,.confidence-bank rect,.influence-bank rect{fill:rgba(13,32,51,.78);stroke:rgba(69,185,255,.34)}
+.expert-node text,.model-core-node text,.confidence-bank text,.influence-bank text,.model-state{font:12px var(--mono);fill:#dbe8f6}
+.expert-node text:first-of-type,.model-core-node text:first-of-type,.confidence-bank text:first-of-type,.influence-bank text:first-of-type{fill:var(--mint);letter-spacing:1.3px}
+.expert-node .big,.model-core-node .big{font-size:26px;fill:#ffb020}.expert-node rect:nth-of-type(2){fill:#18314d}
+.expert-node .fill{fill:var(--mint)}.model-core-node.tft polyline{fill:none;stroke:#ffb020;stroke-width:3}.model-core-node.decision .big{fill:var(--red)}
+.influence-bank rect:nth-child(n+2){fill:#18314d}.influence-bank .green{fill:var(--green)}.influence-bank .amber{fill:var(--amber)}.influence-bank .red{fill:var(--red)}
+.model-state{fill:#9fb3cc;letter-spacing:1.2px}
+
+.scenario-port .before{fill:none;stroke:var(--amber);stroke-width:2;opacity:.62}
+.scenario-port .after{fill:rgba(255,77,99,.22);stroke:var(--red);stroke-width:3;filter:drop-shadow(0 0 18px rgba(255,77,99,.55));animation:portPulse 2.2s ease-in-out infinite}
+.scenario-port text{font:12px var(--mono);fill:#f1f7ff;paint-order:stroke;stroke:#050914;stroke-width:2px}
+.impact-ray{stroke:#ff4d63;stroke-width:1.3;stroke-dasharray:4 8;opacity:.4}
+.scenario-bars rect:first-child,.fleet-card rect,.arrival-window rect:first-child{fill:rgba(5,8,18,.78);stroke:rgba(69,185,255,.32)}
+.scenario-bars text,.fleet-card text,.arrival-window text{font:12px var(--mono);fill:#dbe8f6}.scenario-bars text:first-of-type,.arrival-window text:first-of-type{fill:var(--mint);letter-spacing:1.3px}
+.scenario-bars .base{fill:#ffb020;opacity:.55}.scenario-bars .shock{fill:#ff4d63;opacity:.82}
+
+.fleet-route{fill:none;stroke:#2ee6c7;stroke-width:3;stroke-dasharray:13 12;animation:routeMarch 4s linear infinite}
+.fleet-origin{fill:#45b9ff;filter:drop-shadow(0 0 10px #45b9ff)}
+.fleet-destination{fill:rgba(255,176,32,.35);stroke:#ffb020;stroke-width:3;filter:drop-shadow(0 0 16px #ffb020)}
+.fleet-routing-visual text{font:12px var(--mono);fill:#dbe8f6}
+.arrival-window rect.window{fill:rgba(255,176,32,.25);stroke:#ffb020}.arrival-window rect.best{fill:rgba(46,230,199,.3);stroke:#2ee6c7}
+.arrival-window g rect{fill:#0d2033;stroke:#28405c}.arrival-window g text{fill:#dbe8f6}

@@ -26,7 +26,7 @@ impl Config {
         let frontend_dir = std::env::var("PORTWATCH_FRONTEND_DIR")
             .map(PathBuf::from)
             .ok()
-            .or_else(|| first_existing(&["./frontend", "../frontend"]))
+            .or_else(|| first_existing(&["./frontend-react/dist", "../frontend-react/dist", "./frontend", "../frontend"]))
             .unwrap_or_else(|| PathBuf::from("./frontend"));
 
         let port = std::env::var("PORT").unwrap_or_else(|_| "8080".into());

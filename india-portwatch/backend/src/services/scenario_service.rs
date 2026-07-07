@@ -118,6 +118,19 @@ const PRESETS: &[Preset] = &[
             "Watch war-risk premium impact on export bookings.",
         ],
     },
+    Preset {
+        id: "fuel_price_shock",
+        name: "Fuel price shock",
+        description: "Brent spikes ~25%: bunker costs surge, slow-steaming spreads, demand softens.",
+        category: "market",
+        scope: Scope::All,
+        congestion_x: 1.08, delay_x: 1.15, throughput_x: 0.92,
+        response: &[
+            "Expect slow-steaming: add 6-12 h to ETAs on long hauls.",
+            "Re-price demurrage exposure; bunker surcharges pass through in 1-2 weeks.",
+            "Prioritise high-value cargo if carriers cut marginal sailings.",
+        ],
+    },
 ];
 
 pub fn presets() -> Vec<ScenarioPreset> {

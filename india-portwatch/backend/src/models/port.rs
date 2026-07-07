@@ -13,12 +13,14 @@ pub struct Port {
     pub connectivity_score: f64, // 0..1
 }
 
-/// What the command-dashboard map needs per port: position + live condition.
+/// What the radar map needs per port: position + live condition.
+/// `regime` is UNKNOWN (purple) when the HSMM confidence is LOW.
 #[derive(Debug, Clone, Serialize)]
 pub struct PortMapPin {
     #[serde(flatten)]
     pub port: Port,
-    pub regime: String,          // NORMAL | CONGESTED | SEVERE
+    pub regime: String,          // NORMAL | CONGESTED | SEVERE | UNKNOWN
+    pub regime_confidence: String, // LOW | MEDIUM | HIGH
     pub congestion_now: f64,     // 0..100
     pub delay_hours: f64,
     pub throughput: f64,

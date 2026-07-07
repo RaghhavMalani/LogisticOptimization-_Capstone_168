@@ -1,4 +1,80 @@
-# India PortWatch — Operational Command Center (Rust)
+# India PortWatch Terminal
+
+**v4: command-driven terminal.** A Bloomberg-style command line sits in the top
+bar (focus with Ctrl+K or /):
+
+```
+RADAR                    national radar map
+PORT <ID>                port operations cockpit      PORT CHENNAI
+WX <ID>                  weather intelligence report  WX JNPT
+SAR <ID>                 Sentinel-1/GEE proxy report  SAR MUNDRA
+NLP <query>              news/NLP intelligence        NLP red sea
+MODEL <ID>               model intelligence layer     MODEL VIZAG
+FORECAST <ID> 10D        10-day forecast (in cockpit)
+SIM <SCENARIO> <I>       scenario simulator           SIM CYCLONE 1.5
+FLEET                    ship manager board
+WHY <ID> <topic>         rule-based explanation       WHY JNPT risk
+```
+
+Scenario aliases: CYCLONE STORM STRIKE CAPACITY DEMAND HORMUZ REDSEA FUEL.
+New API: GET /api/ports/:id/wx (wind/rain/wave/visibility/cyclone risk,
+persistence, shock, impact score, weather_hsmm_input, weather_tft_covariate)
+and GET /api/ports/:id/sar (detections, anchorage density, queue activity,
+change vs previous scene, SAR confidence, labelled SENTINEL-1/GEE PROXY MODE).
+Expert modules now expose input signal, score, confidence, effect on forecast,
+and latest run timestamp. Note: after pulling, delete stale hashed files in
+frontend-react/dist/assets (index-BjrVqUWC.js, index-DU_SgGls.css) if present.
+
+---
+
+# India PortWatch — AI Maritime Command Center
+
+**v3: React/Vite/TypeScript frontend** (`frontend-react/`) with Framer Motion
+page/card animations, MapLibre radar + digital-twin maps, typewriter AI
+briefings, News/NLP intelligence, and a rule-based **Ask PortWatch** query box.
+The Rust/Axum backend serves the compiled app automatically (it prefers
+`frontend-react/dist` over the legacy `frontend/`).
+
+## Run (no Node needed — dist is prebuilt)
+
+```bash
+cd india-portwatch
+cargo run -p portwatch-backend        # serves API + frontend-react/dist on :8080
+```
+
+Frontend development (optional):
+
+```bash
+cd frontend-react && npm install && npm run dev    # Vite dev server, proxies /api → :8080
+npm run build                                      # refresh dist/
+```
+
+## The five experiences
+
+| Route | Experience |
+|---|---|
+| `/` | **National Port Radar** — full-screen dark map, pulsing regime markers (pulse speed = urgency, size = congestion), drifting proxy-vessel dots, chokepoint route arcs (Hormuz/Bab-el-Mandeb/Malacca), alert ticker, stress gauge, model timestamp |
+| `/ports/:id` | **Port Operations Cockpit** — command header cards, digital-twin panel (anchorage ring, queue, berth bars, capacity ring, radar sweep, cinematic zoom-in), 10-day risk tiles, animated HSMM probability bars, driver cards with source modules, typewriter AI briefing, port news |
+| `/decision-room` | **AI Decision Room** — 8 shock scenarios × intensity, animated before/after impact cards, AI response plan, details behind View-details |
+| `/ships` | **Ship Manager Fleet Board** — operations rows, per-vessel advisory with reroute callouts |
+| `/model` | **Model Intelligence Layer** — pipeline chain, per-port expert outputs with confidence, News/NLP feed (entity/type/sentiment/risk/affected ports/model impact), **Ask PortWatch** |
+
+New API (on top of the existing set): `GET /api/news`,
+`GET /api/ports/:id/news`, `POST /api/ask` — Ask PortWatch is deliberately
+rule-based over the loaded model outputs (no LLM), and says so in its answers.
+News events come from the real GDELT connector cache
+(`outputs/forecasts/events.csv`) when present, else labelled demo events.
+
+Honesty rules unchanged: vessel dots are an **AIS/satellite proxy simulation**
+seeded by real expert features and labelled everywhere; every payload carries
+`data_mode: real | partial | mock`.
+
+Note on stack: deck.gl / Three.js were deliberately skipped — MapLibre +
+Framer Motion + CSS (conic-gradient radar sweep) deliver the cinematic effect
+with a build that stays small and was fully compiled + type-checked here.
+
+---
+
 
 A map-first, ATC-style command center for Indian port intelligence. Rust/Axum
 backend serving typed JSON from the model pipeline's outputs; dark
@@ -64,6 +140,8 @@ MapLibre GL for map interop. The component set (`MetricCard`, `RiskBadge`,
 ## API
 
 ```
+GET  /api/live                          whole-country proxy vessel field
+GET  /api/ports/:port_id/live           vessels / anchorage / queue / berth (PROXY)
 GET  /api/health
 GET  /api/ports                         registry (static attributes)
 GET  /api/ports/map                     map pins: regime, congestion, risk
@@ -127,10 +205,10 @@ backend.
 
 | Route | Rule enforced |
 |---|---|
-| `/` Command Dashboard | all ports: ATC map, national cards, top-risk, alerts, readiness — no tables |
-| `/ports/:id` Port Cockpit | **selected port only**: fan chart, delay/throughput bars, regime strip, drivers, briefing |
-| `/ships` Ship Manager | fleet ops board + per-vessel advisory |
-| `/scenarios` | 7 shock presets × intensity slider → affected ports only, cards first |
+| `/` National Port Radar | all ports: living map (pulsing regime markers incl. purple UNKNOWN, drifting proxy-vessel dots), national stress gauge, top-5 risk, rotating alerts |
+| `/ports/:id` Port Operations Cockpit | **selected port only**: AI briefing, port-area vessel field (anchorage ring, queue, berth utilisation — labelled AIS/SATELLITE PROXY MODE), 10-day risk tiles, HSMM probability panel, driver cards, expert-module outputs |
+| `/ships` Fleet Board | vessel planning board + per-vessel advisory with reroute callouts |
+| `/decision` AI Decision Room | AI briefing + 7 shock presets × intensity → impact cards first, tables behind View-details |
 | `/analytics` | all-port comparison (styled tables allowed here) |
 | `/model` | pipeline stepper + per-stage files/records/warnings |
 

@@ -1,4 +1,4 @@
-/* Thin typed-ish client for the Rust backend. */
+/* Thin client for the Rust backend. */
 const API = {
   async get(path) {
     const r = await fetch(path, { headers: { Accept: "application/json" } });
@@ -17,7 +17,9 @@ const API = {
 
   ports: () => API.get("/api/ports"),
   mapPins: () => API.get("/api/ports/map"),
+  liveNational: () => API.get("/api/live"),
   port: (id) => API.get(`/api/ports/${id}`),
+  portLive: (id) => API.get(`/api/ports/${id}/live`),
   forecast: (id) => API.get(`/api/ports/${id}/forecast`),
   regime: (id) => API.get(`/api/ports/${id}/regime`),
   briefing: (id) => API.get(`/api/ports/${id}/briefing`),
@@ -37,6 +39,6 @@ function setDataMode(mode) {
   const chip = document.getElementById("data-mode-chip");
   if (!chip || !mode) return;
   chip.textContent = mode === "real" ? "LIVE MODEL OUTPUTS"
-    : mode === "partial" ? "PARTIAL / DEMO MIX" : "DEMO DATA";
+    : mode === "partial" ? "PARTIAL / DEMO MIX" : "DEMO / PROXY MODE";
   chip.className = `chip ${mode}`;
 }

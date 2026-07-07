@@ -1,4 +1,6 @@
 pub mod forecast;
+pub mod live;
+pub mod news;
 pub mod port;
 pub mod regime;
 pub mod scenario;
@@ -6,6 +8,8 @@ pub mod ship;
 pub mod status;
 
 pub use forecast::*;
+pub use live::*;
+pub use news::*;
 pub use port::*;
 pub use regime::*;
 pub use scenario::*;

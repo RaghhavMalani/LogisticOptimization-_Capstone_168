@@ -241,3 +241,117 @@ select {
 .mt { margin-top: 12px; }
 .rank-num { color: var(--muted); font-family: var(--mono); }
 .spark-note { color: var(--muted); font-size: 11px; margin-top: 6px; }
+
+/* ============ v2: AI command-center additions ============ */
+:root { --purple: #a78bfa; }
+
+.small-chip { font-size: 10px; }
+.chip.real { color: var(--green); }
+
+/* UNKNOWN / low-confidence regime = purple */
+.badge.unknown { background: rgba(167,139,250,.12); color: var(--purple); border: 1px solid rgba(167,139,250,.4); }
+.port-marker.UNKNOWN { background: var(--purple); box-shadow: 0 0 14px rgba(167,139,250,.7); }
+
+/* vessel dots on the map */
+.vessel-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #9fd8ff; opacity: .85;
+  box-shadow: 0 0 6px rgba(159,216,255,.9);
+}
+.vessel-dot.anchored { background: var(--amber); box-shadow: 0 0 6px rgba(245,165,36,.8); border-radius: 2px; }
+.vessel-dot.berthed { background: var(--green); box-shadow: 0 0 5px rgba(62,207,142,.8); border-radius: 2px; }
+.vessel-dot.departing { background: #8aa3c0; }
+
+/* national stress gauge */
+.gauge-wrap { display: flex; align-items: center; gap: 14px; }
+.gauge-wrap svg { flex: 0 0 auto; }
+.gauge-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; }
+.gauge-num { font-family: var(--mono); font-size: 24px; }
+
+/* 10-day risk-tile timeline */
+.risk-tiles { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; }
+.risk-tile {
+  border: 1px solid var(--line); border-radius: 8px; padding: 8px 6px;
+  text-align: center; background: var(--panel2); position: relative; overflow: hidden;
+}
+.risk-tile .d { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.risk-tile .lvl { font-family: var(--mono); font-size: 10.5px; letter-spacing: 1px; margin: 4px 0; }
+.risk-tile .dl { font-size: 11px; font-family: var(--mono); }
+.risk-tile .q { font-size: 9.5px; color: var(--muted); font-family: var(--mono); }
+.risk-tile.LOW { border-color: rgba(62,207,142,.4); } .risk-tile.LOW .lvl { color: var(--green); }
+.risk-tile.MEDIUM { border-color: rgba(245,165,36,.45); } .risk-tile.MEDIUM .lvl { color: var(--amber); }
+.risk-tile.HIGH, .risk-tile.CRITICAL { border-color: rgba(240,71,90,.5); }
+.risk-tile.HIGH .lvl, .risk-tile.CRITICAL .lvl { color: var(--red); }
+.risk-tile.peak::after {
+  content: "PEAK"; position: absolute; top: 0; right: 0; font-size: 8px;
+  background: rgba(240,71,90,.25); color: var(--red); padding: 1px 5px; border-radius: 0 0 0 6px;
+}
+@media (max-width: 1100px) { .risk-tiles { grid-template-columns: repeat(5, 1fr); } }
+
+/* regime probability bars */
+.prob-row { display: grid; grid-template-columns: 92px 1fr 46px; gap: 10px; align-items: center; margin: 8px 0; font-size: 12px; }
+.prob-bar { height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; }
+.prob-bar > div { height: 100%; }
+.prob-row.normal .prob-bar > div { background: var(--green); }
+.prob-row.congested .prob-bar > div { background: var(--amber); }
+.prob-row.severe .prob-bar > div { background: var(--red); }
+.prob-row .num { font-family: var(--mono); text-align: right; color: var(--muted); }
+
+/* driver + expert cards */
+.driver-card {
+  border: 1px solid var(--line); border-left: 3px solid var(--cyan);
+  border-radius: 0 8px 8px 0; padding: 9px 12px; margin-bottom: 8px;
+  background: var(--panel2);
+}
+.driver-card .t { font-size: 12.5px; display: flex; justify-content: space-between; }
+.driver-card .t .arrow { font-family: var(--mono); }
+.driver-card .t .arrow.rising { color: var(--red); }
+.driver-card .t .arrow.falling { color: var(--green); }
+.driver-card .d { color: var(--muted); font-size: 11px; margin-top: 3px; }
+.driver-card.hot { border-left-color: var(--red); }
+.driver-card.warm { border-left-color: var(--amber); }
+
+.expert-card {
+  border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+  background: var(--panel2); margin-bottom: 8px;
+  display: grid; grid-template-columns: 1fr auto; gap: 4px 10px;
+}
+.expert-card .name { font-size: 10.5px; letter-spacing: 1.5px; color: var(--cyan); text-transform: uppercase; }
+.expert-card .sig { font-size: 13px; }
+.expert-card .conf { font-family: var(--mono); font-size: 11px; color: var(--muted); text-align: right; }
+
+/* AI briefing */
+.ai-brief {
+  border: 1px solid rgba(79,209,197,.35); border-radius: 10px;
+  background: linear-gradient(180deg, rgba(79,209,197,.08), rgba(16,26,46,.6));
+  padding: 14px 16px; font-size: 13.5px; line-height: 1.6;
+}
+.ai-brief .who { font-size: 10px; letter-spacing: 2px; color: var(--mint); margin-bottom: 6px; }
+.ai-brief .act { margin-top: 8px; color: var(--mint); }
+
+/* port-area panel */
+#port-area-map { position: absolute; inset: 0; background: #0b1120; }
+.area-wrap { position: relative; height: 340px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+.area-overlay {
+  position: absolute; top: 10px; left: 10px; z-index: 5; display: flex; gap: 8px; flex-wrap: wrap;
+}
+.area-overlay .chip { background: rgba(10,15,28,.85); }
+.berth-bar { position: absolute; bottom: 10px; left: 10px; right: 10px; z-index: 5;
+  background: rgba(10,15,28,.85); border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px;
+  font-size: 11px; color: var(--muted); }
+.berth-bar .track { height: 7px; background: var(--line); border-radius: 4px; margin-top: 5px; overflow: hidden; }
+.berth-bar .track > div { height: 100%; background: linear-gradient(90deg, var(--mint), var(--amber)); }
+
+/* live ticker / pulse */
+@keyframes fadein { from { opacity: 0; transform: translateY(-3px);} to { opacity: 1; transform: none; } }
+.alert-row.fresh { animation: fadein .5s ease; }
+.pulse-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--green);
+  margin-right: 6px; animation: pulse 1.8s infinite; }
+
+/* pipeline mini flow */
+.mini-flow { font-family: var(--mono); font-size: 10.5px; color: var(--muted); line-height: 1.9; }
+.mini-flow b { color: var(--mint); font-weight: 600; }
+
+details.more { margin-top: 10px; }
+details.more summary { cursor: pointer; color: var(--cyan); font-size: 12px; letter-spacing: 1px; }
+details.more[open] summary { margin-bottom: 8px; }

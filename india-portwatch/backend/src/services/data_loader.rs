@@ -52,6 +52,8 @@ pub struct DataStore {
     pub ports: Vec<Port>,
     pub forecasts: Vec<ForecastRow>,
     pub regimes: Vec<RegimeRow>,
+    pub panel: Vec<PanelRow>,
+    pub events: Vec<EventRow>,
     pub port_reports: Vec<PortReportRow>,
     pub ship_reports: Vec<ShipReportRow>,
     pub routes: Vec<RouteRow>,
@@ -113,6 +115,16 @@ pub fn load(outputs_dir: &Path) -> DataStore {
         "regimes",
         &["regimes/regimes.csv", "regimes/hsmm_regimes.csv"],
     );
+    let panel: Vec<PanelRow> = read_first(
+        &mut read,
+        "panel",
+        &["expert_features/merged_panel.csv"],
+    );
+    let events: Vec<EventRow> = read_first(
+        &mut read,
+        "events",
+        &["forecasts/events.csv"],
+    );
     let port_reports: Vec<PortReportRow> = read_first(
         &mut read,
         "port_reports",
@@ -158,6 +170,8 @@ pub fn load(outputs_dir: &Path) -> DataStore {
         ports,
         forecasts,
         regimes,
+        panel,
+        events,
         port_reports,
         ship_reports,
         routes,
@@ -173,10 +187,11 @@ pub fn load(outputs_dir: &Path) -> DataStore {
     };
     super::mock::fill_missing(&mut store);
     info!(
-        "DataStore ready (mode={}, forecasts={}, regimes={}, ships={})",
+        "DataStore ready (mode={}, forecasts={}, regimes={}, panel={}, ships={})",
         store.mode(),
         store.forecasts.len(),
         store.regimes.len(),
+        store.panel.len(),
         store.routes.len()
     );
     store

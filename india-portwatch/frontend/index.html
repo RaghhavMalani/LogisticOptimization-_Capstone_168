@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>India PortWatch — Command Center</title>
+  <title>India PortWatch — AI Maritime Command</title>
   <link rel="stylesheet" href="/styles/app.css" />
   <!-- MapLibre GL (map interop only — everything else is dependency-free). -->
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css"
@@ -17,23 +17,24 @@
       <div class="brand">
         <span class="brand-mark">◈</span>
         <span class="brand-name">INDIA <b>PORTWATCH</b></span>
-        <span class="brand-sub">PREDICTIVE PORT INTELLIGENCE</span>
+        <span class="brand-sub">AI PORT OPERATIONS COMMAND</span>
       </div>
       <div class="topbar-right">
+        <span id="model-fresh" class="chip small-chip" title="latest model run">MODEL —</span>
         <span id="data-mode-chip" class="chip">…</span>
         <span id="utc-clock" class="clock"></span>
       </div>
     </header>
 
     <nav id="navrail">
-      <a href="/" data-link class="nav-item" data-route="command">
-        <span class="nav-ico">⬢</span><span>Command</span></a>
+      <a href="/" data-link class="nav-item" data-route="radar">
+        <span class="nav-ico">⬢</span><span>Port Radar</span></a>
       <a href="/ports/JNPT" data-link class="nav-item" data-route="cockpit">
         <span class="nav-ico">⚓</span><span>Port Cockpit</span></a>
+      <a href="/decision" data-link class="nav-item" data-route="decision">
+        <span class="nav-ico">⚡</span><span>Decision Room</span></a>
       <a href="/ships" data-link class="nav-item" data-route="ships">
-        <span class="nav-ico">▲</span><span>Ships</span></a>
-      <a href="/scenarios" data-link class="nav-item" data-route="scenarios">
-        <span class="nav-ico">⚡</span><span>Scenarios</span></a>
+        <span class="nav-ico">▲</span><span>Fleet Board</span></a>
       <a href="/analytics" data-link class="nav-item" data-route="analytics">
         <span class="nav-ico">▦</span><span>Analytics</span></a>
       <a href="/model" data-link class="nav-item" data-route="model">

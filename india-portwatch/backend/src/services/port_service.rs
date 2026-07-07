@@ -1,4 +1,4 @@
-//! Port registry, map pins for the command dashboard, and cockpit briefings.
+//! Port registry, radar map pins, and cockpit briefings.
 
 use crate::models::*;
 use super::data_loader::DataStore;
@@ -16,7 +16,8 @@ pub fn find_port(store: &DataStore, port_id: &str) -> Option<Port> {
         .cloned()
 }
 
-/// One pin per port for the ATC map: regime colour + size by congestion.
+/// One pin per port for the radar: regime colour + size by congestion.
+/// Purple/UNKNOWN when the HSMM's confidence in the state is LOW.
 pub fn map_pins(store: &DataStore) -> Vec<PortMapPin> {
     store
         .ports
@@ -25,12 +26,19 @@ pub fn map_pins(store: &DataStore) -> Vec<PortMapPin> {
             let regime = regime_service::current_state(store, &p.port_id);
             let fc = forecast_service::port_forecast(store, &p.port_id);
             let first = fc.as_ref().and_then(|f| f.horizon.first().cloned());
+            let conf = regime
+                .as_ref()
+                .map(|r| r.confidence.clone())
+                .unwrap_or_else(|| "LOW".into());
+            let label = match &regime {
+                Some(r) if conf != "LOW" => r.current_regime.clone(),
+                Some(_) => "UNKNOWN".into(), // low confidence -> purple
+                None => "UNKNOWN".into(),
+            };
             PortMapPin {
                 port: p.clone(),
-                regime: regime
-                    .as_ref()
-                    .map(|r| r.current_regime.clone())
-                    .unwrap_or_else(|| "NORMAL".into()),
+                regime: label,
+                regime_confidence: conf,
                 congestion_now: first.as_ref().map(|h| h.congestion_q50).unwrap_or(0.0),
                 delay_hours: first.as_ref().map(|h| h.delay_hours).unwrap_or(0.0),
                 throughput: first.as_ref().map(|h| h.throughput).unwrap_or(0.0),
@@ -106,25 +114,41 @@ pub fn briefing(store: &DataStore, port_id: &str) -> Option<PortBriefing> {
     let weather_impact = report
         .and_then(|r| r.weather_impact.clone())
         .unwrap_or_else(|| "low".into());
+
+    // Assistant-style recommended action with a concrete avoid-window.
+    let avoid_from = peak_day.max(1);
+    let avoid_to = (peak_day + 2).min(10);
     let action = report
         .and_then(|r| r.recommended_action.clone())
-        .unwrap_or_else(|| default_action(&current_regime, &capacity_risk));
+        .unwrap_or_else(|| match current_regime.as_str() {
+            "SEVERE" => format!(
+                "Activate congestion protocol: extend gate hours, prioritise \
+                 high-value berths, and divert non-critical arrivals away from \
+                 Day +{avoid_from} to Day +{avoid_to}."
+            ),
+            "CONGESTED" => format!(
+                "Tighten berth allocation windows, pre-clear customs for priority \
+                 vessels, and avoid scheduling excess arrivals on Day +{avoid_from} \
+                 to Day +{avoid_to}."
+            ),
+            _ => format!(
+                "Maintain standard vessel buffer, monitor berth allocation, and \
+                 avoid scheduling excess arrivals on Day +{avoid_from} to Day +{avoid_to}."
+            ),
+        });
 
+    let stability = match current_regime.as_str() {
+        "SEVERE" => "under severe congestion",
+        "CONGESTED" => "congested",
+        _ if capacity_risk == "high" => "currently stable, but capacity risk is elevated",
+        _ => "currently stable",
+    };
     let summary = format!(
-        "{} is currently in {} regime with {} confidence. Peak congestion is \
-         expected on Day +{} (q50 ~{:.0}, q90 ~{:.0}). Expected delay peaks at \
-         ~{:.1} h; capacity risk is {}; weather impact is {}. Recommended \
-         action: {}",
-        port.name,
-        current_regime,
-        confidence,
-        peak_day,
-        peak_q50,
-        peak_q90,
-        peak_delay,
-        capacity_risk,
-        weather_impact,
-        action
+        "{} is {} ({} confidence). The model expects peak congestion on Day +{} \
+         (q50 ~{:.0}, q90 ~{:.0}) with delays up to ~{:.0} h. Weather impact is \
+         {}; capacity risk is {}. Recommended action: {}",
+        port.name, stability, confidence, peak_day, peak_q50, peak_q90,
+        peak_delay, weather_impact, capacity_risk, action
     );
 
     Some(PortBriefing {
@@ -148,19 +172,4 @@ pub fn briefing(store: &DataStore, port_id: &str) -> Option<PortBriefing> {
         recommended_action: action,
         summary,
     })
-}
-
-fn default_action(regime: &str, capacity_risk: &str) -> String {
-    match regime {
-        "SEVERE" => "Activate congestion protocol: prioritise high-value berths, \
-                     extend gate hours, divert feeder traffic."
-            .into(),
-        "CONGESTED" => "Tighten berth allocation windows and pre-clear customs for \
-                        priority vessels."
-            .into(),
-        _ if capacity_risk == "high" => {
-            "Monitor berth allocation closely; capacity headroom is limited.".into()
-        }
-        _ => "Monitor berth allocation and maintain standard buffer.".into(),
-    }
 }

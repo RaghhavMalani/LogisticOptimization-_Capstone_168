@@ -1,13 +1,17 @@
-/* Router + pages for the India PortWatch command center. */
+/* Router + pages for the India PortWatch AI command center. */
 
 const view = () => document.getElementById("view");
 
-/* ------------------------------------------------------------ router */
+/* Page-scoped timers: cleared on every navigation so maps/tickers don't leak. */
+let pageTimers = [];
+function addTimer(fn, ms) { pageTimers.push(setInterval(fn, ms)); }
+function clearTimers() { pageTimers.forEach(clearInterval); pageTimers = []; }
+
+/* router */
 function navigate(path) {
   history.pushState({}, "", path);
   render();
 }
-
 document.addEventListener("click", (e) => {
   const a = e.target.closest("a[data-link]");
   if (!a) return;
@@ -22,16 +26,17 @@ function setActiveNav(route) {
 }
 
 async function render() {
+  clearTimers();
   const path = location.pathname;
   try {
-    if (path === "/" || path === "") return await pageCommand();
+    if (path === "/" || path === "") return await pageRadar();
     let m;
     if ((m = path.match(/^\/ports\/([^/]+)$/))) return await pageCockpit(m[1].toUpperCase());
+    if (path === "/decision" || path === "/scenarios") return await pageDecision();
     if (path === "/ships") return await pageShips();
-    if (path === "/scenarios") return await pageScenarios();
     if (path === "/analytics") return await pageAnalytics();
     if (path === "/model") return await pageModel();
-    return await pageCommand();
+    return await pageRadar();
   } catch (err) {
     view().innerHTML = `<div class="panel"><h3>ERROR</h3>
       <div class="mono" style="color:var(--red)">${esc(err.message)}</div>
@@ -39,216 +44,210 @@ async function render() {
   }
 }
 
-/* --------------------------------------------------- 1. command deck */
-async function pageCommand() {
-  setActiveNav("command");
-  const [pinsEnv, alertsEnv, statusRes] = await Promise.all([
-    API.mapPins(), API.alerts(), API.modelStatus(),
+/* Capacity-weighted national stress index (0-100). */
+function stressIndex(pins) {
+  let num = 0, den = 0;
+  for (const p of pins) {
+    const w = p.port_capacity || 0.5;
+    num += w * (p.congestion_now || 0);
+    den += w;
+  }
+  return den ? num / den : 0;
+}
+
+/* 1. National Port Radar */
+async function pageRadar() {
+  setActiveNav("radar");
+  const [pinsEnv, alertsEnv, liveEnv] = await Promise.all([
+    API.mapPins(), API.alerts(), API.liveNational().catch(() => null),
   ]);
   setDataMode(pinsEnv.data_mode);
   const pins = pinsEnv.data;
-  const summaryEnv = await API.analytics();
-  const nat = summaryEnv.data.national;
+  const stress = stressIndex(pins);
+  const severe = pins.filter((p) => p.regime === "SEVERE");
+  const congested = pins.filter((p) => p.regime === "CONGESTED");
+  const top = [...pins].sort((a, b) => b.congestion_now - a.congestion_now).slice(0, 5);
+  const vessels = (liveEnv?.data || []).flatMap((l) => l.vessels);
 
   view().innerHTML = `
     <div class="page-head">
-      <div><div class="page-title">NATIONAL OPERATIONS</div>
-        <h1>Command Dashboard</h1>
-        <div class="sub">${pins.length} ports under surveillance · forecasts to Day +10</div></div>
-    </div>
-    <div class="grid cols-4">
-      ${MetricCard({ label: "MEAN CONGESTION INDEX", value: fmt.n1(nat.mean_congestion),
-        tone: nat.mean_congestion >= 60 ? "red" : nat.mean_congestion >= 45 ? "amber" : "" })}
-      ${MetricCard({ label: "SEVERE REGIME PORTS", value: nat.severe_ports.length,
-        tone: nat.severe_ports.length ? "red" : "", delta: nat.severe_ports.join(" · ") || "none" })}
-      ${MetricCard({ label: "CONGESTED PORTS", value: nat.congested_count,
-        tone: nat.congested_count ? "amber" : "" })}
-      ${MetricCard({ label: "DATA MODE", value: pinsEnv.data_mode.toUpperCase(),
-        tone: pinsEnv.data_mode === "real" ? "" : "amber",
-        delta: statusRes.outputs_dir })}
+      <div><div class="page-title">NATIONAL PORT RADAR</div>
+        <h1><span class="pulse-dot"></span>India Maritime Operations</h1>
+        <div class="sub">${pins.length} ports · ${vessels.length} tracked vessels
+          <span class="badge info">AIS/SATELLITE PROXY MODE</span></div></div>
+      <div class="panel" style="padding:10px 16px">${StressGauge(stress)}</div>
     </div>
 
-    <div class="grid mt" style="grid-template-columns: 2.2fr 1fr;">
+    <div class="grid" style="grid-template-columns: 2.3fr 1fr;">
       <div>
         <div id="map-wrap"><div id="map"></div>${MapLegend()}</div>
+        <div class="grid cols-4 mt">
+          ${MetricCard({ label: "SEVERE PORTS", value: severe.length,
+            tone: severe.length ? "red" : "", delta: severe.map((p) => p.port_id).join(" · ") || "none" })}
+          ${MetricCard({ label: "CONGESTED PORTS", value: congested.length,
+            tone: congested.length ? "amber" : "" })}
+          ${MetricCard({ label: "MEAN CONGESTION", value: fmt.n1(stress),
+            tone: stress >= 60 ? "red" : stress >= 45 ? "amber" : "" })}
+          ${MetricCard({ label: "VESSELS IN FIELD", value: vessels.length, delta: "proxy signal" })}
+        </div>
       </div>
       <div class="grid" style="align-content:start">
-        <div class="panel"><h3>Top risk ports</h3>
-          ${nat.top_risk_ports.map((p, i) => `
-            <div class="kv"><span class="k"><span class="rank-num">${i + 1}.</span>
+        <div class="panel"><h3>Top 5 ports at risk</h3>
+          ${top.map((p, i) => `<div class="kv">
+            <span class="k"><span class="rank-num">${i + 1}.</span>
               <a href="/ports/${esc(p.port_id)}" data-link>${esc(p.name)}</a></span>
-              <span class="v">${fmt.n1(p.congestion)} ${RegimeBadge(p.regime)}</span></div>`).join("")}
+            <span class="v">${fmt.n1(p.congestion_now)} ${RegimeBadge(p.regime)}</span></div>`).join("")}
         </div>
-        <div class="panel"><h3>Active alerts</h3>
-          <div style="max-height:270px;overflow-y:auto">${AlertsFeed(alertsEnv.data)}</div>
+        <div class="panel"><h3><span class="pulse-dot"></span>Active alerts</h3>
+          <div id="alert-feed" style="max-height:300px;overflow-y:auto">${AlertsFeed(alertsEnv.data)}</div>
         </div>
-        <div class="panel"><h3>Model readiness</h3>
-          ${statusRes.pipeline.map((s) => KV(s.stage,
-            `<span class="badge ${esc(s.status === "ok" ? "low" : s.status === "degraded" ? "medium" : "high")}">${esc(s.status.toUpperCase())}</span>`)).join("")}
-        </div>
+        <div class="panel"><h3>Model pipeline</h3>${MiniPipeline()}</div>
       </div>
     </div>`;
 
-  renderPortMap(document.getElementById("map"), pins);
+  const map = renderPortMap(document.getElementById("map"), pins);
+  if (map && vessels.length) {
+    let tick = () => {};
+    (map.loaded && map.loaded() ? Promise.resolve() : new Promise((r) => map.on("load", r)))
+      .then(() => { tick = addVesselLayer(map, vessels); });
+    addTimer(() => tick(), 1100);
+  }
+  addTimer(async () => {
+    try {
+      const a = await API.alerts();
+      const el = document.getElementById("alert-feed");
+      if (el) { el.innerHTML = AlertsFeed(a.data); el.firstElementChild?.classList.add("fresh"); }
+    } catch (_) {}
+  }, 20000);
 }
 
-/* --------------------------------------------------- 2. port cockpit */
+/* 2. Port Operations Cockpit */
 async function pageCockpit(portId) {
   setActiveNav("cockpit");
   view().innerHTML = `<div class="loading">LOADING ${esc(portId)} COCKPIT…</div>`;
 
-  const [ports, pinEnv, fcEnv, regEnv, briefEnv, drvEnv] = await Promise.all([
+  const [ports, pinEnv, fcEnv, regEnv, briefEnv, intelEnv, liveEnv] = await Promise.all([
     API.ports(),
     API.port(portId),
     API.forecast(portId).catch(() => null),
     API.regime(portId).catch(() => null),
     API.briefing(portId).catch(() => null),
     API.drivers(portId).catch(() => null),
+    API.portLive(portId).catch(() => null),
   ]);
   setDataMode(pinEnv.data_mode);
   const pin = pinEnv.data;
   const fc = fcEnv?.data;
-  const reg = regEnv?.data;
+  const cur = regEnv?.data?.current;
   const brief = briefEnv?.data;
+  const intel = intelEnv?.data;
+  const live = liveEnv?.data;
 
   const selector = `<select id="port-select">${ports.data
     .map((p) => `<option value="${esc(p.port_id)}" ${p.port_id === pin.port_id ? "selected" : ""}>${esc(p.name)}</option>`)
     .join("")}</select>`;
 
-  const cur = reg?.current;
   view().innerHTML = `
     <div class="page-head">
-      <div><div class="page-title">PORT COCKPIT — ${esc(pin.region).toUpperCase()} COAST</div>
+      <div><div class="page-title">PORT OPERATIONS COCKPIT — ${esc(pin.region).toUpperCase()} COAST</div>
         <h1>${esc(pin.name)} ${RegimeBadge(pin.regime)}</h1>
-        <div class="sub">${fc ? `forecast origin ${esc(fc.origin_date)} · model: ${esc(fc.model)}` : "no forecast available"}</div></div>
+        <div class="sub">${fc ? `forecast origin ${esc(fc.origin_date)} · model ${esc(fc.model)} · ` : ""}
+          state confidence ${esc(pin.regime_confidence)}</div></div>
       <div>${selector}</div>
     </div>
 
     <div class="grid cols-4">
       ${MetricCard({ label: "CONGESTION (DAY +1)", value: fmt.n1(pin.congestion_now),
         tone: pin.congestion_now >= 60 ? "red" : pin.congestion_now >= 45 ? "amber" : "" })}
-      ${MetricCard({ label: "EXPECTED DELAY (H)", value: fmt.n1(pin.delay_hours),
+      ${MetricCard({ label: "DELAY FORECAST (H)", value: fmt.n1(pin.delay_hours),
         tone: pin.delay_hours >= 18 ? "red" : pin.delay_hours >= 10 ? "amber" : "" })}
       ${MetricCard({ label: "THROUGHPUT (T/DAY)", value: fmt.n0(pin.throughput) })}
       ${MetricCard({ label: "TRANSITION RISK", value: fmt.pct(pin.transition_risk),
         tone: pin.transition_risk >= 0.3 ? "amber" : "" })}
     </div>
 
-    <div class="grid cols-2 mt">
+    ${brief ? `<div class="mt">${AiBriefing(brief.summary.split("Recommended action:")[0].trim(),
+      brief.recommended_action)}</div>` : ""}
+
+    <div class="grid mt" style="grid-template-columns: 1.4fr 1fr;">
       <div class="panel">
-        ${ForecastTimeline(fc?.horizon, { title: "10-day congestion forecast" })}
+        <h3>Port area — live vessel field</h3>
+        <div class="area-wrap">
+          <div id="port-area-map"></div>
+          <div class="area-overlay">
+            <span class="chip mock">AIS/SATELLITE PROXY MODE</span>
+            ${live ? `<span class="chip">QUEUE ${live.queue_count}</span>
+            <span class="chip">WX ${esc(live.weather_badge)}</span>
+            <span class="chip">AIS CONF ${Number(live.ais_confidence).toFixed(2)}</span>` : ""}
+          </div>
+          ${live ? `<div class="berth-bar">BERTH / CAPACITY UTILISATION
+            <b class="mono">${(live.berth_utilization * 100).toFixed(0)}%</b>
+            <div class="track"><div style="width:${(live.berth_utilization * 100).toFixed(0)}%"></div></div>
+          </div>` : ""}
+        </div>
+        <div class="spark-note">amber ring = anchorage zone · squares = anchored/berthed · dots = moving (simulated proxy)</div>
       </div>
       <div class="panel">
-        ${BarTimeline(fc?.horizon, "delay_hours", { label: "Delay forecast (hours)", color: "var(--amber)" })}
-        ${BarTimeline(fc?.horizon, "throughput", { label: "Throughput forecast (tonnes/day)", color: "var(--cyan)" })}
+        <h3>HSMM regime — model explanation</h3>
+        ${RegimeProbPanel(cur)}
+        <details class="more"><summary>REGIME HISTORY (45 DAYS)</summary>
+          ${RegimeTimelineStrip(regEnv?.data?.history)}</details>
       </div>
+    </div>
+
+    <div class="panel mt">
+      <h3>10-day forecast timeline</h3>
+      ${RiskTileTimeline(fc?.horizon)}
+      <details class="more"><summary>QUANTILE DETAIL (q10-q90 FAN)</summary>
+        ${ForecastTimeline(fc?.horizon)}</details>
     </div>
 
     <div class="grid cols-2 mt">
       <div class="panel">
-        <h3>HSMM regime — last 45 days</h3>
-        ${RegimeTimelineStrip(reg?.history)}
-        <div class="mt"></div>
-        ${cur ? [
-          KV("Current regime", RegimeBadge(cur.current_regime)),
-          KV("P(normal / congested / severe)",
-            `${fmt.pct(cur.p_normal)} / ${fmt.pct(cur.p_congested)} / ${fmt.pct(cur.p_severe)}`),
-          KV("Days in state", fmt.n1(cur.days_in_state)),
-          KV("Expected remaining", `${fmt.n1(cur.expected_remaining_days)} d`),
-          KV("Transition risk", fmt.pct(cur.transition_risk)),
-          KV("Confidence", esc(cur.confidence)),
-        ].join("") : `<div class="muted">No regime state.</div>`}
+        <h3>Why — top forecast drivers</h3>
+        ${DriverCards(intel?.drivers)}
       </div>
       <div class="panel">
-        <h3>Condition drivers</h3>
-        ${DriverPanel(drvEnv?.data?.drivers)}
-        <div class="mt"></div>
-        ${brief ? [
-          KV("Peak congestion", `Day +${brief.peak_congestion_day} · q50 ${fmt.n1(brief.peak_congestion_q50)} · q90 ${fmt.n1(brief.peak_congestion_q90)}`),
-          KV("Peak delay", `${fmt.n1(brief.peak_delay_hours)} h`),
-          KV("Weather impact", RiskBadge(brief.weather_impact)),
-          KV("Capacity risk", RiskBadge(brief.capacity_risk)),
-          KV("High-risk days", brief.high_risk_days.length ? brief.high_risk_days.map((d) => `+${d}`).join(", ") : "none"),
-        ].join("") : ""}
+        <h3>Model outputs — expert modules</h3>
+        ${ExpertCards(intel?.expert_outputs)}
+        ${fc ? `<div class="expert-card"><div>
+            <div class="name">TFT Forecast</div>
+            <div class="sig">Peak congestion Day +${brief?.peak_congestion_day ?? "—"} · q90 ${fmt.n0(brief?.peak_congestion_q90)}</div>
+            <div class="d muted small">Multi-horizon quantile forecast over expert + regime features.</div>
+          </div><div class="conf">model<br/><b>${esc(fc.model)}</b></div></div>` : ""}
       </div>
-    </div>
+    </div>`;
 
-    ${brief ? `<div class="panel mt">
-      <h3>Operational briefing</h3>
-      <div class="action-panel">${esc(brief.summary)}</div>
-    </div>` : ""}`;
-
+  if (live) {
+    const tick = renderPortAreaMap(document.getElementById("port-area-map"), pin, live);
+    addTimer(() => tick(), 1100);
+  }
   document.getElementById("port-select").addEventListener("change", (e) =>
     navigate(`/ports/${e.target.value}`));
 }
 
-/* -------------------------------------------------------- 3. ships */
-async function pageShips() {
-  setActiveNav("ships");
-  const env = await API.ships();
-  setDataMode(env.data_mode);
-  const ships = env.data;
-
-  view().innerHTML = `
-    <div class="page-head">
-      <div><div class="page-title">FLEET PLANNING</div><h1>Ship Manager</h1>
-        <div class="sub">${ships.length} vessels tracked · click a vessel for the full advisory</div></div>
-    </div>
-    <div class="grid" style="grid-template-columns: 1.7fr 1fr">
-      <div class="panel">
-        <h3>Fleet operations board</h3>
-        <table class="ops"><thead><tr>
-          <th>Vessel</th><th>Route</th><th>ETA window</th><th>Berth wait</th>
-          <th>Entry risk</th><th>Best / worst day</th><th>Buffer</th><th>Conf.</th>
-        </tr></thead><tbody>
-        ${ships.map((s) => `<tr data-ship="${esc(s.ship_id)}" style="cursor:pointer">
-          <td>${esc(s.name)}</td>
-          <td>${esc(s.intended_port)}${s.reroute ? ` → <b style="color:var(--amber)">${esc(s.recommended_port)}</b>` : ""}</td>
-          <td>${esc(s.eta_window)}</td>
-          <td>${RiskBadge(s.berth_waiting_risk)}</td>
-          <td>${RiskBadge(s.port_entry_risk)}</td>
-          <td>+${s.best_arrival_day} / +${s.worst_arrival_day}</td>
-          <td>${esc(s.recommended_buffer_hours)} h</td>
-          <td>${RiskBadge(s.confidence)}</td>
-        </tr>`).join("")}
-        </tbody></table>
-      </div>
-      <div class="panel" id="ship-detail">
-        <h3>Vessel advisory</h3>
-        <div class="muted">Select a vessel from the board.</div>
-      </div>
-    </div>`;
-
-  document.querySelectorAll("tr[data-ship]").forEach((tr) =>
-    tr.addEventListener("click", async () => {
-      const rec = await API.shipRec(tr.dataset.ship);
-      const r = rec.data;
-      document.getElementById("ship-detail").innerHTML = `
-        <h3>Vessel advisory — ${esc(r.name)}</h3>
-        ${KV("Destination", `${esc(r.intended_port)}${r.reroute ? " → " + esc(r.recommended_port) : " (keep)"}`)}
-        ${KV("Best arrival", `Day +${r.best_arrival_day}`)}
-        ${KV("Recommended buffer", `${esc(r.recommended_buffer_hours)} h`)}
-        ${KV("Berth waiting risk", RiskBadge(r.berth_waiting_risk))}
-        ${KV("Port entry risk", RiskBadge(r.port_entry_risk))}
-        ${KV("Confidence", RiskBadge(r.confidence))}
-        <div class="action-panel mt">${esc(r.advisory)}<br/><br/>
-          <span class="muted small">Reason: ${esc(r.reason)}</span></div>`;
-    }));
-}
-
-/* ---------------------------------------------------- 4. scenarios */
-async function pageScenarios() {
-  setActiveNav("scenarios");
-  const env = await API.scenarios();
+/* 3. AI Decision Room */
+async function pageDecision() {
+  setActiveNav("decision");
+  const [env, pinsEnv] = await Promise.all([API.scenarios(), API.mapPins()]);
   const presets = env.data;
+  const pins = pinsEnv.data;
+  const worstPin = [...pins].sort((a, b) => b.congestion_now - a.congestion_now)[0];
+  const briefEnv = worstPin ? await API.briefing(worstPin.port_id).catch(() => null) : null;
   let selected = presets[0]?.id;
 
   view().innerHTML = `
     <div class="page-head">
-      <div><div class="page-title">WHAT-IF ENGINE</div><h1>Scenario Simulator</h1>
-        <div class="sub">Shocks are applied to the live forecast — deltas are relative to today's model view</div></div>
+      <div><div class="page-title">AI DECISION ROOM</div>
+        <h1>What-if · Why · What to do</h1>
+        <div class="sub">Shocks are applied to the live forecast — deltas relative to today's model view</div></div>
     </div>
-    <div class="grid" style="grid-template-columns: 1fr 2fr">
+
+    ${briefEnv ? AiBriefing(
+      `Current national focus: ${briefEnv.data.port_name}. ${briefEnv.data.summary.split("Recommended action:")[0].trim()}`,
+      briefEnv.data.recommended_action) : ""}
+
+    <div class="grid mt" style="grid-template-columns: 1fr 2fr">
       <div>
         <div class="grid" id="preset-list">
           ${presets.map((p) => `<div class="panel scenario-card ${p.id === selected ? "selected" : ""}" data-id="${esc(p.id)}">
@@ -300,33 +299,94 @@ function renderSimResult(r) {
       ${MetricCard({ label: "WORST DELAY IMPACT",
         value: `+${fmt.n1(Math.max(...r.affected_ports.map((p) => p.delay_delta_hours), 0))}h`, tone: "red" })}
     </div>
-    <div class="panel mt"><h3>${esc(r.scenario_name)} — national impact</h3>
-      <div class="action-panel">${esc(r.national_summary)}</div>
+    <div class="panel mt">
+      ${AiBriefing(r.national_summary, r.recommended_response[0] || "")}
       <div class="grid cols-3 mt">
         ${worst.map((p) => `<div class="panel">
-          <b>${esc(p.port_name)}</b><div class="mt"></div>
-          ${KV("Congestion", `${fmt.n1(p.baseline_congestion)} → <b style="color:var(--amber)">${fmt.n1(p.scenario_congestion)}</b>`)}
-          ${KV("Delay", `${fmt.n1(p.baseline_delay_hours)}h → <b style="color:var(--amber)">${fmt.n1(p.scenario_delay_hours)}h</b>`)}
-          ${KV("Throughput", `${fmt.n1(p.throughput_change_pct)}%`)}
-          ${KV("Risk", `${RiskBadge(p.risk_before)} → ${RiskBadge(p.risk_after)}`)}
+          <b>${esc(p.port_name)}</b>
+          <div class="kv"><span class="k">Congestion</span>
+            <span class="v">${fmt.n1(p.baseline_congestion)} → <b style="color:var(--amber)">${fmt.n1(p.scenario_congestion)}</b></span></div>
+          <div class="kv"><span class="k">Delay</span>
+            <span class="v">+${fmt.n1(p.delay_delta_hours)}h</span></div>
+          <div class="kv"><span class="k">Throughput</span><span class="v">${fmt.n1(p.throughput_change_pct)}%</span></div>
+          <div class="kv"><span class="k">Risk</span>
+            <span class="v">${RiskBadge(p.risk_before)} → ${RiskBadge(p.risk_after)}</span></div>
         </div>`).join("")}
       </div>
     </div>
-    <div class="panel mt"><h3>All affected ports</h3>
-      <table class="ops"><thead><tr><th>Port</th><th>ΔCongestion</th><th>ΔDelay</th><th>ΔThroughput</th><th>Risk</th></tr></thead>
-      <tbody>${r.affected_ports.map((p) => `<tr>
-        <td><a href="/ports/${esc(p.port_id)}" data-link>${esc(p.port_name)}</a></td>
-        <td>+${fmt.n1(p.congestion_delta)}</td><td>+${fmt.n1(p.delay_delta_hours)}h</td>
-        <td>${fmt.n1(p.throughput_change_pct)}%</td>
-        <td>${RiskBadge(p.risk_before)} → ${RiskBadge(p.risk_after)}</td></tr>`).join("")}
-      </tbody></table>
-    </div>
     <div class="panel mt"><h3>Recommended response</h3>
-      ${r.recommended_response.map((s) => `<div class="kv"><span class="k">▸</span><span style="text-align:left;flex:1;margin-left:10px">${esc(s)}</span></div>`).join("")}
+      ${r.recommended_response.map((s) => `<div class="kv"><span class="k">▸</span>
+        <span style="text-align:left;flex:1;margin-left:10px">${esc(s)}</span></div>`).join("")}
+      <details class="more"><summary>VIEW DETAILS — ALL AFFECTED PORTS</summary>
+        <table class="ops"><thead><tr><th>Port</th><th>ΔCongestion</th><th>ΔDelay</th><th>ΔThroughput</th><th>Risk</th></tr></thead>
+        <tbody>${r.affected_ports.map((p) => `<tr>
+          <td><a href="/ports/${esc(p.port_id)}" data-link>${esc(p.port_name)}</a></td>
+          <td>+${fmt.n1(p.congestion_delta)}</td><td>+${fmt.n1(p.delay_delta_hours)}h</td>
+          <td>${fmt.n1(p.throughput_change_pct)}%</td>
+          <td>${RiskBadge(p.risk_before)} → ${RiskBadge(p.risk_after)}</td></tr>`).join("")}
+        </tbody></table></details>
     </div>`;
 }
 
-/* ---------------------------------------------------- 5. analytics */
+/* 4. Fleet Board */
+async function pageShips() {
+  setActiveNav("ships");
+  const env = await API.ships();
+  setDataMode(env.data_mode);
+  const ships = env.data;
+
+  view().innerHTML = `
+    <div class="page-head">
+      <div><div class="page-title">FLEET OPERATIONS</div><h1>Ship Manager Board</h1>
+        <div class="sub">${ships.length} vessels tracked · click a vessel for the full advisory</div></div>
+    </div>
+    <div class="grid" style="grid-template-columns: 1.7fr 1fr">
+      <div class="panel">
+        <h3>Fleet board</h3>
+        <table class="ops"><thead><tr>
+          <th>Vessel</th><th>Route</th><th>ETA window</th><th>Berth wait</th>
+          <th>Entry risk</th><th>Best / worst</th><th>Buffer</th><th>Conf.</th>
+        </tr></thead><tbody>
+        ${ships.map((s) => `<tr data-ship="${esc(s.ship_id)}" style="cursor:pointer">
+          <td>${esc(s.name)}</td>
+          <td>${esc(s.intended_port)}${s.reroute ? ` → <b style="color:var(--amber)">${esc(s.recommended_port)}</b>` : ""}</td>
+          <td>${esc(s.eta_window)}</td>
+          <td>${RiskBadge(s.berth_waiting_risk)}</td>
+          <td>${RiskBadge(s.port_entry_risk)}</td>
+          <td>+${s.best_arrival_day} / +${s.worst_arrival_day}</td>
+          <td>${esc(s.recommended_buffer_hours)} h</td>
+          <td>${RiskBadge(s.confidence)}</td>
+        </tr>`).join("")}
+        </tbody></table>
+      </div>
+      <div class="panel" id="ship-detail">
+        <h3>Vessel advisory</h3>
+        <div class="muted">Select a vessel from the board.</div>
+      </div>
+    </div>`;
+
+  document.querySelectorAll("tr[data-ship]").forEach((tr) =>
+    tr.addEventListener("click", async () => {
+      const rec = await API.shipRec(tr.dataset.ship);
+      const r = rec.data;
+      document.getElementById("ship-detail").innerHTML = `
+        <h3>Vessel advisory — ${esc(r.name)}</h3>
+        ${r.reroute ? `<div class="ai-brief" style="margin-bottom:10px">
+          <div class="who">◈ REROUTE ADVISED</div>
+          ${esc(r.intended_port)} → <b>${esc(r.recommended_port)}</b><br/>
+          <span class="muted small">${esc(r.reason)}</span></div>` : ""}
+        ${KV("Destination", `${esc(r.intended_port)}${r.reroute ? " → " + esc(r.recommended_port) : " (keep)"}`)}
+        ${KV("Best arrival", `Day +${r.best_arrival_day}`)}
+        ${KV("Recommended buffer", `${esc(r.recommended_buffer_hours)} h`)}
+        ${KV("Berth waiting risk", RiskBadge(r.berth_waiting_risk))}
+        ${KV("Port entry risk", RiskBadge(r.port_entry_risk))}
+        ${KV("Confidence", RiskBadge(r.confidence))}
+        <div class="action-panel mt">${esc(r.advisory)}<br/><br/>
+          <span class="muted small">Reason: ${esc(r.reason)}</span></div>`;
+    }));
+}
+
+/* 5. Analytics */
 async function pageAnalytics() {
   setActiveNav("analytics");
   const env = await API.analytics();
@@ -387,12 +447,12 @@ async function pageAnalytics() {
             <td>${w.fold ?? "—"}</td><td>${esc(w.train_end || "—")}</td>
             <td>${fmt.n1(w.mae)}</td><td>${fmt.n1(w.rmse)}</td><td>${fmt.n1(w.mape_pct)}</td>
             <td>${w.coverage_80pct_cal != null ? fmt.pct(w.coverage_80pct_cal) : "—"}</td></tr>`).join("")}
-          </tbody></table>` : `<div class="muted">No backtest metrics found — run the pipeline with walk-forward enabled.</div>`}
+          </tbody></table>` : `<div class="muted">No backtest metrics found.</div>`}
       </div>
     </div>`;
 }
 
-/* -------------------------------------------------------- 6. model */
+/* 6. Model */
 async function pageModel() {
   setActiveNav("model");
   const st = await API.modelStatus();
@@ -420,10 +480,21 @@ async function pageModel() {
     </div>` : ""}`;
 }
 
-/* ------------------------------------------------------------ clock */
+/* global tickers */
 setInterval(() => {
   const el = document.getElementById("utc-clock");
   if (el) el.textContent = new Date().toISOString().slice(0, 19).replace("T", " ") + "Z";
 }, 1000);
+
+async function refreshModelFreshness() {
+  try {
+    const st = await API.modelStatus();
+    const tft = st.pipeline.find((s) => s.stage === "TFT FORECAST");
+    const el = document.getElementById("model-fresh");
+    if (el) el.textContent = `MODEL ${tft?.latest_run || "—"}`;
+  } catch (_) {}
+}
+refreshModelFreshness();
+setInterval(refreshModelFreshness, 60000);
 
 render();

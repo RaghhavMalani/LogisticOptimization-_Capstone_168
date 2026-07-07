@@ -2,8 +2,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, Alert, Pin, Vessel, fmt } from "../api";
+import MaritimeMap from "../components/map/MaritimeMap";
 import { Metric } from "../ui";
-import { MaritimeRadarVisual } from "../visuals";
 
 export default function Radar({ setMode }: { setMode: (m: string) => void }) {
   const nav = useNavigate();
@@ -64,8 +64,8 @@ export default function Radar({ setMode }: { setMode: (m: string) => void }) {
       </div>
 
       <div className="radar-stage">
-        <div className="radar-hero">
-          <MaritimeRadarVisual pins={pins} vessels={vessels} onSelect={(id) => nav(`/ports/${id}`)} />
+        <div className="radar-map-panel">
+          <MaritimeMap pins={pins} vessels={vessels} onSelect={(id) => nav(`/ports/${id}`)} />
         </div>
         <div className="feedband">
           <span className="t">SYSTEM FEED</span>

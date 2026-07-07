@@ -87,7 +87,7 @@ export default function Cockpit({ setMode }: { setMode: (m: string) => void }) {
         </div>
       )}
 
-      <div className="grid mt" style={{ gridTemplateColumns: "1.4fr 1fr" }}>
+      <div className="grid mt cockpit-main-grid">
         <Panel title="Port digital twin — live vessel field" custom={0}>
           <PortOpsVisual pin={pin} live={live} sar={sar} />
           <div className="spark-note">
@@ -122,16 +122,43 @@ export default function Cockpit({ setMode }: { setMode: (m: string) => void }) {
             </div>
           )}
         </Panel>
-        <Panel title="HSMM regime intelligence" custom={1}>
-          <RegimeProbs cur={cur} />
-          <details className="more"><summary>REGIME HISTORY (45 DAYS)</summary>
-            <div className="regime-strip mt">
-              {reg?.history.map((h) => (
-                <div key={h.date} className={`cell ${h.regime}`} title={`${h.date} — ${h.regime}`} />
-              ))}
-            </div>
-          </details>
-        </Panel>
+        <div className="grid cockpit-side-stack">
+          <Panel title="HSMM regime intelligence" custom={1}>
+            <RegimeProbs cur={cur} />
+            <details className="more"><summary>REGIME HISTORY (45 DAYS)</summary>
+              <div className="regime-strip mt">
+                {reg?.history.map((h) => (
+                  <div key={h.date} className={`cell ${h.regime}`} title={`${h.date} — ${h.regime}`} />
+                ))}
+              </div>
+            </details>
+          </Panel>
+          <Panel title="Weather + SAR module outputs" custom={2}>
+            {wx ? (
+              <>
+                <div className="module-grid">
+                  <div><span>Wind</span><b>{fmt.n1(wx.wind_kt)} kt</b><em>{wx.wind_dir}</em></div>
+                  <div><span>Rain 24h</span><b>{fmt.n1(wx.rainfall_mm)} mm</b><em>impact {wx.weather_impact_score.toFixed(2)}</em></div>
+                  <div><span>Wave</span><b>{fmt.n1(wx.wave_m)} m</b><em>vis {fmt.n1(wx.visibility_km)} km</em></div>
+                  <div><span>Storm</span><b>{wx.cyclone_risk}</b><em>conf {wx.weather_confidence.toFixed(2)}</em></div>
+                </div>
+                <div className="mt" />
+                <KV k="weather_hsmm_input" v={wx.weather_hsmm_input.toFixed(2)} />
+                <KV k="weather_tft_covariate" v={wx.weather_tft_covariate.toFixed(2)} />
+                <KV k="weather_persistence" v={wx.weather_persistence.toFixed(2)} />
+                <KV k="weather_shock" v={wx.weather_shock.toFixed(2)} />
+              </>
+            ) : <div className="muted">No weather report.</div>}
+            {sar && (
+              <>
+                <h3 className="mt">SAR/AIS proxy</h3>
+                <KV k="vessel_detections" v={sar.vessel_detections} />
+                <KV k="queue_zone_activity" v={`${(sar.queue_zone_activity * 100).toFixed(0)}%`} />
+                <KV k="change_vs_prev_scene" v={`${sar.change_vs_prev_pct > 0 ? "+" : ""}${fmt.n1(sar.change_vs_prev_pct)}%`} />
+              </>
+            )}
+          </Panel>
+        </div>
       </div>
 
       <Panel title="10-day forecast timeline" className="mt" custom={0}>

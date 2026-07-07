@@ -71,7 +71,9 @@ a{color:var(--cyan);text-decoration:none}
 .panel h3{font-size:10.5px;letter-spacing:2px;color:var(--muted);font-weight:600;
   margin-bottom:10px;text-transform:uppercase}
 
-.metric .value{font-family:var(--mono);font-size:24px;color:var(--mint)}
+.metric{min-height:82px;background:linear-gradient(180deg,rgba(13,32,51,.92),rgba(7,16,29,.78))}
+.metric .value{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--mint);
+  text-shadow:0 0 14px rgba(46,230,199,.24)}
 .metric .value.amber{color:var(--amber)}.metric .value.red{color:var(--red)}
 .metric .label{color:var(--muted);font-size:10.5px;letter-spacing:1px;margin-top:4px}
 .metric .delta{font-size:10.5px;font-family:var(--mono);margin-top:4px;color:var(--muted)}
@@ -336,6 +338,13 @@ table.ops td{padding:8px 10px;border-bottom:1px solid rgba(28,42,69,.5);font-fam
 .terminal-band strong{font:12px var(--mono);color:var(--mint)}
 .ops-note{font-size:12px;line-height:1.55;color:var(--muted)}
 .ops-note b{color:var(--text)}
+.cockpit-main-grid{grid-template-columns:minmax(0,1.45fr) minmax(360px,.95fr)}
+.cockpit-side-stack{align-content:start}
+.module-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.module-grid>div{border:1px solid rgba(24,49,77,.85);border-radius:7px;background:rgba(13,32,51,.7);padding:9px 10px}
+.module-grid span{display:block;font:9px var(--mono);letter-spacing:1.4px;color:var(--muted);text-transform:uppercase}
+.module-grid b{display:block;font:18px var(--mono);color:var(--mint);margin-top:4px}
+.module-grid em{display:block;font:10px var(--mono);font-style:normal;color:var(--muted);margin-top:2px}
 .intel-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .intel-cell{border:1px solid var(--line);border-radius:7px;background:rgba(13,32,51,.72);padding:10px}
 .intel-cell .k{font:9px var(--mono);letter-spacing:1.5px;color:var(--muted);text-transform:uppercase}
@@ -346,6 +355,36 @@ table.ops td{padding:8px 10px;border-bottom:1px solid rgba(28,42,69,.5);font-fam
 .radar-hero::after{content:"";position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(180deg,rgba(5,8,18,0),rgba(5,8,18,.22)),
   repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 4px)}
+.radar-map-panel{position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#050914}
+.map-terminal{position:relative;min-height:clamp(600px,70vh,820px);background:#050914}
+.map-terminal > .map-host.maplibregl-map,
+.map-terminal > .map-host{position:absolute;inset:0;width:100%;height:100%}
+.map-terminal::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:3;
+  background:linear-gradient(180deg,rgba(5,8,18,0),rgba(5,8,18,.22)),
+  repeating-linear-gradient(0deg,rgba(255,255,255,.024) 0 1px,transparent 1px 4px)}
+.map-controls{position:absolute;left:14px;top:14px;z-index:8;display:flex;gap:8px;flex-wrap:wrap;max-width:760px}
+.map-controls button{background:rgba(5,8,18,.82);border:1px solid rgba(69,185,255,.35);
+  color:var(--muted);border-radius:6px;padding:7px 10px;font:10px var(--mono);letter-spacing:.9px;text-transform:uppercase;cursor:pointer;
+  box-shadow:0 0 12px rgba(0,0,0,.22)}
+.map-controls button.active{color:var(--mint);border-color:rgba(46,230,199,.62);background:rgba(8,27,37,.9)}
+.map-status-strip{position:absolute;left:14px;right:14px;bottom:14px;z-index:8;display:flex;gap:8px;flex-wrap:wrap}
+.map-status-strip span{background:rgba(5,8,18,.84);border:1px solid rgba(24,49,77,.95);border-radius:6px;
+  padding:5px 9px;font:10px var(--mono);letter-spacing:.7px;color:var(--muted)}
+.maplibregl-ctrl-top-right{top:58px!important;right:12px!important}
+.maplibregl-ctrl-group{background:rgba(5,8,18,.8)!important;border:1px solid rgba(69,185,255,.3)!important}
+.maplibregl-ctrl button{filter:invert(1) hue-rotate(160deg);opacity:.78}
+.portwatch-map-popup .maplibregl-popup-content{background:rgba(5,8,18,.94)!important;border:1px solid rgba(69,185,255,.42)!important;
+  box-shadow:0 0 28px rgba(69,185,255,.14);padding:0!important;border-radius:8px!important}
+.portwatch-map-popup .maplibregl-popup-tip{border-top-color:rgba(5,8,18,.94)!important}
+.port-tooltip{width:220px;padding:10px 11px;color:var(--text);font-family:var(--sans)}
+.pt-head{display:flex;justify-content:space-between;gap:8px;align-items:center;font:12px var(--mono)}
+.pt-head b{color:var(--mint);letter-spacing:1px}.pt-head span{font-size:9px;border:1px solid var(--line);border-radius:4px;padding:2px 5px}
+.pt-head span.severe{color:var(--red);border-color:rgba(255,77,99,.5)}.pt-head span.congested{color:var(--amber);border-color:rgba(255,176,32,.5)}
+.pt-head span.normal{color:var(--green);border-color:rgba(67,209,125,.5)}.pt-head span.unknown{color:var(--purple);border-color:rgba(168,137,255,.5)}
+.pt-name{font-size:12px;color:var(--muted);margin:6px 0 8px}
+.pt-grid{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font:11px var(--mono)}
+.pt-grid span{color:var(--muted)}.pt-grid b{color:var(--text)}
+.pt-action{margin-top:9px;padding-top:7px;border-top:1px solid rgba(24,49,77,.8);font:10px var(--mono);color:var(--mint);letter-spacing:.8px}
 .map-topline{position:absolute;z-index:6;left:12px;top:12px;right:12px;display:flex;gap:8px;flex-wrap:wrap}
 .weather-map-overlay{position:absolute;inset:0;z-index:4;pointer-events:none;mix-blend-mode:screen;opacity:.82}
 .rain-band{position:absolute;width:38%;height:18%;border-radius:50%;filter:blur(8px);
@@ -441,6 +480,8 @@ table.ops td{padding:8px 10px;border-bottom:1px solid rgba(28,42,69,.5);font-fam
 .land-mass{fill:#132232;stroke:#8fb3d4;stroke-width:1.2;opacity:.88;filter:drop-shadow(0 0 12px rgba(69,185,255,.18))}
 .coastline{fill:none;stroke:#d6e7f8;stroke-width:1.4;opacity:.55}
 .subcontinent-shade{fill:#0b1625;stroke:#28405c;stroke-width:1;opacity:.74}
+.map-grid path,.weather-grid path,.sar-grid path{fill:none;stroke:#45b9ff;stroke-width:.7;opacity:.06}
+.night-lights circle{fill:#ffdf9e;filter:drop-shadow(0 0 4px rgba(255,176,32,.45))}
 .sea-stream{fill:none;stroke:#2ee6c7;stroke-width:1.2;stroke-dasharray:5 12;opacity:.36;animation:streamFlow 8s linear infinite}
 @keyframes streamFlow{to{stroke-dashoffset:-120}}
 .weather-layer ellipse{fill:url(#seaGlow);stroke:none;filter:blur(8px);opacity:.65}
@@ -473,8 +514,12 @@ table.ops td{padding:8px 10px;border-bottom:1px solid rgba(28,42,69,.5);font-fam
 .port-live-node.unknown .risk-ring{stroke:var(--purple)}
 .port-live-node.major .risk-halo{opacity:.26}
 @keyframes portHalo{50%{opacity:.32;transform:scale(1.18)}}@keyframes portPulse{50%{transform:scale(1.1);opacity:.48}}
+.map-inset rect{fill:rgba(5,8,18,.82);stroke:rgba(69,185,255,.33)}
+.map-inset text{font:12px var(--mono);fill:#dbe8f6}.map-inset text:first-of-type{fill:var(--mint);letter-spacing:1.6px}
 
 .port-land{fill:#101f2d;stroke:#8fb3d4;stroke-width:1.1}
+.sat-noise rect{fill:#d8c49e;opacity:.07}
+.terminal-labels text{font:10px var(--mono);fill:rgba(219,232,246,.62);letter-spacing:.9px;paint-order:stroke;stroke:#050914;stroke-width:2px}
 .breakwater{fill:none;stroke:#8fb3d4;stroke-width:5;stroke-linecap:round;opacity:.74}
 .breakwater.secondary{stroke-width:3;opacity:.48}
 .anchorage-zone{fill:rgba(255,176,32,.07);stroke:rgba(255,176,32,.76);stroke-width:2;stroke-dasharray:9 8}
@@ -489,6 +534,10 @@ table.ops td{padding:8px 10px;border-bottom:1px solid rgba(28,42,69,.5);font-fam
 .port-readout rect{fill:rgba(5,8,18,.78);stroke:rgba(69,185,255,.32)}
 .port-readout text{font:12px var(--mono);fill:#9fb3cc}.port-readout .green{fill:var(--green)}.port-readout .amber{fill:var(--amber)}.port-readout .red{fill:var(--red)}
 .port-readout text:nth-child(3),.port-readout.right text:nth-child(3){font-size:28px;fill:var(--mint)}
+.approach-legend rect{fill:rgba(5,8,18,.78);stroke:rgba(69,185,255,.32)}
+.approach-legend text{font:10px var(--mono);fill:#9fb3cc}.approach-legend circle.berthed{fill:var(--green)}
+.approach-legend circle.anchored{fill:var(--amber)}.approach-legend circle.moving{fill:var(--cyan)}
+.approach-legend path{stroke:var(--mint);stroke-dasharray:6 6}
 
 .wx-coast{fill:#101f2d;stroke:#8fb3d4;stroke-width:1.1}
 .wind-stream{fill:none;stroke:#7ee7ff;stroke-width:1.8;stroke-linecap:round;stroke-dasharray:14 16;opacity:.54;animation:streamFlow 4.6s linear infinite}
@@ -503,6 +552,8 @@ table.ops td{padding:8px 10px;border-bottom:1px solid rgba(28,42,69,.5);font-fam
 .weather-readouts text:first-of-type{fill:var(--mint);letter-spacing:1.6px}
 .wave-meter rect{fill:#18314d}.wave-meter rect:nth-child(n+7){fill:#ffb020}
 .visibility-meter rect:first-child{fill:#18314d}.visibility-meter .fill{fill:linear-gradient(90deg,var(--red),var(--amber),var(--green));fill:var(--green)}
+.weather-model-link rect{fill:rgba(5,8,18,.8);stroke:rgba(46,230,199,.35)}
+.weather-model-link text{font:12px var(--mono);fill:#dbe8f6}.weather-model-link text:first-of-type{fill:var(--mint);letter-spacing:1.3px}
 
 .sar-coast{fill:#111e2a;stroke:#8fb3d4;stroke-width:1.1}
 .sar-anchorage{fill:url(#sarGlow);stroke:rgba(255,176,32,.72);stroke-width:2;stroke-dasharray:9 7}
@@ -512,6 +563,9 @@ table.ops td{padding:8px 10px;border-bottom:1px solid rgba(28,42,69,.5);font-fam
 .sar-detection .det-ring{fill:none;stroke:#2ee6c7;stroke-width:1;opacity:.65}
 .sar-compare rect,.sar-labels rect{fill:rgba(5,8,18,.78);stroke:rgba(69,185,255,.3)}
 .sar-compare text,.sar-labels text{font:12px var(--mono);fill:#dbe8f6}.sar-compare text:first-of-type,.sar-labels text:first-child{fill:var(--mint);letter-spacing:1.3px}
+.sar-quality rect:first-child{fill:rgba(5,8,18,.8);stroke:rgba(69,185,255,.32)}
+.sar-quality text{font:12px var(--mono);fill:#dbe8f6}.sar-quality text:first-of-type{fill:var(--mint);letter-spacing:1.3px}
+.sar-quality rect:nth-of-type(2){fill:#18314d}.sar-quality .fill{fill:var(--mint)}
 
 .ai-flow-line{fill:none;stroke:url(#flowGrad);stroke-width:6;stroke-linecap:round;stroke-dasharray:18 14;opacity:.64;animation:routeMarch 4s linear infinite}
 .expert-node rect,.model-core-node rect,.confidence-bank rect,.influence-bank rect{fill:rgba(13,32,51,.78);stroke:rgba(69,185,255,.34)}

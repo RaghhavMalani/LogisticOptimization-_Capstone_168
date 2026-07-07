@@ -54,6 +54,8 @@ export function MaritimeRadarVisual({ pins, vessels, onSelect }: {
   const [layers, setLayers] = useState({ weather: true, sar: true, model: true });
   const byId = useMemo(() => Object.fromEntries(pins.map((p) => [p.port_id, p])), [pins]);
   const top = [...pins].sort((a, b) => b.congestion_now - a.congestion_now).slice(0, 5);
+  const severeCount = pins.filter((p) => p.regime === "SEVERE").length;
+  const congestedCount = pins.filter((p) => p.regime === "CONGESTED").length;
 
   return (
     <div className="ops-visual radar-visual">
@@ -79,6 +81,16 @@ export function MaritimeRadarVisual({ pins, vessels, onSelect }: {
         </defs>
 
         <rect width={MAP.w} height={MAP.h} fill="url(#seaGlow)" />
+        <g className="map-grid">
+          {Array.from({ length: 13 }, (_, i) => <path key={`gx${i}`} d={`M ${80 + i * 70} 0 L ${40 + i * 70} 620`} />)}
+          {Array.from({ length: 8 }, (_, i) => <path key={`gy${i}`} d={`M 0 ${78 + i * 66} L 1000 ${60 + i * 66}`} />)}
+        </g>
+        <g className="night-lights">
+          {Array.from({ length: 80 }, (_, i) => (
+            <circle key={i} cx={x(67 + ((i * 5.7) % 24))} cy={y(7 + ((i * 3.1) % 19))}
+              r={(i % 5 === 0 ? 1.9 : 1.1)} opacity={0.16 + (i % 4) * 0.07} />
+          ))}
+        </g>
         {Array.from({ length: 18 }, (_, i) => (
           <path key={`wind-${i}`} className="sea-stream"
             d={`M ${40 + i * 54} ${470 + Math.sin(i) * 28} C ${190 + i * 24} ${420 - i * 3}, ${300 + i * 32} ${520 + Math.cos(i) * 26}, ${510 + i * 20} ${448 - Math.sin(i) * 38}`} />
@@ -137,6 +149,21 @@ export function MaritimeRadarVisual({ pins, vessels, onSelect }: {
             </g>
           );
         })}
+
+        <g className="map-inset national-readout" transform="translate(38 470)">
+          <rect width="298" height="104" rx="8" />
+          <text x="18" y="27">NATIONAL RADAR OUTPUT</text>
+          <text x="18" y="55">SEVERE {severeCount} / CONGESTED {congestedCount}</text>
+          <text x="18" y="80">TOP RISK {top.map((p) => p.port_id).join(" / ")}</text>
+        </g>
+        <g className="map-inset route-readout" transform="translate(712 428)">
+          <rect width="236" height="146" rx="8" />
+          <text x="18" y="27">CHOKEPOINT IMPACT</text>
+          <text x="18" y="56">HORMUZ       HIGH</text>
+          <text x="18" y="82">BAB-EL-MANDEB MED</text>
+          <text x="18" y="108">MALACCA      SEVERE</text>
+          <text x="18" y="132">SUEZ         NORMAL</text>
+        </g>
       </svg>
       <div className="visual-status-strip">
         <span>LIVE NODES {pins.length}</span>
@@ -164,7 +191,20 @@ export function PortOpsVisual({ pin, live, sar }: { pin: Pin; live?: PortLive; s
           </linearGradient>
         </defs>
         <rect width="980" height="480" fill="url(#basin)" />
+        <g className="sat-noise">
+          {Array.from({ length: 130 }, (_, i) => (
+            <rect key={i} x={(i * 73) % 392} y={(i * 41) % 472}
+              width={12 + (i % 5) * 7} height={7 + (i % 4) * 6} />
+          ))}
+        </g>
         <path className="port-land" d="M 0 0 L 410 0 C 382 72, 356 118, 388 178 C 420 240, 380 292, 330 328 C 244 389, 245 435, 268 480 L 0 480 Z" />
+        <g className="terminal-labels">
+          <text x="38" y="66">NORTH HARBOUR</text>
+          <text x="88" y="122">PORT TRUST</text>
+          <text x="54" y="214">CENTRAL BASIN</text>
+          <text x="58" y="306">SOUTH HARBOUR</text>
+          <text x="304" y="198">OIL JETTY</text>
+        </g>
         <path className="breakwater" d="M 364 116 C 514 126, 634 156, 760 228" />
         <path className="breakwater secondary" d="M 305 356 C 482 325, 610 314, 780 350" />
         <circle className="anchorage-zone" cx="690" cy="168" r={112} />
@@ -208,6 +248,13 @@ export function PortOpsVisual({ pin, live, sar }: { pin: Pin; live?: PortLive; s
           <text x="725" y="93">{sar ? `${sar.vessel_detections} DETECTIONS` : `${vessels.length} VESSELS`}</text>
           <text x="725" y="111">QUEUE ACTIVITY {sar ? `${(sar.queue_zone_activity * 100).toFixed(0)}%` : "LIVE"}</text>
         </g>
+        <g className="approach-legend" transform="translate(396 388)">
+          <rect width="282" height="54" rx="8" />
+          <circle cx="22" cy="20" r="5" className="berthed" /><text x="36" y="24">AT BERTH</text>
+          <circle cx="112" cy="20" r="5" className="anchored" /><text x="126" y="24">ANCHORED</text>
+          <circle cx="218" cy="20" r="5" className="moving" /><text x="232" y="24">EN ROUTE</text>
+          <path d="M 20 40 L 72 40" /><text x="84" y="44">APPROACH LANE</text>
+        </g>
       </svg>
     </div>
   );
@@ -233,6 +280,10 @@ export function WeatherIntelVisual({ wx }: { wx: WxReport }) {
           <filter id="wxBlur"><feGaussianBlur stdDeviation="10" /></filter>
         </defs>
         <rect width="980" height="480" fill="url(#wxSea)" />
+        <g className="weather-grid">
+          {Array.from({ length: 12 }, (_, i) => <path key={`wgx${i}`} d={`M ${120 + i * 78} 0 L ${40 + i * 76} 480`} />)}
+          {Array.from({ length: 7 }, (_, i) => <path key={`wgy${i}`} d={`M 0 ${70 + i * 58} L 980 ${45 + i * 58}`} />)}
+        </g>
         <path className="wx-coast" d="M 92 0 C 142 70, 121 128, 182 188 C 244 250, 186 316, 222 480 L 0 480 L 0 0 Z" />
         {Array.from({ length: 18 }, (_, i) => (
           <path key={i} className="wind-stream"
@@ -273,6 +324,11 @@ export function WeatherIntelVisual({ wx }: { wx: WxReport }) {
           <rect width={clamp(wx.visibility_km / 12, 0.05, 1) * 178} height="9" rx="5" className="fill" />
           <text x="0" y="35">VISIBILITY {fmt.n1(wx.visibility_km)} KM</text>
         </g>
+        <g className="weather-model-link" transform="translate(594 292)">
+          <rect width="336" height="66" rx="8" />
+          <text x="18" y="25">MODEL COUPLING</text>
+          <text x="18" y="49">HSMM {wx.weather_hsmm_input.toFixed(2)} / TFT {wx.weather_tft_covariate.toFixed(2)} / SHOCK {wx.weather_shock.toFixed(2)}</text>
+        </g>
       </svg>
     </div>
   );
@@ -300,6 +356,10 @@ export function SarIntelVisual({ sar, pin, live }: { sar: SarReport; pin: Pin; l
         <circle className="sar-queue" cx="704" cy="316" r="82" />
         <path className="sar-scan" d="M 160 0 L 620 480" />
         <path className="sar-scan secondary" d="M 318 0 L 778 480" />
+        <g className="sar-grid">
+          {Array.from({ length: 11 }, (_, i) => <path key={`sx${i}`} d={`M ${80 + i * 90} 0 L ${40 + i * 86} 480`} />)}
+          {Array.from({ length: 7 }, (_, i) => <path key={`sy${i}`} d={`M 0 ${58 + i * 62} L 980 ${52 + i * 57}`} />)}
+        </g>
         {Array.from({ length: count }, (_, i) => {
           const cluster = i % 3;
           const cx = cluster === 0 ? 630 + ((i * 31) % 170) : cluster === 1 ? 535 + ((i * 47) % 255) : 724 + ((i * 29) % 125);
@@ -322,6 +382,13 @@ export function SarIntelVisual({ sar, pin, live }: { sar: SarReport; pin: Pin; l
           <text x="36" y="66">SCENE {sar.scene_time}</text>
           <text x="36" y="90">CONFIDENCE {sar.sar_confidence.toFixed(2)} / {pin.port_id}</text>
           {live && <text x="36" y="114">LIVE PROXY VESSELS {live.vessels.length}</text>}
+        </g>
+        <g className="sar-quality" transform="translate(690 42)">
+          <rect width="238" height="96" rx="8" />
+          <text x="18" y="28">SIGNAL QUALITY</text>
+          <rect x="18" y="48" width="170" height="9" rx="5" />
+          <rect x="18" y="48" width={clamp(sar.sar_confidence, 0, 1) * 170} height="9" rx="5" className="fill" />
+          <text x="18" y="78">CONF {sar.sar_confidence.toFixed(2)} / PROXY MODE</text>
         </g>
       </svg>
     </div>

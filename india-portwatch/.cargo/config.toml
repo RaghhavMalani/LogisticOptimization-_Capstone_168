@@ -1,6 +1,0 @@
-# Windows-GNU: use Rust's bundled LLD linker + self-contained CRT so builds
-# never depend on whatever MinGW happens to be on PATH (e.g. an old Dev-C++
-# GCC 4.9, whose ld can't handle modern flags like --high-entropy-va).
-[target.x86_64-pc-windows-gnu]
-linker = "rust-lld"
-rustflags = ["-C", "link-self-contained=yes"]

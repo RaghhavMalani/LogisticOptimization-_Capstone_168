@@ -6,7 +6,9 @@ export function listVesselProxies(): VesselProxy[] {
 }
 
 export function getSARSignal(portCode: string): SARSignal {
-  return sarSignals.find((signal) => signal.portCode === portCode) ?? sarSignals[0];
+  return (
+    sarSignals.find((signal) => signal.portCode === portCode) ?? sarSignals[0]
+  );
 }
 
 export function listSARSignals(): SARSignal[] {

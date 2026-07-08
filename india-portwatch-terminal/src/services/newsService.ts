@@ -7,7 +7,10 @@ export function listNewsEvents(): NewsEvent[] {
 
 export function listNewsEventsForEntity(entity: string): NewsEvent[] {
   const normalized = entity.trim().toUpperCase();
-  return newsEvents.filter((event) => event.entity.includes(normalized) || event.tag.includes(normalized));
+  return newsEvents.filter(
+    (event) =>
+      event.entity.includes(normalized) || event.tag.includes(normalized),
+  );
 }
 
 export function listAlertEvents() {

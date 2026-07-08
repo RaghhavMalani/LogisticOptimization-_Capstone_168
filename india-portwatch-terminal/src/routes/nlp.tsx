@@ -1,6 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { Panel, Chip, Bar } from "@/components/terminal/ui";
-import { listEntitySentiment, listNewsEvents } from "@/services/newsService";
+import {
+  listAlertEvents,
+  listEntitySentiment,
+  listNewsEvents,
+} from "@/services/newsService";
+import { fetchNewsBundle, fetchNewsEventsForEntity } from "@/services/news";
 
 export const Route = createFileRoute("/nlp")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -12,26 +18,75 @@ export const Route = createFileRoute("/nlp")({
 function NlpPage() {
   const { entity } = Route.useSearch();
   const normalizedEntity = entity.toUpperCase();
-  const events = listNewsEvents();
-  const focusedEvents = events.filter((event) => event.entity.includes(normalizedEntity) || event.tag.includes(normalizedEntity));
-  const feedEvents = focusedEvents.length ? [...focusedEvents, ...events.filter((event) => !focusedEvents.includes(event))] : events;
-  const entities = listEntitySentiment();
+  const focusedQuery = useQuery({
+    queryKey: ["news-entity", normalizedEntity],
+    queryFn: () => fetchNewsEventsForEntity(normalizedEntity),
+    initialData: () =>
+      listNewsEvents().filter(
+        (event) =>
+          event.entity.includes(normalizedEntity) ||
+          event.tag.includes(normalizedEntity),
+      ),
+    staleTime: 30_000,
+  });
+  const newsBundleQuery = useQuery({
+    queryKey: ["news-bundle"],
+    queryFn: fetchNewsBundle,
+    initialData: () => ({
+      events: listNewsEvents(),
+      alerts: listAlertEvents(),
+      sentiment: listEntitySentiment(),
+    }),
+    staleTime: 30_000,
+  });
+  const events = newsBundleQuery.data.events;
+  const focusedEvents = focusedQuery.data.length
+    ? focusedQuery.data
+    : events.filter(
+        (event) =>
+          event.entity.includes(normalizedEntity) ||
+          event.tag.includes(normalizedEntity),
+      );
+  const feedEvents = focusedEvents.length
+    ? [
+        ...focusedEvents,
+        ...events.filter((event) => !focusedEvents.includes(event)),
+      ]
+    : events;
+  const entities = newsBundleQuery.data.sentiment;
 
   return (
     <div className="h-full grid grid-cols-[1.4fr_1fr_1fr] gap-2">
-      <Panel title={`NLP FEED · ${normalizedEntity} · GDELT + REUTERS + LLOYD'S · Δ 45s`}>
+      <Panel
+        title={`NLP FEED · ${normalizedEntity} · GDELT + REUTERS + LLOYD'S · Δ 45s`}
+      >
         <div className="p-2 space-y-2">
-          {feedEvents.concat(feedEvents).map((n,i)=>(
+          {feedEvents.concat(feedEvents).map((n, i) => (
             <div key={`${n.id}-${i}`} className="panel p-2">
               <div className="flex items-center justify-between text-[9px] tracking-widest text-[var(--color-muted-foreground)]">
                 <div className="flex items-center gap-2">
                   <span className="tabular-nums">{n.timestamp}Z</span>
-                  <Chip tone={n.severity==="severe"?"red":n.severity==="elevated"?"amber":"amber"}>{n.tag}</Chip>
+                  <Chip
+                    tone={
+                      n.severity === "severe"
+                        ? "red"
+                        : n.severity === "elevated"
+                          ? "amber"
+                          : "amber"
+                    }
+                  >
+                    {n.tag}
+                  </Chip>
                   <span>{n.source}</span>
                 </div>
-                <span>SENT {n.sentiment >= 0 ? "+" : ""}{n.sentiment.toFixed(2)}</span>
+                <span>
+                  SENT {n.sentiment >= 0 ? "+" : ""}
+                  {n.sentiment.toFixed(2)}
+                </span>
               </div>
-              <div className="text-[11px] text-[var(--color-foreground)] leading-snug mt-1">{n.text}</div>
+              <div className="text-[11px] text-[var(--color-foreground)] leading-snug mt-1">
+                {n.text}
+              </div>
             </div>
           ))}
         </div>
@@ -40,11 +95,35 @@ function NlpPage() {
       <div className="grid grid-rows-2 gap-2 min-h-0">
         <Panel title="ENTITY SALIENCE">
           <div className="p-3 space-y-1.5 text-[11px]">
-            {entities.map(e=>(
-              <div key={e.entity} className="grid grid-cols-[80px_1fr_46px] items-center gap-2">
+            {entities.map((e) => (
+              <div
+                key={e.entity}
+                className="grid grid-cols-[80px_1fr_46px] items-center gap-2"
+              >
                 <span className="text-[var(--color-cyan)]">{e.entity}</span>
-                <Bar value={e.mentions/50} tone={e.sentiment<-0.2?"red":e.sentiment<0?"amber":"mint"} />
-                <span className={"text-right tabular-nums " + (e.sentiment<-0.2?"text-[var(--color-red)]":e.sentiment<0?"text-[var(--color-amber)]":"text-[var(--color-mint)]")}>{e.sentiment>=0?"+":""}{e.sentiment.toFixed(2)}</span>
+                <Bar
+                  value={e.mentions / 50}
+                  tone={
+                    e.sentiment < -0.2
+                      ? "red"
+                      : e.sentiment < 0
+                        ? "amber"
+                        : "mint"
+                  }
+                />
+                <span
+                  className={
+                    "text-right tabular-nums " +
+                    (e.sentiment < -0.2
+                      ? "text-[var(--color-red)]"
+                      : e.sentiment < 0
+                        ? "text-[var(--color-amber)]"
+                        : "text-[var(--color-mint)]")
+                  }
+                >
+                  {e.sentiment >= 0 ? "+" : ""}
+                  {e.sentiment.toFixed(2)}
+                </span>
               </div>
             ))}
           </div>
@@ -53,19 +132,59 @@ function NlpPage() {
           <div className="p-3">
             <svg viewBox="0 0 400 220" className="w-full h-full">
               {[
-                {id:"HRMZ",x:60,y:60,c:"red"},{id:"BAB",x:60,y:160,c:"amber"},
-                {id:"SUEZ",x:200,y:40,c:"amber"},{id:"MLC",x:340,y:60,c:"mint"},
-                {id:"IN-W",x:200,y:120,c:"amber"},{id:"IN-E",x:340,y:160,c:"red"},
-              ].map(n=>(
+                { id: "HRMZ", x: 60, y: 60, c: "red" },
+                { id: "BAB", x: 60, y: 160, c: "amber" },
+                { id: "SUEZ", x: 200, y: 40, c: "amber" },
+                { id: "MLC", x: 340, y: 60, c: "mint" },
+                { id: "IN-W", x: 200, y: 120, c: "amber" },
+                { id: "IN-E", x: 340, y: 160, c: "red" },
+              ].map((n) => (
                 <g key={n.id} transform={`translate(${n.x} ${n.y})`}>
-                  <circle r="14" fill="oklch(0.18 0.03 240)" stroke={`var(--color-${n.c})`} strokeWidth="1.5"/>
-                  <text textAnchor="middle" y="3" fontSize="9" fill={`var(--color-${n.c})`}>{n.id}</text>
+                  <circle
+                    r="14"
+                    fill="oklch(0.18 0.03 240)"
+                    stroke={`var(--color-${n.c})`}
+                    strokeWidth="1.5"
+                  />
+                  <text
+                    textAnchor="middle"
+                    y="3"
+                    fontSize="9"
+                    fill={`var(--color-${n.c})`}
+                  >
+                    {n.id}
+                  </text>
                 </g>
               ))}
-              {[["HRMZ","IN-W"],["BAB","IN-W"],["SUEZ","IN-W"],["MLC","IN-E"],["IN-W","IN-E"]].map(([a,b],i)=>{
-                const nodes: any = {HRMZ:[60,60],BAB:[60,160],SUEZ:[200,40],MLC:[340,60],"IN-W":[200,120],"IN-E":[340,160]};
-                const [x1,y1]=nodes[a], [x2,y2]=nodes[b];
-                return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="oklch(0.82 0.18 195 / 0.4)" strokeWidth="1" className="animate-dash"/>;
+              {[
+                ["HRMZ", "IN-W"],
+                ["BAB", "IN-W"],
+                ["SUEZ", "IN-W"],
+                ["MLC", "IN-E"],
+                ["IN-W", "IN-E"],
+              ].map(([a, b], i) => {
+                const nodes: any = {
+                  HRMZ: [60, 60],
+                  BAB: [60, 160],
+                  SUEZ: [200, 40],
+                  MLC: [340, 60],
+                  "IN-W": [200, 120],
+                  "IN-E": [340, 160],
+                };
+                const [x1, y1] = nodes[a],
+                  [x2, y2] = nodes[b];
+                return (
+                  <line
+                    key={i}
+                    x1={x1}
+                    y1={y1}
+                    x2={x2}
+                    y2={y2}
+                    stroke="oklch(0.82 0.18 195 / 0.4)"
+                    strokeWidth="1"
+                    className="animate-dash"
+                  />
+                );
               })}
             </svg>
           </div>
@@ -76,23 +195,87 @@ function NlpPage() {
         <Panel title="SENTIMENT TIMELINE · 24H">
           <div className="p-3">
             <svg viewBox="0 0 240 80" className="w-full h-24">
-              <line x1="0" y1="40" x2="240" y2="40" stroke="var(--color-line-strong)" strokeDasharray="2 3"/>
-              <polyline points={Array.from({length:24}).map((_,i)=>`${i*10},${40-Math.sin(i/2)*15-((i>16)?10:0)}`).join(" ")} fill="none" stroke="var(--color-red)" strokeWidth="1.4"/>
+              <line
+                x1="0"
+                y1="40"
+                x2="240"
+                y2="40"
+                stroke="var(--color-line-strong)"
+                strokeDasharray="2 3"
+              />
+              <polyline
+                points={Array.from({ length: 24 })
+                  .map(
+                    (_, i) =>
+                      `${i * 10},${40 - Math.sin(i / 2) * 15 - (i > 16 ? 10 : 0)}`,
+                  )
+                  .join(" ")}
+                fill="none"
+                stroke="var(--color-red)"
+                strokeWidth="1.4"
+              />
             </svg>
-            <div className="flex justify-between text-[9px] text-[var(--color-muted-foreground)] tabular-nums"><span>-24h</span><span>NOW</span></div>
+            <div className="flex justify-between text-[9px] text-[var(--color-muted-foreground)] tabular-nums">
+              <span>-24h</span>
+              <span>NOW</span>
+            </div>
           </div>
         </Panel>
         <Panel title="LLM INTELLIGENCE · SUMMARY">
           <div className="p-3 text-[11px] leading-relaxed space-y-2">
-            <p>Corpus of <span className="text-[var(--color-cyan)] tabular-nums">1,284</span> maritime articles in last 24h. Dominant themes: <span className="text-[var(--color-red)]">Hormuz tanker rerouting</span>, <span className="text-[var(--color-amber)]">Bay-of-Bengal cyclogenesis</span>, <span className="text-[var(--color-amber)]">JNPT congestion</span>.</p>
-            <p>Sentiment on India east-coast ports has decayed <span className="text-[var(--color-red)]">−0.24</span> over 12h. GDELT tone reinforces HSMM regime shift to CONGESTED_HIGH.</p>
-            <p>NLP feeds forward with weight <span className="text-[var(--color-cyan)] tabular-nums">0.18</span> into TFT covariates.</p>
+            <p>
+              Corpus of{" "}
+              <span className="text-[var(--color-cyan)] tabular-nums">
+                1,284
+              </span>{" "}
+              maritime articles in last 24h. Dominant themes:{" "}
+              <span className="text-[var(--color-red)]">
+                Hormuz tanker rerouting
+              </span>
+              ,{" "}
+              <span className="text-[var(--color-amber)]">
+                Bay-of-Bengal cyclogenesis
+              </span>
+              ,{" "}
+              <span className="text-[var(--color-amber)]">JNPT congestion</span>
+              .
+            </p>
+            <p>
+              Sentiment on India east-coast ports has decayed{" "}
+              <span className="text-[var(--color-red)]">−0.24</span> over 12h.
+              GDELT tone reinforces HSMM regime shift to CONGESTED_HIGH.
+            </p>
+            <p>
+              NLP feeds forward with weight{" "}
+              <span className="text-[var(--color-cyan)] tabular-nums">
+                0.18
+              </span>{" "}
+              into TFT covariates.
+            </p>
           </div>
         </Panel>
         <Panel title="KEYWORD PULSE">
           <div className="p-3 flex flex-wrap gap-1.5 text-[10px]">
-            {["strait of hormuz","tanker premium","cyclogenesis","kakinada","dredging","labour rotation","monsoon swell","reroute","cape of good hope","fuel surcharge","JNPT","yard util"].map(k=>(
-              <span key={k} className="border border-[var(--color-line-strong)] px-1.5 py-0.5 text-[var(--color-muted-foreground)]">{k}</span>
+            {[
+              "strait of hormuz",
+              "tanker premium",
+              "cyclogenesis",
+              "kakinada",
+              "dredging",
+              "labour rotation",
+              "monsoon swell",
+              "reroute",
+              "cape of good hope",
+              "fuel surcharge",
+              "JNPT",
+              "yard util",
+            ].map((k) => (
+              <span
+                key={k}
+                className="border border-[var(--color-line-strong)] px-1.5 py-0.5 text-[var(--color-muted-foreground)]"
+              >
+                {k}
+              </span>
             ))}
           </div>
         </Panel>

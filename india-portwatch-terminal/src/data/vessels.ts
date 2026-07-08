@@ -1,25 +1,55 @@
 import type { SARSignal, VesselKind, VesselProxy } from "@/types/portwatch";
 
-const radarSeeds: Array<[number, number, number, VesselKind]> = [
-  [0.22, 0.44, 40, "CONT"], [0.26, 0.5, 55, "TANKER"], [0.3, 0.58, 90, "CONT"], [0.34, 0.62, 110, "OTHER"],
-  [0.2, 0.6, 20, "CONT"], [0.16, 0.52, 350, "TANKER"], [0.12, 0.42, 10, "CONT"], [0.24, 0.36, 70, "TANKER"],
-  [0.32, 0.72, 180, "CONT"], [0.4, 0.8, 200, "OTHER"], [0.48, 0.82, 250, "CONT"], [0.56, 0.78, 280, "TANKER"],
-  [0.62, 0.7, 300, "CONT"], [0.66, 0.62, 320, "OTHER"], [0.7, 0.54, 340, "CONT"], [0.74, 0.46, 10, "TANKER"],
-  [0.78, 0.6, 60, "CONT"], [0.82, 0.7, 100, "OTHER"], [0.86, 0.78, 140, "CONT"], [0.5, 0.72, 240, "TANKER"],
-  [0.44, 0.66, 260, "CONT"], [0.58, 0.6, 300, "OTHER"], [0.68, 0.4, 20, "CONT"], [0.6, 0.34, 30, "TANKER"],
+const vesselSeeds: Array<
+  [number, number, number, VesselKind, string, VesselProxy["status"]]
+> = [
+  [22.32, 69.42, 40, "CONT", "INMUN", "anchored"],
+  [22.18, 70.05, 55, "TANKER", "INIXY", "approach"],
+  [18.62, 72.53, 90, "CONT", "INNSA", "anchored"],
+  [18.42, 72.88, 110, "OTHER", "INBOM", "approach"],
+  [18.92, 72.15, 72, "CONT", "INNSA", "anchored"],
+  [19.42, 72.18, 240, "TANKER", "INBOM", "underway"],
+  [15.12, 73.48, 350, "TANKER", "INMRM", "approach"],
+  [13.84, 74.18, 10, "CONT", "ININM", "underway"],
+  [12.58, 74.36, 70, "TANKER", "ININM", "underway"],
+  [9.72, 75.68, 180, "CONT", "INCOK", "anchored"],
+  [8.36, 76.9, 200, "OTHER", "INCOK", "underway"],
+  [8.58, 78.46, 250, "CONT", "INTUT", "approach"],
+  [10.42, 80.14, 280, "TANKER", "INMAA", "underway"],
+  [12.74, 80.62, 300, "CONT", "INMAA", "anchored"],
+  [13.54, 80.72, 320, "OTHER", "INENR", "approach"],
+  [13.08, 81.12, 286, "CONT", "INMAA", "anchored"],
+  [15.62, 81.18, 340, "CONT", "INENR", "underway"],
+  [17.34, 83.54, 10, "TANKER", "INVTZ", "approach"],
+  [18.82, 84.84, 60, "CONT", "INPRT", "underway"],
+  [20.04, 86.34, 100, "OTHER", "INPRT", "anchored"],
+  [21.56, 87.62, 140, "CONT", "INHAL", "approach"],
+  [20.78, 88.18, 30, "TANKER", "INHAL", "anchored"],
+  [23.52, 68.82, 20, "CONT", "HRMZ", "underway"],
+  [13.0, 43.9, 94, "TANKER", "BAB", "rerouted"],
+  [4.2, 100.2, 332, "CONT", "MLC", "underway"],
+  [2.8, 98.8, 318, "BULK", "MLC", "underway"],
 ];
 
-export const vesselProxies: VesselProxy[] = radarSeeds.map(([x, y, heading, vesselType], index) => ({
-  id: `MMSI-${419000000 + index * 137}`,
-  vesselType,
-  radar: { x, y },
-  schematic: { x: x * 1000, y: y * 700 },
-  heading,
-  speedKnots: 8 + (index % 12),
-  flag: ["IN", "SG", "PA", "LR", "MH", "AE"][index % 6],
-  source: index % 7 === 0 ? "SAR" : index % 3 === 0 ? "AIS_SAR" : "AIS",
-  confidence: 0.72 + (index % 8) * 0.03,
-}));
+export const vesselProxies: VesselProxy[] = vesselSeeds.map(
+  ([lat, lon, heading, vesselType, destinationPortCode, status], index) => ({
+    id: `MMSI-${419000000 + index * 137}`,
+    vesselType,
+    location: { lat, lon },
+    radar: {
+      x: 0.1 + ((lon - 56) / 36) * 0.8,
+      y: 0.12 + ((25 - lat) / 18) * 0.76,
+    },
+    schematic: { x: lon * 10, y: lat * 10 },
+    destinationPortCode,
+    status,
+    heading,
+    speedKnots: 8 + (index % 12),
+    flag: ["IN", "SG", "PA", "LR", "MH", "AE"][index % 6],
+    source: index % 7 === 0 ? "SAR" : index % 3 === 0 ? "AIS_SAR" : "AIS",
+    confidence: 0.72 + (index % 8) * 0.03,
+  }),
+);
 
 export const sarSignals: SARSignal[] = [
   {

@@ -4,7 +4,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans:
+    "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo,
+    monospace;
   --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
   --radius-sm: 2px;
   --radius-md: 3px;
@@ -48,17 +50,17 @@
   --foreground: oklch(0.94 0.02 200);
   --panel: oklch(0.18 0.025 240);
   --panel-2: oklch(0.22 0.03 240);
-  --line: oklch(0.30 0.03 240);
-  --line-strong: oklch(0.40 0.05 220);
+  --line: oklch(0.3 0.03 240);
+  --line-strong: oklch(0.4 0.05 220);
   --muted: oklch(0.22 0.025 240);
   --muted-foreground: oklch(0.65 0.03 220);
   --primary: oklch(0.82 0.18 190);
-  --primary-foreground: oklch(0.10 0.02 240);
+  --primary-foreground: oklch(0.1 0.02 240);
   --cyan: oklch(0.82 0.18 195);
   --mint: oklch(0.86 0.19 155);
   --amber: oklch(0.82 0.18 75);
   --red: oklch(0.68 0.24 25);
-  --purple: oklch(0.68 0.20 305);
+  --purple: oklch(0.68 0.2 305);
   --blue-deep: oklch(0.28 0.09 245);
   --sea: oklch(0.16 0.04 240);
   --land: oklch(0.24 0.03 220);
@@ -81,7 +83,7 @@
   --popover-foreground: var(--foreground);
   --card: var(--panel);
   --card-foreground: var(--foreground);
-  --primary-foreground: oklch(0.10 0.02 240);
+  --primary-foreground: oklch(0.1 0.02 240);
   --secondary: var(--panel-2);
   --secondary-foreground: var(--foreground);
   --accent: var(--panel-2);
@@ -93,13 +95,26 @@
   --ring: var(--cyan);
 }
 
-.dark { color-scheme: dark; }
+.dark {
+  color-scheme: dark;
+}
 
 @layer base {
-  html, body, #root { height: 100%; }
-  * { border-color: var(--color-line); }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  * {
+    border-color: var(--color-line);
+  }
   body {
-    background: radial-gradient(circle at 20% 10%, oklch(0.18 0.05 240) 0%, oklch(0.10 0.02 240) 60%, oklch(0.08 0.015 240) 100%);
+    background: radial-gradient(
+      circle at 20% 10%,
+      oklch(0.18 0.05 240) 0%,
+      oklch(0.1 0.02 240) 60%,
+      oklch(0.08 0.015 240) 100%
+    );
     color: var(--color-foreground);
     font-family: var(--font-sans);
     font-size: 12px;
@@ -107,17 +122,33 @@
     letter-spacing: 0.01em;
     overflow: hidden;
   }
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--color-line); border-radius: 2px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--color-line-strong); }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-line);
+    border-radius: 2px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-line-strong);
+  }
 }
 
 @utility panel {
-  background: linear-gradient(180deg, oklch(0.19 0.03 240) 0%, oklch(0.16 0.025 240) 100%);
+  background: linear-gradient(
+    180deg,
+    oklch(0.19 0.03 240) 0%,
+    oklch(0.16 0.025 240) 100%
+  );
   border: 1px solid var(--color-line);
   border-radius: 3px;
-  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.03), 0 2px 12px oklch(0 0 0 / 0.4);
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.03),
+    0 2px 12px oklch(0 0 0 / 0.4);
 }
 
 @utility panel-header {
@@ -126,7 +157,11 @@
   justify-content: space-between;
   padding: 4px 8px;
   border-bottom: 1px solid var(--color-line);
-  background: linear-gradient(180deg, oklch(0.24 0.03 240) 0%, oklch(0.20 0.03 240) 100%);
+  background: linear-gradient(
+    180deg,
+    oklch(0.24 0.03 240) 0%,
+    oklch(0.2 0.03 240) 100%
+  );
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.14em;
@@ -151,55 +186,139 @@
   font-variant-numeric: tabular-nums;
 }
 
-@utility glow-cyan { text-shadow: 0 0 8px oklch(0.82 0.18 195 / 0.6); }
-@utility glow-amber { text-shadow: 0 0 8px oklch(0.82 0.18 75 / 0.6); }
-@utility glow-red { text-shadow: 0 0 10px oklch(0.68 0.24 25 / 0.7); }
+@utility glow-cyan {
+  text-shadow: 0 0 8px oklch(0.82 0.18 195 / 0.6);
+}
+@utility glow-amber {
+  text-shadow: 0 0 8px oklch(0.82 0.18 75 / 0.6);
+}
+@utility glow-red {
+  text-shadow: 0 0 10px oklch(0.68 0.24 25 / 0.7);
+}
 
 @keyframes pulse-ring {
-  0% { transform: scale(0.8); opacity: 0.9; }
-  100% { transform: scale(2.4); opacity: 0; }
+  0% {
+    transform: scale(0.8);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
 }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-@keyframes dash-flow { to { stroke-dashoffset: -40; } }
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -40;
+  }
+}
 @keyframes sweep {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 @keyframes ticker {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 @keyframes vessel-drift {
-  0% { transform: translate(0,0); }
-  50% { transform: translate(2px,-1px); }
-  100% { transform: translate(0,0); }
+  0% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(2px, -1px);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
 }
 @keyframes halo-breathe {
-  0%,100% { transform: scale(1); opacity: 0.55; }
-  50% { transform: scale(1.12); opacity: 0.85; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 0.85;
+  }
 }
 @keyframes vessel-track {
-  0% { stroke-dashoffset: 0; opacity: 0.0; }
-  20% { opacity: 0.6; }
-  100% { stroke-dashoffset: -80; opacity: 0.0; }
+  0% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.6;
+  }
+  100% {
+    stroke-dashoffset: -80;
+    opacity: 0;
+  }
 }
 @keyframes impact-rise {
-  0% { transform: translateY(6px); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
+  0% {
+    transform: translateY(6px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 @keyframes scenario-flash {
-  0% { box-shadow: 0 0 0 0 var(--color-cyan); }
-  100% { box-shadow: 0 0 0 6px transparent; }
+  0% {
+    box-shadow: 0 0 0 0 var(--color-cyan);
+  }
+  100% {
+    box-shadow: 0 0 0 6px transparent;
+  }
 }
 
-.animate-blink { animation: blink 1.4s ease-in-out infinite; }
-.animate-dash { stroke-dasharray: 4 6; animation: dash-flow 2s linear infinite; }
-.animate-pulse-ring { animation: pulse-ring 2.4s ease-out infinite; transform-origin: center; }
-.animate-ticker { animation: ticker 60s linear infinite; }
-.animate-sweep { animation: sweep 8s linear infinite; transform-origin: center; }
-.animate-drift { animation: vessel-drift 4s ease-in-out infinite; }
-.animate-halo { animation: halo-breathe 4.2s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
-.animate-impact { animation: impact-rise .5s ease-out both; }
+.animate-blink {
+  animation: blink 1.4s ease-in-out infinite;
+}
+.animate-dash {
+  stroke-dasharray: 4 6;
+  animation: dash-flow 2s linear infinite;
+}
+.animate-pulse-ring {
+  animation: pulse-ring 2.4s ease-out infinite;
+  transform-origin: center;
+}
+.animate-ticker {
+  animation: ticker 60s linear infinite;
+}
+.animate-sweep {
+  animation: sweep 8s linear infinite;
+  transform-origin: center;
+}
+.animate-drift {
+  animation: vessel-drift 4s ease-in-out infinite;
+}
+.animate-halo {
+  animation: halo-breathe 4.2s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+.animate-impact {
+  animation: impact-rise 0.5s ease-out both;
+}
 
 /* Ship silhouette utility — bow + hull + wake */
 .ship-shape {
@@ -214,18 +333,32 @@
 
 .grid-bg {
   background-image:
-    linear-gradient(oklch(0.30 0.03 240 / 0.25) 1px, transparent 1px),
-    linear-gradient(90deg, oklch(0.30 0.03 240 / 0.25) 1px, transparent 1px);
+    linear-gradient(oklch(0.3 0.03 240 / 0.25) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0.3 0.03 240 / 0.25) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 .scanlines {
-  background-image: repeating-linear-gradient(0deg, transparent 0, transparent 2px, oklch(1 0 0 / 0.015) 2px, oklch(1 0 0 / 0.015) 3px);
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent 0,
+    transparent 2px,
+    oklch(1 0 0 / 0.015) 2px,
+    oklch(1 0 0 / 0.015) 3px
+  );
 }
 
 /* Leaflet terminal styling */
-.leaflet-container { background: #0a1420 !important; font-family: var(--font-sans); outline: none; }
-.leaflet-container a { color: var(--color-cyan); }
-.leaflet-tile { filter: brightness(1.05) contrast(1.15) saturate(0.9); }
+.leaflet-container {
+  background: #0a1420 !important;
+  font-family: var(--font-sans);
+  outline: none;
+}
+.leaflet-container a {
+  color: var(--color-cyan);
+}
+.leaflet-tile {
+  filter: brightness(1.05) contrast(1.15) saturate(0.9);
+}
 .leaflet-tooltip.pw-tip {
   background: oklch(0.14 0.02 240 / 0.85);
   color: var(--color-foreground);
@@ -238,5 +371,496 @@
   padding: 2px 5px;
   border-radius: 0;
 }
-.leaflet-tooltip.pw-tip-cyan { color: var(--color-cyan); border-color: var(--color-cyan); }
-.leaflet-tooltip.pw-tip::before { display: none; }
+.leaflet-tooltip.pw-tip-cyan {
+  color: var(--color-cyan);
+  border-color: var(--color-cyan);
+}
+.leaflet-tooltip.pw-tip::before {
+  display: none;
+}
+
+.pw-leaflet-map {
+  background:
+    radial-gradient(
+      circle at 58% 55%,
+      oklch(0.16 0.04 230 / 0.5),
+      transparent 46%
+    ),
+    oklch(0.08 0.02 240);
+}
+.pw-leaflet-map .leaflet-tile {
+  filter: brightness(1.15) contrast(1.25) saturate(1.1) hue-rotate(4deg);
+}
+.pw-map-ocean-tint {
+  background:
+    radial-gradient(
+      circle at 35% 60%,
+      oklch(0.2 0.08 225 / 0.26),
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 67% 54%,
+      oklch(0.2 0.09 210 / 0.25),
+      transparent 44%
+    ),
+    linear-gradient(
+      180deg,
+      oklch(0.05 0.02 240 / 0.18),
+      oklch(0.09 0.04 235 / 0.42)
+    );
+  mix-blend-mode: screen;
+}
+.pw-map-vignette {
+  background: radial-gradient(
+    ellipse at center,
+    transparent 50%,
+    oklch(0.04 0.02 240 / 0.72) 100%
+  );
+}
+.leaflet-tooltip.pw-port-tooltip {
+  background: oklch(0.12 0.02 240 / 0.88);
+  color: var(--color-muted-foreground);
+  border: 1px solid var(--color-cyan);
+  box-shadow: 0 8px 24px oklch(0 0 0 / 0.42);
+  font-family: var(--font-sans);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0;
+  border-radius: 0;
+}
+.leaflet-tooltip.pw-port-tooltip::before {
+  display: none;
+}
+.pw-tooltip-card {
+  min-width: 150px;
+  padding: 6px 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  line-height: 1.25;
+}
+.pw-tooltip-card b {
+  color: var(--color-foreground);
+  font-weight: 600;
+  text-align: right;
+}
+.pw-vessel-leaflet-icon,
+.pw-alert-leaflet-icon,
+.pw-chokepoint-label-icon {
+  background: transparent;
+  border: 0;
+}
+.pw-port-label-callout,
+.pw-port-halo-icon,
+.pw-radar-cell-icon,
+.pw-cyclone-icon,
+.pw-radar-vessel-icon,
+.pw-route-pulse-icon,
+.pw-radar-chokepoint-callout {
+  background: transparent;
+  border: 0;
+}
+.pw-port-label-callout {
+  width: auto !important;
+  height: auto !important;
+  pointer-events: none;
+  text-shadow:
+    0 0 3px #000,
+    0 1px 2px #000;
+  white-space: nowrap;
+}
+.pw-port-label-callout span {
+  display: grid;
+  grid-template-columns: auto 24px;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 6px;
+  border: 1px solid;
+  background: oklch(0.08 0.02 240 / 0.74);
+  backdrop-filter: blur(7px);
+  box-shadow: 0 8px 18px oklch(0 0 0 / 0.32);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  line-height: 12px;
+}
+.pw-port-label-callout b {
+  font-weight: 700;
+}
+.pw-port-label-callout i {
+  font-style: normal;
+  color: var(--color-foreground);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.pw-port-halo-icon span {
+  --port-color: #7dd3fc;
+  display: block;
+  width: 74px;
+  height: 74px;
+  border-radius: 999px;
+  background: radial-gradient(
+    circle,
+    var(--port-color) 0%,
+    transparent 12%,
+    color-mix(in srgb, var(--port-color) 28%, transparent) 36%,
+    transparent 68%
+  );
+  filter: blur(0.3px);
+  opacity: 0.72;
+  animation: halo-breathe 4.8s ease-in-out infinite;
+}
+.pw-port-halo-icon span.severe {
+  animation-duration: 2.2s;
+  opacity: 0.95;
+}
+.pw-port-halo-icon span.congested {
+  animation-duration: 3.6s;
+}
+.pw-port-halo-icon span.normal {
+  animation: none;
+  opacity: 0.36;
+}
+.pw-vessel-glyph {
+  --vessel-color: #7dd3fc;
+  position: relative;
+  display: block;
+  width: 18px;
+  height: 18px;
+  transform-origin: center;
+  animation: vessel-drift 4.4s ease-in-out infinite;
+}
+.pw-vessel-glyph::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 2px;
+  width: 10px;
+  height: 14px;
+  background: var(--vessel-color);
+  clip-path: polygon(50% 0, 92% 72%, 50% 100%, 8% 72%);
+  box-shadow:
+    0 0 8px var(--vessel-color),
+    0 0 2px #fff;
+  opacity: 0.95;
+}
+.pw-vessel-glyph::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 12px;
+  width: 2px;
+  height: 9px;
+  background: var(--vessel-color);
+  opacity: 0.46;
+}
+.pw-alert-leaflet-icon {
+  width: auto !important;
+  height: auto !important;
+}
+.pw-alert-leaflet-icon span {
+  display: block;
+  min-width: 68px;
+  max-width: 112px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 1px solid;
+  background: oklch(0.1 0.02 240 / 0.82);
+  backdrop-filter: blur(8px);
+  padding: 2px 5px;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-shadow: 0 0 3px #000;
+}
+.pw-chokepoint-label-icon {
+  width: auto !important;
+  height: auto !important;
+  pointer-events: none;
+  white-space: nowrap;
+  text-shadow:
+    0 0 3px #000,
+    0 1px 2px #000;
+}
+.pw-chokepoint-label-icon b,
+.pw-chokepoint-label-icon span {
+  display: block;
+  font-size: 8px;
+  line-height: 10px;
+  letter-spacing: 0.14em;
+}
+.pw-chokepoint-label-icon b {
+  color: var(--color-foreground);
+  font-weight: 600;
+}
+
+.pw-radar-cell {
+  --cell-size: 160px;
+  --cell-delay: 0s;
+  position: relative;
+  display: block;
+  width: var(--cell-size);
+  height: var(--cell-size);
+  border-radius: 999px;
+  transform: translateZ(0);
+  animation: radar-cell-drift 8s ease-in-out infinite;
+  animation-delay: var(--cell-delay);
+  mix-blend-mode: screen;
+}
+.pw-radar-cell i,
+.pw-radar-cell b,
+.pw-radar-cell em {
+  position: absolute;
+  inset: 0;
+  display: block;
+  border-radius: 999px;
+  filter: blur(14px);
+}
+.pw-radar-cell i {
+  background: radial-gradient(
+    circle at 50% 50%,
+    #7ef0b4 0 10%,
+    #45b9ff 24%,
+    transparent 58%
+  );
+  opacity: 0.38;
+}
+.pw-radar-cell b {
+  inset: 12%;
+  background: radial-gradient(
+    circle at 42% 48%,
+    #ffef7a 0 12%,
+    #ffb347 24%,
+    transparent 58%
+  );
+  opacity: 0.32;
+}
+.pw-radar-cell em {
+  inset: 27%;
+  background: radial-gradient(circle, #ff5566 0 18%, transparent 62%);
+  opacity: 0;
+}
+.pw-radar-light i {
+  opacity: 0.26;
+}
+.pw-radar-moderate i {
+  opacity: 0.42;
+}
+.pw-radar-heavy b {
+  opacity: 0.42;
+}
+.pw-radar-severe b,
+.pw-radar-severe em {
+  opacity: 0.48;
+}
+.pw-wind-streamline {
+  animation: wind-flow 5.5s linear infinite;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px oklch(0.82 0.18 195 / 0.45));
+}
+.pw-cyclone-system {
+  position: relative;
+  display: block;
+  width: 190px;
+  height: 190px;
+  color: #ffb347;
+  filter: drop-shadow(0 0 14px oklch(0.68 0.24 25 / 0.62));
+  mix-blend-mode: screen;
+}
+.pw-cyclone-system svg {
+  position: absolute;
+  inset: 0;
+}
+.pw-cyclone-system path {
+  fill: none;
+  stroke: #ffb347;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  opacity: 0.76;
+}
+.pw-cyclone-system circle {
+  fill: #ff5566;
+  stroke: #ffe2b7;
+  stroke-width: 1;
+}
+.pw-cyclone-ring {
+  fill: none !important;
+  stroke: #ff5566 !important;
+  opacity: 0.42;
+  animation: pulse-ring 2.8s ease-out infinite;
+  transform-origin: center;
+}
+.pw-cyclone-ring.late {
+  animation-delay: 0.8s;
+}
+.pw-cyclone-rotor {
+  transform-origin: center;
+  animation: sweep 14s linear infinite;
+}
+.pw-cyclone-system b,
+.pw-cyclone-system em {
+  position: absolute;
+  left: 112px;
+  white-space: nowrap;
+  background: oklch(0.08 0.02 240 / 0.76);
+  border: 1px solid #ffb34788;
+  padding: 2px 5px;
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  font-style: normal;
+}
+.pw-cyclone-system b {
+  top: 56px;
+  color: #ffb347;
+}
+.pw-cyclone-system em {
+  top: 75px;
+  color: var(--color-muted-foreground);
+}
+.pw-radar-vessel {
+  --vessel-color: #7dd3fc;
+  --vessel-heading: 0deg;
+  position: relative;
+  display: block;
+  width: 28px;
+  height: 28px;
+  transform: rotate(var(--vessel-heading));
+  animation: radar-vessel-bob 3.8s ease-in-out infinite;
+}
+.pw-radar-vessel::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 3px;
+  width: 14px;
+  height: 20px;
+  background: var(--vessel-color);
+  clip-path: polygon(50% 0, 92% 70%, 62% 100%, 50% 86%, 38% 100%, 8% 70%);
+  box-shadow:
+    0 0 10px var(--vessel-color),
+    0 0 2px #fff;
+}
+.pw-radar-vessel::after {
+  content: "";
+  position: absolute;
+  left: 13px;
+  top: 20px;
+  width: 2px;
+  height: 14px;
+  background: linear-gradient(180deg, var(--vessel-color), transparent);
+  opacity: 0.56;
+}
+.pw-radar-vessel i {
+  position: absolute;
+  inset: 3px;
+  border: 1px solid color-mix(in srgb, var(--vessel-color) 75%, white);
+  border-radius: 999px;
+  opacity: 0.28;
+}
+.pw-radar-vessel.sar i {
+  border-style: dashed;
+  opacity: 0.56;
+}
+.pw-radar-vessel.fused i {
+  border-color: var(--color-amber);
+  opacity: 0.54;
+}
+.pw-vessel-wake-line {
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+.pw-route-glow-line,
+.pw-route-dash-line {
+  stroke-linecap: round;
+}
+.pw-route-dash-line {
+  animation: route-flow 4.2s linear infinite;
+  filter: drop-shadow(0 0 4px oklch(0.82 0.18 195 / 0.32));
+}
+.pw-route-pulse-icon span {
+  --route-color: #7dd3fc;
+  display: block;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid var(--route-color);
+  background: radial-gradient(
+    circle,
+    var(--route-color) 0 10%,
+    transparent 45%
+  );
+  box-shadow: 0 0 14px var(--route-color);
+  animation: pulse-ring 2.6s ease-out infinite;
+}
+.pw-radar-chokepoint-callout {
+  width: auto !important;
+  height: auto !important;
+  pointer-events: none;
+}
+.pw-radar-chokepoint-callout b,
+.pw-radar-chokepoint-callout span {
+  display: block;
+  width: max-content;
+  max-width: 132px;
+  padding: 2px 6px;
+  background: oklch(0.08 0.02 240 / 0.78);
+  border: 1px solid var(--color-line-strong);
+  backdrop-filter: blur(8px);
+  font-size: 8px;
+  line-height: 10px;
+  letter-spacing: 0.14em;
+}
+.pw-radar-chokepoint-callout b {
+  color: var(--color-foreground);
+  border-bottom: 0;
+}
+@keyframes radar-cell-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(8px, -5px) scale(1.04);
+  }
+}
+@keyframes wind-flow {
+  to {
+    stroke-dashoffset: -70;
+  }
+}
+@keyframes route-flow {
+  to {
+    stroke-dashoffset: -90;
+  }
+}
+@keyframes radar-vessel-bob {
+  0%,
+  100% {
+    margin-top: 0;
+  }
+  50% {
+    margin-top: -2px;
+  }
+}
+.pw-sar-scene {
+  box-shadow:
+    inset 0 0 70px oklch(0 0 0 / 0.72),
+    inset 0 0 0 1px oklch(0.82 0.18 195 / 0.08);
+}
+.animate-sar-sweep {
+  animation: sar-sweep 5.8s ease-in-out infinite;
+  mix-blend-mode: screen;
+}
+@keyframes sar-sweep {
+  0% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  28% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateX(330%);
+    opacity: 0;
+  }
+}

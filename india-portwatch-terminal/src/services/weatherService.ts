@@ -6,5 +6,8 @@ export function listWeatherSignals(): WeatherSignal[] {
 }
 
 export function getWeatherSignal(portCode: string): WeatherSignal {
-  return weatherSignals.find((signal) => signal.portCode === portCode) ?? weatherSignals[0];
+  return (
+    weatherSignals.find((signal) => signal.portCode === portCode) ??
+    weatherSignals[0]
+  );
 }

@@ -48,8 +48,11 @@ export interface PortRisk {
 export interface VesselProxy {
   id: string;
   vesselType: VesselKind;
+  location: GeoPoint;
   radar: RadarPoint;
   schematic: RadarPoint;
+  destinationPortCode?: string;
+  status?: "underway" | "anchored" | "approach" | "berthed" | "rerouted";
   heading: number;
   speedKnots: number;
   flag: string;

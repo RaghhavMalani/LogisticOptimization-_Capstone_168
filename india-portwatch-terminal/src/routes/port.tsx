@@ -1,9 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Chip, Sparkline, Bar } from "@/components/terminal/ui";
-import { NLP_HEADLINES, PORTS } from "@/data/portwatch";
 import chennaiSat from "@/assets/chennai-port.jpg";
+import { getDecisionRecommendation, getForecastForPort, getHSMMRegime, listModelPipelineStatuses } from "@/services/modelService";
+import { listNewsEvents } from "@/services/newsService";
+import { getPortSnapshot } from "@/services/portService";
+import { getWeatherSignal } from "@/services/weatherService";
 
 export const Route = createFileRoute("/port")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    port: typeof search.port === "string" ? search.port : "INMAA",
+  }),
   component: PortPage,
 });
 
@@ -13,30 +19,18 @@ const berthOcc = [
   ["B9", 40, "mint"], ["B10", 30, "mint"],
 ] as const;
 
-const forecastDays = [
-  { d: 1, delay: 76.8, band: 12.6, wxPct: 93, sev: "SEVERE" },
-  { d: 2, delay: 78.5, band: 12.0, wxPct: 91, sev: "SEVERE" },
-  { d: 3, delay: 71.3, band: 9.4,  wxPct: 85, sev: "HIGH" },
-  { d: 4, delay: 62.1, band: 7.1,  wxPct: 75, sev: "HIGH" },
-  { d: 5, delay: 53.2, band: 5.8,  wxPct: 0,  sev: "MOD" },
-  { d: 6, delay: 48.7, band: 4.6,  wxPct: 0,  sev: "MOD" },
-  { d: 7, delay: 46.6, band: 4.2,  wxPct: 0,  sev: "MOD" },
-  { d: 8, delay: 44.3, band: 3.9,  wxPct: 0,  sev: "MOD" },
-  { d: 9, delay: 40.8, band: 3.3,  wxPct: 0,  sev: "LOW" },
-  { d: 10, delay: 39.1, band: 3.0, wxPct: 0,  sev: "LOW" },
-];
-
-const experts = [
-  ["Weather Expert",   "Monsoon conditions impacting pilotage & yard ops.",   0.93, "cyan"],
-  ["News / Geo Expert","Labor risk moderate; export demand surge ongoing.",   0.88, "amber"],
-  ["Port Ops Expert",  "Berth occupancy high; yard dwell increasing.",         0.90, "amber"],
-  ["Demand Expert",    "Auto components & projects cargo demand high.",        0.86, "cyan"],
-  ["HSMM Regime",      "Severe regime likely to persist in short term.",       0.93, "red"],
-  ["TFT Forecast",     "Congestion index forecast for next 10 days.",          0.91, "red"],
-] as const;
-
 function PortPage() {
-  const chn = PORTS.find(p => p.code === "INMAA")!;
+  const { port } = Route.useSearch();
+  const chn = getPortSnapshot(port);
+  const weather = getWeatherSignal(chn.code);
+  const regime = getHSMMRegime(chn.code);
+  const forecastDays = getForecastForPort(chn.code);
+  const recommendation = getDecisionRecommendation(chn.code);
+  const experts = listModelPipelineStatuses();
+  const newsForPort = listNewsEvents().filter((event) => event.affectedPorts.includes(chn.code));
+  const portName = chn.name.toUpperCase();
+  const riskTone = chn.risk === "severe" ? "red" : chn.risk === "congested" ? "amber" : "mint";
+  const severityLabel = chn.risk === "severe" ? "SEVERE" : chn.risk === "congested" ? "HIGH" : "NORMAL";
 
   return (
     <div className="h-full overflow-auto">
@@ -45,30 +39,30 @@ function PortPage() {
         <div className="grid grid-cols-[1.4fr_1fr_0.9fr_1fr_1fr_1.1fr_1.1fr] gap-2 items-stretch">
           <div className="panel px-4 py-3 col-span-1">
             <div className="text-[9px] tracking-[0.24em] text-[var(--color-muted-foreground)]">PORT OPERATIONS COCKPIT FOR</div>
-            <div className="text-[32px] leading-none tracking-[0.06em] text-[var(--color-foreground)] font-semibold">CHENNAI</div>
-            <div className="text-[9px] tracking-[0.24em] text-[var(--color-muted-foreground)] mt-1">CHENNAI PORT AUTHORITY</div>
+            <div className="text-[32px] leading-none tracking-[0.06em] text-[var(--color-foreground)] font-semibold">{portName}</div>
+            <div className="text-[9px] tracking-[0.24em] text-[var(--color-muted-foreground)] mt-1">{chn.authority.toUpperCase()}</div>
           </div>
-          <HdrField label="CURRENT PORT AUTHORITY" value="Chennai Port Authority" sub="13.0827° N, 80.2707° E" />
-          <HdrField label="CURRENT REGIME" chip={<Chip tone="red">SEVERE</Chip>} />
+          <HdrField label="CURRENT PORT AUTHORITY" value={chn.authority} sub={`${chn.location.lat.toFixed(4)}° N, ${chn.location.lon.toFixed(4)}° E`} />
+          <HdrField label="CURRENT REGIME" chip={<Chip tone={riskTone}>{severityLabel}</Chip>} />
           <HdrField label="FORECAST ORIGIN" value="07 MAY 2025" sub="03:00 UTC" />
-          <HdrField label="MODEL CONFIDENCE" chip={<Chip tone="mint">HIGH</Chip>} sub="93%" />
-          <HdrField label="SELECT PORT" value="CHENNAI ▾" />
+          <HdrField label="MODEL CONFIDENCE" chip={<Chip tone="mint">HIGH</Chip>} sub={`${Math.round(chn.confidence * 100)}%`} />
+          <HdrField label="SELECT PORT" value={`${portName} ▾`} />
           <HdrField label="LAST UPDATED" value="07 May 2025 06:15 UTC" chip={<Chip tone="mint">● LIVE</Chip>} />
         </div>
 
         {/* TOP KPI STRIP */}
         <div className="grid grid-cols-7 gap-2">
-          <Kpi label="SEVERITY" big="SEVERE" tone="red" sub="HIGH IMPACT" />
-          <Kpi label="CHENNAI PORT CONGESTION" big="76.8" tone="red" sub="Index (0-100)" spark={[45,50,58,64,68,72,75,76.8]} sparkTone="red" />
-          <Kpi label="PEAK DELAY (P95)" big="12.6 h" tone="red" sub="(next 24h)" spark={[8,9,10,11,12,12.4,12.6]} sparkTone="red" />
-          <Kpi label="THROUGHPUT (27D)" big="42,318" tone="cyan" sub="TEU" spark={[38000,39500,40100,41000,41800,42100,42318]} sparkTone="cyan" />
-          <Kpi label="TRANSITION RISK" big="63%" tone="amber" sub="(12h Horizon)" spark={[42,48,54,58,60,62,63]} sparkTone="amber" />
-          <Kpi label="CONFIDENCE" big="93%" tone="mint" sub="Model Confidence" spark={[85,88,90,91,92,93,93]} sparkTone="mint" />
+          <Kpi label="SEVERITY" big={severityLabel} tone={riskTone} sub="HIGH IMPACT" />
+          <Kpi label={`${portName} PORT CONGESTION`} big={(chn.congestion * 100).toFixed(1)} tone={riskTone} sub="Index (0-100)" spark={[45,50,58,64,68,72,75,chn.congestion * 100]} sparkTone={riskTone} />
+          <Kpi label="PEAK DELAY (P95)" big={`${chn.delayHours.toFixed(1)} h`} tone={riskTone} sub="(next 24h)" spark={[8,9,10,11,12,Math.max(12, chn.delayHours - 1),chn.delayHours]} sparkTone={riskTone} />
+          <Kpi label="THROUGHPUT (27D)" big={chn.throughput.toLocaleString()} tone="cyan" sub="TEU proxy" spark={[chn.throughput * 0.86, chn.throughput * 0.9, chn.throughput * 0.93, chn.throughput]} sparkTone="cyan" />
+          <Kpi label="TRANSITION RISK" big={`${Math.round(regime.transitionRisk24h * 100)}%`} tone="amber" sub="(12h Horizon)" spark={[42,48,54,58,60,62,regime.transitionRisk24h * 100]} sparkTone="amber" />
+          <Kpi label="CONFIDENCE" big={`${Math.round(chn.confidence * 100)}%`} tone="mint" sub="Model Confidence" spark={[85,88,90,91,92,93,chn.confidence * 100]} sparkTone="mint" />
           <div className="panel px-3 py-2 flex flex-col justify-between">
             <div>
-              <div className="label-xs">RECOMMENDATION (CHENNAI)</div>
+              <div className="label-xs">RECOMMENDATION ({portName})</div>
               <div className="mt-1 text-[11px] text-[var(--color-foreground)] leading-snug">
-                <span className="text-[var(--color-amber)]">Activate congestion protocol.</span> Prioritize berth allocation. Stagger arrivals. Advise vessels to slow steam.
+                <span className="text-[var(--color-amber)]">{recommendation.title}.</span> {recommendation.actions.slice(0, 3).join(". ")}.
               </div>
             </div>
             <button className="mt-1 self-end text-[var(--color-cyan)] text-[16px]">›</button>
@@ -79,7 +73,7 @@ function PortPage() {
         <div className="panel px-3 py-2 flex items-center gap-4 text-[11px]">
           <span className="text-[var(--color-cyan)] flex items-center gap-2 whitespace-nowrap"><span className="h-1.5 w-1.5 rounded-full bg-[var(--color-cyan)] animate-blink"/>AI OPERATIONAL BRIEFING</span>
           <span className="text-[var(--color-foreground)] flex-1">
-            Chennai Port congestion is severe. Peak congestion on Day 1–2 (Δ+12.6h). High onshore wind and moderate sea state may impact pilotage and cargo ops.
+            {chn.name} congestion is {severityLabel.toLowerCase()}. Peak congestion is expected in the next 48h with {weather.windKnots} kt wind and {weather.seaState.toLowerCase()} sea state affecting pilotage and cargo ops.
           </span>
           <div className="flex items-center gap-3 text-[10px] text-[var(--color-mint)]">
             <span>● Activate congestion protocol</span>
@@ -87,14 +81,14 @@ function PortPage() {
             <span>● Stagger arrivals</span>
             <span>● Advise vessels to slow steam</span>
           </div>
-          <span className="text-[9px] text-[var(--color-muted-foreground)]">Generated by India PortWatch AI · 07 May 2025 06:15 UTC</span>
+          <span className="text-[9px] text-[var(--color-muted-foreground)]">Generated by India PortWatch AI · {recommendation.timestamp}</span>
         </div>
 
         {/* MID GRID: twin | hsmm | weather */}
         <div className="grid grid-cols-[1.6fr_0.9fr_1.1fr] gap-2" style={{ minHeight: 380 }}>
           {/* DIGITAL TWIN */}
           <div className="panel flex flex-col">
-            <div className="panel-header"><span>PORT DIGITAL TWIN — CHENNAI PORT</span><span>UPDATED: 06:15 UTC</span></div>
+            <div className="panel-header"><span>PORT DIGITAL TWIN — {portName} PORT</span><span>UPDATED: {chn.updatedAt}</span></div>
             <div className="relative flex-1 overflow-hidden">
               <img src={chennaiSat} alt="Chennai port satellite" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "brightness(0.72) saturate(1.08) contrast(1.05)" }} />
               <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 40%, oklch(0 0 0 / 0.55) 100%)" }} />
@@ -218,31 +212,31 @@ function PortPage() {
           {/* HSMM + weather column */}
           <div className="grid grid-rows-2 gap-2">
             <div className="panel">
-              <div className="panel-header"><span>HSMM REGIME INTELLIGENCE (CHENNAI)</span></div>
+              <div className="panel-header"><span>HSMM REGIME INTELLIGENCE ({portName})</span></div>
               <div className="p-3 space-y-2 text-[11px]">
-                {[["Normal",0,"mint"],["Congested",7,"amber"],["Severe",91,"red"]].map(([l,v,t])=>(
+                {[["Normal",regime.probabilities.normal * 100,"mint"],["Congested",regime.probabilities.congested * 100,"amber"],["Severe",regime.probabilities.severe * 100,"red"]].map(([l,v,t])=>(
                   <div key={l as string}>
-                    <div className="flex justify-between mb-1"><span className="text-[var(--color-foreground)]">{l}</span><span className={t==="red"?"text-[var(--color-red)]":t==="amber"?"text-[var(--color-amber)]":"text-[var(--color-mint)]"}>{v}%</span></div>
+                    <div className="flex justify-between mb-1"><span className="text-[var(--color-foreground)]">{l}</span><span className={t==="red"?"text-[var(--color-red)]":t==="amber"?"text-[var(--color-amber)]":"text-[var(--color-mint)]"}>{Math.round(v as number)}%</span></div>
                     <div className="h-1 bg-[var(--color-panel-2)]"><div className="h-full" style={{ width: `${v}%`, background: t==="red"?"var(--color-red)":t==="amber"?"var(--color-amber)":"var(--color-mint)"}} /></div>
                   </div>
                 ))}
                 <div className="pt-2 border-t border-[var(--color-line)] space-y-1 text-[10px]">
-                  <Row k="Days in State" v="3.2" />
-                  <Row k="Expected remaining" v="1.3 day" />
-                  <Row k="Transition risk (24h)" v={<><span className="text-[var(--color-foreground)]">63%</span> <Chip tone="red">HIGH</Chip></>} />
-                  <Row k="State confidence" v={<><span className="text-[var(--color-foreground)]">93%</span> <Chip tone="red">HIGH</Chip></>} />
+                  <Row k="Days in State" v={regime.daysInState.toFixed(1)} />
+                  <Row k="Expected remaining" v={`${regime.expectedRemainingDays.toFixed(1)} day`} />
+                  <Row k="Transition risk (24h)" v={<><span className="text-[var(--color-foreground)]">{Math.round(regime.transitionRisk24h * 100)}%</span> <Chip tone={regime.transitionRisk24h > 0.55 ? "red" : "amber"}>HIGH</Chip></>} />
+                  <Row k="State confidence" v={<><span className="text-[var(--color-foreground)]">{Math.round(regime.confidence * 100)}%</span> <Chip tone="red">HIGH</Chip></>} />
                 </div>
               </div>
             </div>
             <div className="panel">
-              <div className="panel-header"><span>WEATHER INTELLIGENCE · CHENNAI COASTAL OUTLOOK</span></div>
+              <div className="panel-header"><span>WEATHER INTELLIGENCE · {portName} COASTAL OUTLOOK</span></div>
               <div className="p-3 grid grid-cols-3 gap-x-3 gap-y-2 text-[10px]">
-                <WxCell l="WIND (10m)" v="28 kt" sub="WNW" />
-                <WxCell l="GUSTS" v="38 kt" />
-                <WxCell l="RAINFALL (24h)" v="18 mm" />
-                <WxCell l="WAVE HEIGHT" v="1.7 m" sub="S" />
-                <WxCell l="SEA STATE" v="Moderate" />
-                <WxCell l="VISIBILITY" v="9 km" sub="Good" tone="mint" />
+                <WxCell l="WIND (10m)" v={`${weather.windKnots} kt`} sub={weather.windDirection} />
+                <WxCell l="GUSTS" v={`${weather.gustKnots} kt`} />
+                <WxCell l="RAINFALL (24h)" v={`${weather.rainfallMm24h} mm`} />
+                <WxCell l="WAVE HEIGHT" v={`${weather.waveHeightM} m`} sub="S" />
+                <WxCell l="SEA STATE" v={weather.seaState} />
+                <WxCell l="VISIBILITY" v={`${weather.visibilityKm} km`} sub="Good" tone="mint" />
                 <div className="col-span-3 mt-1 border-t border-[var(--color-line)] pt-2">
                   <div className="label-xs mb-1">MONSOON OUTLOOK</div>
                   <div className="grid grid-cols-3 gap-2 text-[10px]">
@@ -254,12 +248,12 @@ function PortPage() {
                 <div className="col-span-3 mt-1 border-t border-[var(--color-line)] pt-2">
                   <div className="label-xs mb-1">WEATHER MODULE OUTPUTS</div>
                   <div className="grid grid-cols-3 gap-2 text-[10px]">
-                    <WxOut k="weather_raw_score" v="0.68" />
-                    <WxOut k="weather_impact_score" v="0.72" />
+                    <WxOut k="weather_raw_score" v={weather.impactScore.toFixed(2)} />
+                    <WxOut k="weather_impact_score" v={weather.impactScore.toFixed(2)} />
                     <WxOut k="weather_persistence" v="SW_MONSOON_ACTIVE" tone="mint" />
-                    <WxOut k="weather_shock" v="0.19" />
-                    <WxOut k="weather_hsmm_input" v="0.71" tone="red" />
-                    <WxOut k="weather_tft_covariate" v="0.67" />
+                    <WxOut k="weather_shock" v={weather.shockSigma.toFixed(2)} />
+                    <WxOut k="weather_hsmm_input" v={weather.impactScore.toFixed(2)} tone="red" />
+                    <WxOut k="weather_tft_covariate" v={weather.persistenceScore.toFixed(2)} />
                   </div>
                 </div>
               </div>
@@ -269,19 +263,19 @@ function PortPage() {
 
         {/* 10-DAY FORECAST TIMELINE */}
         <div className="panel">
-          <div className="panel-header"><span>10-DAY FORECAST TIMELINE · CHENNAI PORT</span></div>
+          <div className="panel-header"><span>10-DAY FORECAST TIMELINE · {portName} PORT</span></div>
           <div className="p-2 grid grid-cols-10 gap-1.5">
             {forecastDays.map((d, i) => {
-              const tone = d.sev === "SEVERE" ? "red" : d.sev === "HIGH" ? "amber" : d.sev === "MOD" ? "cyan" : "mint";
+              const tone = d.severity === "SEVERE" ? "red" : d.severity === "HIGH" ? "amber" : d.severity === "MOD" ? "cyan" : "mint";
               const bg = tone === "red" ? "var(--color-red)" : tone === "amber" ? "var(--color-amber)" : tone === "cyan" ? "var(--color-cyan)" : "var(--color-mint)";
               return (
                 <div key={i} className="panel p-2 flex flex-col gap-1" style={{ animation: `fade-in .5s ease-out ${i*60}ms both` }}>
-                  <div className="flex justify-between items-center text-[9px]"><span className="text-[var(--color-muted-foreground)]">DAY {d.d} · {String(6+i).padStart(2,"0")} MAY</span><span className="px-1 border" style={{ borderColor: bg, color: bg }}>{d.sev}</span></div>
-                  <div className="text-[16px] tabular-nums text-[var(--color-foreground)] leading-none">{d.delay}</div>
-                  <div className="text-[9px] text-[var(--color-muted-foreground)]">(±{d.band}h)</div>
+                  <div className="flex justify-between items-center text-[9px]"><span className="text-[var(--color-muted-foreground)]">DAY {d.day} · {d.dateLabel}</span><span className="px-1 border" style={{ borderColor: bg, color: bg }}>{d.severity}</span></div>
+                  <div className="text-[16px] tabular-nums text-[var(--color-foreground)] leading-none">{d.congestionIndex}</div>
+                  <div className="text-[9px] text-[var(--color-muted-foreground)]">(±{d.uncertaintyBandHours}h)</div>
                   <div className="flex items-center justify-between text-[9px]">
                     <span className="text-[var(--color-cyan)]">☁</span>
-                    {d.wxPct > 0 && <span className="text-[var(--color-red)] tabular-nums">{d.wxPct}%</span>}
+                    {d.weatherProbability > 0 && <span className="text-[var(--color-red)] tabular-nums">{Math.round(d.weatherProbability * 100)}%</span>}
                   </div>
                   <div className="h-0.5" style={{ background: bg, opacity: 0.7 }} />
                 </div>
@@ -293,7 +287,7 @@ function PortPage() {
         {/* BOTTOM: DRIVERS · EXPERT CHAIN · NEWS */}
         <div className="grid grid-cols-3 gap-2">
           <div className="panel">
-            <div className="panel-header"><span>KEY FORECAST DRIVERS · CHENNAI</span><span>IMPACT</span></div>
+            <div className="panel-header"><span>KEY FORECAST DRIVERS · {portName}</span><span>IMPACT</span></div>
             <div className="p-2 space-y-1.5 text-[11px]">
               {[["1","Wind Speed (WNW 20–30 kt)","+28%","HIGH","red"],
                 ["2","SW Monsoon Onset (Active)","+25%","HIGH","red"],
@@ -313,14 +307,14 @@ function PortPage() {
           </div>
 
           <div className="panel">
-            <div className="panel-header"><span>MODEL OUTPUTS · EXPERT CHAIN (CHENNAI)</span><span>Confidence</span></div>
+            <div className="panel-header"><span>MODEL OUTPUTS · EXPERT CHAIN ({portName})</span><span>Confidence</span></div>
             <div className="p-2 space-y-1.5 text-[11px]">
-              {experts.map(([name, note, conf, tone]) => (
-                <div key={name as string} className="grid grid-cols-[18px_140px_1fr_36px] gap-2 items-center">
+              {experts.map((expert) => (
+                <div key={expert.key} className="grid grid-cols-[18px_140px_1fr_36px] gap-2 items-center">
                   <span className="text-[var(--color-cyan)]">◎</span>
-                  <span className="text-[var(--color-foreground)]">{name}</span>
-                  <span className="text-[10px] text-[var(--color-muted-foreground)]">{note}</span>
-                  <span className={"text-right tabular-nums " + (tone === "red" ? "text-[var(--color-red)]" : tone === "amber" ? "text-[var(--color-amber)]" : "text-[var(--color-cyan)]")}>{(conf as number).toFixed(2)}</span>
+                  <span className="text-[var(--color-foreground)]">{expert.name}</span>
+                  <span className="text-[10px] text-[var(--color-muted-foreground)]">{expert.effectOnForecast}</span>
+                  <span className={"text-right tabular-nums " + (expert.score > 0.7 ? "text-[var(--color-red)]" : expert.score > 0.55 ? "text-[var(--color-amber)]" : "text-[var(--color-cyan)]")}>{expert.confidence.toFixed(2)}</span>
                 </div>
               ))}
               <div className="text-[9px] text-[var(--color-muted-foreground)] pt-1 border-t border-[var(--color-line)]/60">ⓘ Expert chain output drives HSMM regime and TFT forecast.</div>
@@ -328,23 +322,18 @@ function PortPage() {
           </div>
 
           <div className="panel">
-            <div className="panel-header"><span>NEWS INTELLIGENCE · THIS PORT (CHENNAI)</span><span>Impact · Confidence</span></div>
+            <div className="panel-header"><span>NEWS INTELLIGENCE · THIS PORT ({portName})</span><span>Impact · Confidence</span></div>
             <div className="p-2 space-y-2 text-[11px]">
-              {[
-                ["1","Labor Risk","HIGH","red","Union strike notice issued by CITU at Chennai Port from 10 May","(Ops may slow if unresolved)","High","0.87"],
-                ["2","Export Demand Surge","HIGH","red","Surge in auto components exports via Chennai","(BMW, Hyundai, Ford shipments)","High","0.90"],
-                ["3","Berth Operations","MEDIUM","amber","Berths B3 & B4 maintenance works on 12–13 May","(Partial closure expected)","Medium","0.76"],
-                ["4","Dredging Update","LOW","mint","Maintenance dredging in south channel 09–15 May","(Improves draft post works)","Low","0.65"],
-              ].map(([n,cat,sev,tone,title,paren,imp,conf])=>(
-                <div key={n as string} className="grid grid-cols-[14px_1fr_54px_44px] gap-2">
-                  <span className="text-[var(--color-cyan)] tabular-nums">{n}</span>
+              {(newsForPort.length ? newsForPort : listNewsEvents()).slice(0,4).map((event, i)=>(
+                <div key={event.id} className="grid grid-cols-[14px_1fr_54px_44px] gap-2">
+                  <span className="text-[var(--color-cyan)] tabular-nums">{i + 1}</span>
                   <div>
-                    <div className="flex items-center gap-2"><span className="text-[var(--color-foreground)] font-medium">{cat}</span><Chip tone={tone as any}>{sev}</Chip></div>
-                    <div className="text-[10px] text-[var(--color-foreground)]">{title}</div>
-                    <div className="text-[9px] text-[var(--color-muted-foreground)]">{paren}</div>
+                    <div className="flex items-center gap-2"><span className="text-[var(--color-foreground)] font-medium">{event.tag}</span><Chip tone={event.severity === "severe" ? "red" : event.severity === "normal" ? "mint" : "amber"}>{event.severity}</Chip></div>
+                    <div className="text-[10px] text-[var(--color-foreground)]">{event.text}</div>
+                    <div className="text-[9px] text-[var(--color-muted-foreground)]">{event.source} · {event.timestamp}Z</div>
                   </div>
-                  <span className="text-right text-[10px] text-[var(--color-foreground)] self-start">{imp}</span>
-                  <span className="text-right tabular-nums text-[10px] text-[var(--color-cyan)] self-start">{conf}</span>
+                  <span className="text-right text-[10px] text-[var(--color-foreground)] self-start">{event.sentiment < -0.2 ? "High" : "Medium"}</span>
+                  <span className="text-right tabular-nums text-[10px] text-[var(--color-cyan)] self-start">{event.confidence.toFixed(2)}</span>
                 </div>
               ))}
               <div className="text-[9px] text-[var(--color-muted-foreground)] pt-1 border-t border-[var(--color-line)]/60">ⓘ News & events intelligence integrated into expert chain.</div>

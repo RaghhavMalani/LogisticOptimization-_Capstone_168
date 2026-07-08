@@ -1,49 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Chip, Sparkline } from "@/components/terminal/ui";
 import { cn } from "@/lib/utils";
+import { listPortOperationalSnapshots } from "@/services/portService";
+import { listScenarioDefinitions, simulateScenario } from "@/services/scenarioService";
+import type { OperationalRiskLevel } from "@/types/portwatch";
 
 export const Route = createFileRoute("/sim")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    scenario: typeof search.scenario === "string" ? search.scenario : "STORM_W",
+    intensity: typeof search.intensity === "number" ? search.intensity : Number(search.intensity ?? 1.5),
+  }),
   component: DecisionRoom,
 });
-
-const SCENARIOS = [
-  { key: "STORM_W",  name: "Storm near west coast",     desc: "Severe monsoon storm tracking along Arabian Sea", icon: "storm" },
-  { key: "CYC_E",    name: "Cyclone near east coast",   desc: "Bay of Bengal cyclone approaching Chennai–Vizag", icon: "cyc" },
-  { key: "LABOUR",   name: "Labour strike",              desc: "Port workers' strike reducing gate & yard ops",   icon: "worker" },
-  { key: "CAPDROP",  name: "Port capacity drop",         desc: "Unplanned berth/crane outage (~20% handling)",    icon: "crane" },
-  { key: "DEMAND",   name: "Demand surge",               desc: "Festival/quarter-end surge (+15% cargo demand)",  icon: "cargo" },
-  { key: "HORMUZ",   name: "Hormuz closure",             desc: "Strait of Hormuz closed · Gulf crude/LNG halt",   icon: "gate" },
-  { key: "REDSEA",   name: "Red Sea disruption",         desc: "Bab-el-Mandeb/Suez route disruption",             icon: "drop" },
-  { key: "FUEL",     name: "Fuel price shock",           desc: "Brent spike > $25/bbl · cost pressure",           icon: "fuel" },
-];
-
-const AFFECTED_PORTS = [
-  ["1", "JNPT (Nhava Sheva)", 92, "SEVERE", "red"],
-  ["2", "Mundra (APSEZ)",     81, "SEVERE", "red"],
-  ["3", "Paradip",             74, "SEVERE", "red"],
-  ["4", "Visakhapatnam",       69, "SEVERE", "red"],
-  ["5", "Deendayal (Kandla)",  63, "HIGH",   "amber"],
-  ["6", "Chennai",             58, "HIGH",   "amber"],
-  ["7", "Kochi",               49, "MEDIUM", "cyan"],
-  ["8", "Mangaluru",           42, "MEDIUM", "cyan"],
-] as const;
-
-const CHOKES = [
-  ["Strait of Hormuz", "HIGH",   "red"],
-  ["Bab-el-Mandeb",    "MEDIUM", "amber"],
-  ["Malacca Strait",   "LOW",    "mint"],
-  ["Suez Canal",       "LOW",    "mint"],
-  ["Cape of Good Hope","LOW",    "mint"],
-] as const;
-
-const SEA_ROUTES = [
-  ["West Coast Route",   "+9.6h"],
-  ["East Coast Route",   "+6.3h"],
-  ["India → Europe",     "+11.2h"],
-  ["India → US East Coast", "+8.1h"],
-  ["India → GCC",        "+5.4h"],
-] as const;
 
 const EXPERTS = [
   ["Weather Expert",    "Storm cell over Arabian Sea coast. High waves & strong winds.", 0.82, "Wx Impact Index", "0.71", "red"],
@@ -63,10 +32,42 @@ const STAGES = [
   ["ANALYTICS",    "Insights & What to do", "cyan"],
 ] as const;
 
+function riskTone(risk: OperationalRiskLevel): "red" | "amber" | "cyan" | "mint" {
+  if (risk === "severe") return "red";
+  if (risk === "high") return "amber";
+  if (risk === "medium") return "cyan";
+  return "mint";
+}
+
+function riskLabel(risk: OperationalRiskLevel): string {
+  if (risk === "severe") return "SEVERE";
+  if (risk === "high") return "HIGH";
+  if (risk === "medium") return "MEDIUM";
+  return "LOW";
+}
+
+function signedPercent(value: number): string {
+  return `${value >= 0 ? "+" : ""}${value.toFixed(0)}%`;
+}
+
+function signedHours(value: number): string {
+  return `${value >= 0 ? "+" : ""}${value.toFixed(1)}h`;
+}
+
 function DecisionRoom() {
-  const [sel, setSel] = useState("STORM_W");
-  const [intensity, setIntensity] = useState(1.5);
+  const search = Route.useSearch();
+  const [sel, setSel] = useState(search.scenario);
+  const [intensity, setIntensity] = useState(Number.isFinite(search.intensity) ? search.intensity : 1.5);
   const [runId, setRunId] = useState(0);
+  const scenarios = listScenarioDefinitions();
+  const ports = listPortOperationalSnapshots();
+  const result = useMemo(() => simulateScenario(sel, intensity, 1247 + runId), [sel, intensity, runId]);
+  const impactByPort = new Map(result.affectedPorts.map((impact) => [impact.portCode, impact]));
+
+  useEffect(() => {
+    setSel(search.scenario);
+    setIntensity(Number.isFinite(search.intensity) ? search.intensity : 1.5);
+  }, [search.scenario, search.intensity]);
 
   return (
     <div className="h-full overflow-auto">
@@ -96,7 +97,7 @@ function DecisionRoom() {
             <div className="panel-header"><span className="flex items-center gap-2"><NumBadge n={1}/> SCENARIO SIMULATOR</span></div>
             <div className="p-3 text-[10px] text-[var(--color-muted-foreground)]">Explore what-if situations and their impact</div>
             <div className="px-3 pb-3 grid grid-cols-2 gap-2">
-              {SCENARIOS.map(sc => (
+              {scenarios.map(sc => (
                 <button key={sc.key} onClick={()=>setSel(sc.key)} className={cn(
                   "panel text-left p-2 transition-colors",
                   sel === sc.key ? "border-[var(--color-cyan)] shadow-[0_0_0_1px_var(--color-cyan)_inset,0_0_18px_-6px_var(--color-cyan)]" : "hover:border-[var(--color-line-strong)]"
@@ -142,18 +143,16 @@ function DecisionRoom() {
             </div>
             <div className="p-2 text-[10px] text-[var(--color-muted-foreground)]">Before vs After impact on affected ports, routes & operations</div>
             <div className="px-2 grid grid-cols-5 gap-2" key={runId}>
-              <ImpactCard label="Congestion Increase" avg="+64%" tone="red" data={[45,50,58,62,64,64]} sub="(56.2 → 92.1)" delay={0} />
-              <ImpactCard label="Delay Increase"      avg="+11.2h" tone="red" data={[6,8,9,10,11,11.2]} sub="(9.1h → 20.3h)" delay={80} />
-              <ImpactCard label="Throughput Drop"     avg="-18%" tone="mint" data={[100,95,90,85,82,82]} sub="(100 → 82 TEU/day)" invert delay={160} />
-              <ImpactCard label="Freight Impact"      avg="+8.7%" tone="red" data={[100,102,104,106,108,108.7]} sub="($2,184 → $2,374/TEU)" delay={240} />
+              <ImpactCard label="Congestion Increase" avg={signedPercent(result.congestionDelta)} tone={riskTone(result.riskLevel) === "red" ? "red" : "amber"} data={[45,50,58,62,result.congestionDelta]} sub={`Risk ${riskLabel(result.riskLevel)}`} delay={0} />
+              <ImpactCard label="Delay Increase"      avg={signedHours(result.delayDeltaHours)} tone="red" data={[6,8,9,10,result.delayDeltaHours]} sub="fleet ETA delta" delay={80} />
+              <ImpactCard label="Throughput Drop"     avg={signedPercent(result.throughputDelta)} tone="mint" data={[100,95,90,85,100 + result.throughputDelta]} sub="TEU/day proxy" invert delay={160} />
+              <ImpactCard label="Freight Impact"      avg={signedPercent(result.freightDelta)} tone="red" data={[100,102,104,106,100 + result.freightDelta]} sub="per TEU proxy" delay={240} />
               <div className="panel p-2 flex flex-col gap-1 text-[10px] animate-impact" style={{ animationDelay: "320ms" }}>
                 <div className="label-xs">Recommended Operational Response</div>
                 <ul className="text-[10px] leading-snug space-y-0.5 text-[var(--color-foreground)]">
-                  <li className="text-[var(--color-mint)]">● Prioritise berth allocation</li>
-                  <li className="text-[var(--color-mint)]">● Stagger vessel arrivals</li>
-                  <li className="text-[var(--color-mint)]">● Activate yard re-plan</li>
-                  <li className="text-[var(--color-amber)]">● Pre-position empties</li>
-                  <li className="text-[var(--color-amber)]">● Reroute via alternate ports</li>
+                  {result.recommendation.actions.map((action, index) => (
+                    <li key={action} className={index < 2 ? "text-[var(--color-mint)]" : "text-[var(--color-amber)]"}>● {action}</li>
+                  ))}
                 </ul>
                 <button className="mt-1 text-[10px] text-[var(--color-cyan)] border border-[var(--color-cyan)]/40 px-2 py-1">View Full Playbook →</button>
               </div>
@@ -167,14 +166,17 @@ function DecisionRoom() {
                   <span></span><span>PORT</span><span className="text-right">IMPACT SCORE</span><span></span>
                 </div>
                 <div className="p-1 text-[10px]">
-                  {AFFECTED_PORTS.map(([n,name,s,sev,tone])=>(
-                    <div key={n as string} className="grid grid-cols-[16px_1fr_36px_54px] items-center px-1 py-1 gap-1">
-                      <span className="text-[var(--color-muted-foreground)] tabular-nums">{n}.</span>
-                      <span className="text-[var(--color-foreground)] truncate">{name}</span>
-                      <span className="text-right tabular-nums text-[var(--color-foreground)]">{s}</span>
-                      <Chip tone={tone as any}>{sev}</Chip>
+                  {result.affectedPorts.map((impact, index)=>{
+                    const port = ports.find((item) => item.code === impact.portCode);
+                    return (
+                    <div key={impact.portCode} className="grid grid-cols-[16px_1fr_36px_54px] items-center px-1 py-1 gap-1">
+                      <span className="text-[var(--color-muted-foreground)] tabular-nums">{index + 1}.</span>
+                      <span className="text-[var(--color-foreground)] truncate">{port?.name ?? impact.portCode}</span>
+                      <span className="text-right tabular-nums text-[var(--color-foreground)]">{impact.impactScore}</span>
+                      <Chip tone={riskTone(impact.riskLevel)}>{riskLabel(impact.riskLevel)}</Chip>
                     </div>
-                  ))}
+                    );
+                  })}
                   <div className="text-[10px] text-[var(--color-cyan)] px-1 py-1">View all 121 ports →</div>
                 </div>
                 <div className="p-2 border-t border-[var(--color-line)]">
@@ -208,11 +210,13 @@ function DecisionRoom() {
                   <path d="M 175 155 Q 230 130 240 100" stroke="#ffb347" strokeWidth="1" fill="none" strokeDasharray="3 3" style={{ animation: "dash-flow 4s linear infinite" }} />
                   {/* ports */}
                   {[
-                    ["Kandla", 60, 90, "amber"], ["Mundra", 55, 100, "red"], ["JNPT", 75, 155, "red"],
-                    ["Marmagao", 90, 190, "cyan"], ["Mangaluru", 95, 220, "cyan"], ["Kochi", 110, 255, "cyan"],
-                    ["Chennai", 155, 220, "amber"], ["Visakhapatnam", 175, 155, "red"], ["Paradip", 175, 115, "red"], ["Kolkata", 190, 70, "amber"],
-                  ].map(([n,x,y,t])=>{
-                    const c = t==="red"?"#ff5566":t==="amber"?"#ffb347":"#7dd3fc";
+                    ["INIXY","Kandla", 60, 90], ["INMUN","Mundra", 55, 100], ["INNSA","JNPT", 75, 155],
+                    ["INMRM","Marmagao", 90, 190], ["ININM","Mangaluru", 95, 220], ["INCOK","Kochi", 110, 255],
+                    ["INMAA","Chennai", 155, 220], ["INVTZ","Visakhapatnam", 175, 155], ["INPRT","Paradip", 175, 115], ["INHAL","Kolkata", 190, 70],
+                  ].map(([code,n,x,y])=>{
+                    const impact = impactByPort.get(code as string);
+                    const tone = impact ? riskTone(impact.riskLevel) : "cyan";
+                    const c = tone==="red"?"#ff5566":tone==="amber"?"#ffb347":tone==="mint"?"#7ef0b4":"#7dd3fc";
                     return (
                       <g key={n as string}>
                         <circle cx={x as number} cy={y as number} r="12" fill={`${c}18`} className="animate-halo" style={{ transformBox: "fill-box", transformOrigin: "center" }} />
@@ -236,19 +240,19 @@ function DecisionRoom() {
               <div className="panel">
                 <div className="panel-header"><span>AFFECTED CHOKEPOINTS</span><span>RISK</span></div>
                 <div className="p-2 text-[10px] space-y-1">
-                  {CHOKES.map(([n,r,t])=>(
-                    <div key={n as string} className="flex items-center justify-between border-b border-[var(--color-line)]/50 py-1">
-                      <span className="text-[var(--color-foreground)]">{n}</span>
-                      <Chip tone={t as any}>{r}</Chip>
+                  {result.chokepointImpacts.map((impact)=>(
+                    <div key={impact.name} className="flex items-center justify-between border-b border-[var(--color-line)]/50 py-1">
+                      <span className="text-[var(--color-foreground)]">{impact.name}</span>
+                      <Chip tone={riskTone(impact.riskLevel)}>{riskLabel(impact.riskLevel)}</Chip>
                     </div>
                   ))}
                 </div>
                 <div className="panel-header border-t border-[var(--color-line)]"><span>SEA ROUTE IMPACT</span><span>DELAY (HRS)</span></div>
                 <div className="p-2 text-[10px] space-y-1">
-                  {SEA_ROUTES.map(([n,d])=>(
-                    <div key={n as string} className="flex items-center justify-between border-b border-[var(--color-line)]/50 py-1">
-                      <span className="text-[var(--color-foreground)]">{n}</span>
-                      <span className="text-[var(--color-red)] tabular-nums">{d}</span>
+                  {result.routeImpacts.map((impact)=>(
+                    <div key={impact.name} className="flex items-center justify-between border-b border-[var(--color-line)]/50 py-1">
+                      <span className="text-[var(--color-foreground)]">{impact.name}</span>
+                      <span className="text-[var(--color-red)] tabular-nums">{signedHours(impact.delayDeltaHours)}</span>
                     </div>
                   ))}
                 </div>

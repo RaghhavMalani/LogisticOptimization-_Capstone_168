@@ -1,21 +1,30 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Panel, Metric, Chip, Bar, Sparkline } from "@/components/terminal/ui";
+import { getPortSnapshot } from "@/services/portService";
+import { getWeatherSignal } from "@/services/weatherService";
 
 export const Route = createFileRoute("/wx")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    port: typeof search.port === "string" ? search.port : "INMAA",
+  }),
   component: WxPage,
 });
 
 function WxPage() {
+  const { port: portQuery } = Route.useSearch();
+  const port = getPortSnapshot(portQuery);
+  const weather = getWeatherSignal(port.code);
+
   return (
     <div className="h-full grid grid-cols-1 grid-rows-[auto_1fr_auto] gap-2">
       <div className="grid grid-cols-7 gap-2">
-        <Metric label="WIND"           value="28"   unit="kt SW" tone="amber" sub="gust 41 kt" />
-        <Metric label="WAVE HT"        value="2.6"  unit="m"     tone="amber" sub="period 8.2s" />
-        <Metric label="PRECIP RATE"    value="14"   unit="mm/h"  tone="cyan"  sub="6h acc 62mm" />
-        <Metric label="VISIBILITY"     value="8.2"  unit="km"    tone="mint"  sub="ceiling 900m" />
-        <Metric label="CYC/STORM RISK" value="34"   unit="%"     tone="amber" sub="T+72h" />
-        <Metric label="WX IMPACT"      value="0.71" tone="red"   sub="port ops" />
-        <Metric label="WX PERSISTENCE" value="0.62" tone="amber" sub="regime 18h" />
+        <Metric label="WIND"           value={weather.windKnots} unit={`kt ${weather.windDirection}`} tone="amber" sub={`gust ${weather.gustKnots} kt`} />
+        <Metric label="WAVE HT"        value={weather.waveHeightM}  unit="m"     tone="amber" sub={weather.seaState} />
+        <Metric label="PRECIP RATE"    value={weather.precipRateMmH} unit="mm/h"  tone="cyan"  sub={`24h acc ${weather.rainfallMm24h}mm`} />
+        <Metric label="VISIBILITY"     value={weather.visibilityKm} unit="km"    tone="mint"  sub={port.name} />
+        <Metric label="CYC/STORM RISK" value={Math.round(weather.cycloneRisk7d * 100)} unit="%" tone="amber" sub="T+72h" />
+        <Metric label="WX IMPACT"      value={weather.impactScore.toFixed(2)} tone="red"   sub="port ops" />
+        <Metric label="WX PERSISTENCE" value={weather.persistenceScore.toFixed(2)} tone="amber" sub="regime 18h" />
       </div>
 
       <div className="min-h-0 grid grid-cols-[1.4fr_1fr] grid-rows-2 gap-2">

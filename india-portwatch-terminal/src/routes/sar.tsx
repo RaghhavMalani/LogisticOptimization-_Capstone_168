@@ -1,24 +1,33 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Panel, Metric, Chip, Bar } from "@/components/terminal/ui";
+import { getPortSnapshot } from "@/services/portService";
+import { getSARSignal } from "@/services/sarService";
 
 export const Route = createFileRoute("/sar")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    port: typeof search.port === "string" ? search.port : "INMAA",
+  }),
   component: SarPage,
 });
 
 function SarPage() {
+  const { port: portQuery } = Route.useSearch();
+  const port = getPortSnapshot(portQuery);
+  const sar = getSARSignal(port.code);
+
   return (
     <div className="h-full grid grid-cols-1 grid-rows-[auto_1fr] gap-2">
       <div className="grid grid-cols-6 gap-2">
-        <Metric label="SCENE"          value="S1A_IW_20261108T003411" tone="cyan" sub="Sentinel-1A · GRD" />
-        <Metric label="VESSEL DETECT." value="63" tone="mint" sub="Δ vs prev +14" />
-        <Metric label="ANCHORAGE"      value="22" tone="amber" sub="ring 0 · 8" />
-        <Metric label="CHANGE SCORE"   value="0.42" tone="amber" sub="vs T-1" />
-        <Metric label="SAR CONFIDENCE" value="0.79" tone="cyan" sub="cloud N/A" />
-        <Metric label="AIS FALLBACK"   value="ARMED" tone="mint" sub="17 vessels" />
+        <Metric label="SCENE"          value={sar.sceneId} tone="cyan" sub="Sentinel-1A · GRD" />
+        <Metric label="VESSEL DETECT." value={sar.vesselDetections} tone="mint" sub={`Δ vs prev +${Math.max(0, sar.vesselDetections - 49)}`} />
+        <Metric label="ANCHORAGE"      value={sar.anchorageCount} tone="amber" sub={port.name} />
+        <Metric label="CHANGE SCORE"   value={sar.changeScore.toFixed(2)} tone="amber" sub="vs T-1" />
+        <Metric label="SAR CONFIDENCE" value={sar.confidence.toFixed(2)} tone="cyan" sub="cloud N/A" />
+        <Metric label="AIS FALLBACK"   value="ARMED" tone="mint" sub={`${sar.sarOnly} vessels`} />
       </div>
 
       <div className="min-h-0 grid grid-cols-[1fr_300px] gap-2">
-        <Panel title="SAR PROXY · CHENNAI · S1A IW · VV+VH · GEE MODE">
+        <Panel title={`SAR PROXY · ${port.name.toUpperCase()} · S1A IW · VV+VH · GEE MODE`}>
           <div className="relative w-full h-full bg-[oklch(0.10_0.02_240)] overflow-hidden">
             {/* SAR raster look */}
             <div className="absolute inset-0" style={{
@@ -37,10 +46,10 @@ function SarPage() {
               <g transform="translate(500 380)" fill="none" stroke="oklch(0.82 0.18 75 / 0.7)">
                 <circle r="90" strokeDasharray="4 4" />
                 <circle r="150" strokeDasharray="2 6" />
-                <text x="0" y="-96" textAnchor="middle" fontSize="9" fill="var(--color-amber)">ANCHORAGE Q · 22</text>
+                <text x="0" y="-96" textAnchor="middle" fontSize="9" fill="var(--color-amber)">ANCHORAGE Q · {sar.anchorageCount}</text>
               </g>
               {/* Bright vessel detections */}
-              {Array.from({length:63}).map((_,i)=>{
+              {Array.from({length:sar.vesselDetections}).map((_,i)=>{
                 const cx = 200 + ((i*137)%700);
                 const cy = 200 + ((i*89)%380);
                 return (
@@ -59,7 +68,7 @@ function SarPage() {
                 <g key={i} stroke="var(--color-cyan)" strokeWidth="0.8" opacity="0.6"><line x1={x-10} y1={y} x2={x+10} y2={y}/><line x1={x} y1={y-10} x2={x} y2={y+10}/></g>
               ))}
             </svg>
-            <div className="absolute top-2 left-2 text-[9px] tracking-widest text-[var(--color-cyan)] bg-[var(--color-background)]/70 border border-[var(--color-line)] px-2 py-1">SENTINEL-1A · IW · 10m · VV+VH · 20261108T003411Z</div>
+            <div className="absolute top-2 left-2 text-[9px] tracking-widest text-[var(--color-cyan)] bg-[var(--color-background)]/70 border border-[var(--color-line)] px-2 py-1">SENTINEL-1A · IW · 10m · VV+VH · {sar.timestamp}</div>
             <div className="absolute bottom-2 right-2 text-[9px] tracking-widest text-[var(--color-muted-foreground)] bg-[var(--color-background)]/70 border border-[var(--color-line)] px-2 py-1">GEE · SAR-PROXY · ESA COPERNICUS</div>
           </div>
         </Panel>
@@ -67,31 +76,31 @@ function SarPage() {
         <div className="flex flex-col gap-2 min-h-0">
           <Panel title="DETECTIONS · SUMMARY">
             <div className="p-3 space-y-2 text-[11px]">
-              <div className="flex justify-between"><span className="text-[var(--color-muted-foreground)]">CONT</span><span className="tabular-nums text-[var(--color-cyan)]">24</span></div>
-              <div className="flex justify-between"><span className="text-[var(--color-muted-foreground)]">TANKER</span><span className="tabular-nums text-[var(--color-amber)]">18</span></div>
-              <div className="flex justify-between"><span className="text-[var(--color-muted-foreground)]">BULK</span><span className="tabular-nums text-[var(--color-mint)]">15</span></div>
-              <div className="flex justify-between"><span className="text-[var(--color-muted-foreground)]">UNCLASSIFIED</span><span className="tabular-nums text-[var(--color-purple)]">6</span></div>
+              <div className="flex justify-between"><span className="text-[var(--color-muted-foreground)]">CONT</span><span className="tabular-nums text-[var(--color-cyan)]">{Math.round(sar.vesselDetections * 0.38)}</span></div>
+              <div className="flex justify-between"><span className="text-[var(--color-muted-foreground)]">TANKER</span><span className="tabular-nums text-[var(--color-amber)]">{Math.round(sar.vesselDetections * 0.29)}</span></div>
+              <div className="flex justify-between"><span className="text-[var(--color-muted-foreground)]">BULK</span><span className="tabular-nums text-[var(--color-mint)]">{Math.round(sar.vesselDetections * 0.24)}</span></div>
+              <div className="flex justify-between"><span className="text-[var(--color-muted-foreground)]">UNCLASSIFIED</span><span className="tabular-nums text-[var(--color-purple)]">{Math.round(sar.vesselDetections * 0.09)}</span></div>
               <div className="border-t border-[var(--color-line)] pt-2 label-xs">CHANGE vs T-1</div>
-              <Bar value={0.42} tone="amber" />
-              <div className="text-[10px] text-[var(--color-muted-foreground)]">+14 vessels · queue expansion detected NE quadrant</div>
+              <Bar value={sar.changeScore} tone="amber" />
+              <div className="text-[10px] text-[var(--color-muted-foreground)]">+{Math.max(0, sar.vesselDetections - 49)} vessels · queue expansion detected NE quadrant</div>
             </div>
           </Panel>
           <Panel title="AIS FALLBACK · GAP FILL">
             <div className="p-3 text-[11px] space-y-1.5">
-              <div className="flex justify-between"><span>AIS ACTIVE</span><Chip tone="mint">46</Chip></div>
-              <div className="flex justify-between"><span>SAR-ONLY</span><Chip tone="amber">17</Chip></div>
-              <div className="flex justify-between"><span>DARK VESSELS</span><Chip tone="red">3</Chip></div>
+              <div className="flex justify-between"><span>AIS ACTIVE</span><Chip tone="mint">{sar.aisActive}</Chip></div>
+              <div className="flex justify-between"><span>SAR-ONLY</span><Chip tone="amber">{sar.sarOnly}</Chip></div>
+              <div className="flex justify-between"><span>DARK VESSELS</span><Chip tone="red">{sar.darkVessels}</Chip></div>
               <div className="text-[10px] text-[var(--color-muted-foreground)] pt-2">Dark-vessel candidates flagged for enrichment via next Sentinel-2 pass (T+04:12h).</div>
             </div>
           </Panel>
           <Panel title="SAR / AIS FUSION SCORE" className="flex-1">
             <div className="p-3 space-y-2 text-[11px]">
-              <div className="flex justify-between"><span>Cross-match rate</span><span className="tabular-nums text-[var(--color-mint)]">94%</span></div>
-              <Bar value={0.94} tone="mint" />
-              <div className="flex justify-between"><span>Bounding IoU</span><span className="tabular-nums text-[var(--color-cyan)]">0.81</span></div>
-              <Bar value={0.81} tone="cyan" />
-              <div className="flex justify-between"><span>Heading agreement</span><span className="tabular-nums text-[var(--color-cyan)]">0.86</span></div>
-              <Bar value={0.86} tone="cyan" />
+              <div className="flex justify-between"><span>Cross-match rate</span><span className="tabular-nums text-[var(--color-mint)]">{Math.round(sar.crossMatchRate * 100)}%</span></div>
+              <Bar value={sar.crossMatchRate} tone="mint" />
+              <div className="flex justify-between"><span>Bounding IoU</span><span className="tabular-nums text-[var(--color-cyan)]">{sar.boundingIou.toFixed(2)}</span></div>
+              <Bar value={sar.boundingIou} tone="cyan" />
+              <div className="flex justify-between"><span>Heading agreement</span><span className="tabular-nums text-[var(--color-cyan)]">{sar.headingAgreement.toFixed(2)}</span></div>
+              <Bar value={sar.headingAgreement} tone="cyan" />
               <div className="text-[10px] text-[var(--color-muted-foreground)] pt-2">Fusion → HSMM proxy channel <span className="text-[var(--color-cyan)]">sar_ais_fused</span></div>
             </div>
           </Panel>

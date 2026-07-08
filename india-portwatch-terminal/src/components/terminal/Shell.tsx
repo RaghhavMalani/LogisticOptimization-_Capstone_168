@@ -1,8 +1,10 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { NLP_HEADLINES } from "@/data/portwatch";
 import { Chip } from "./ui";
 import { cn } from "@/lib/utils";
+import { listNewsEvents } from "@/services/newsService";
+import { getPort } from "@/services/portService";
+import { resolveScenarioKey } from "@/services/scenarioService";
 
 const RAIL = [
   { key: "Port Radar",         to: "/",       icon: "radar" },
@@ -29,7 +31,10 @@ function useUtc() {
 
 export function TerminalShell({ children }: { children: React.ReactNode }) {
   const path = useRouterState({ select: s => s.location.pathname });
+  const navigate = useNavigate();
   const { time, date } = useUtc();
+  const [command, setCommand] = useState("");
+  const tickerEvents = listNewsEvents();
 
   const pageTitle =
     path === "/" ? { eyebrow: "NATIONAL PORT RADAR", chip: "AI SATELLITE PROXY MODE" } :
@@ -40,6 +45,53 @@ export function TerminalShell({ children }: { children: React.ReactNode }) {
     path.startsWith("/wx")   ? { eyebrow: "WEATHER INTELLIGENCE", chip: "IMD · INCOIS · ECMWF" } :
     path.startsWith("/sar")  ? { eyebrow: "SAR / AIS PROXY", chip: "SENTINEL-1 · S1-IW" } :
     { eyebrow: "NEWS / NLP INTELLIGENCE", chip: "GDELT · REUTERS · SPLASH" };
+
+  const runCommand = (raw: string) => {
+    const cleaned = raw.trim().replace(/\s+/g, " ").toUpperCase();
+    if (!cleaned) return;
+    if (cleaned === "RADAR") {
+      void navigate({ to: "/" });
+      return;
+    }
+    if (cleaned === "FLEET") {
+      void navigate({ to: "/fleet" });
+      return;
+    }
+    const [verb, ...rest] = cleaned.split(" ");
+    const target = rest.join(" ");
+    if (verb === "PORT") {
+      void navigate({ to: "/port", search: { port: getPort(target || "CHENNAI").code } });
+      return;
+    }
+    if (verb === "WX") {
+      void navigate({ to: "/wx", search: { port: getPort(target || "CHENNAI").code } });
+      return;
+    }
+    if (verb === "SAR") {
+      void navigate({ to: "/sar", search: { port: getPort(target || "CHENNAI").code } });
+      return;
+    }
+    if (verb === "NLP") {
+      void navigate({ to: "/nlp", search: { entity: target || "HORMUZ" } });
+      return;
+    }
+    if (verb === "MODEL") {
+      void navigate({ to: "/model", search: { port: getPort(target || "CHENNAI").code } });
+      return;
+    }
+    if (verb === "SIM") {
+      const intensityText = rest.at(-1);
+      const parsedIntensity = Number(intensityText);
+      const scenarioAlias = Number.isFinite(parsedIntensity) ? rest.slice(0, -1).join("_") : rest.join("_");
+      void navigate({
+        to: "/sim",
+        search: {
+          scenario: resolveScenarioKey(scenarioAlias || "CYCLONE_EAST"),
+          intensity: Number.isFinite(parsedIntensity) ? parsedIntensity : 1.5,
+        },
+      });
+    }
+  };
 
   return (
     <div className="fixed inset-0 flex flex-col text-[12px] bg-[oklch(0.09_0.015_240)]">
@@ -56,6 +108,37 @@ export function TerminalShell({ children }: { children: React.ReactNode }) {
         <div className="flex-1 flex items-center gap-3 px-5">
           <div className="text-[16px] tracking-[0.12em] font-semibold text-[var(--color-foreground)]">{pageTitle.eyebrow}</div>
           <span className="px-2 py-[3px] border border-[var(--color-cyan)]/50 text-[9px] tracking-[0.18em] text-[var(--color-cyan)] bg-[var(--color-cyan)]/5 rounded-sm">{pageTitle.chip}</span>
+          <form
+            className="ml-auto w-[300px] flex items-center border border-[var(--color-line-strong)] bg-[oklch(0.08_0.02_240_/_0.7)]"
+            onSubmit={(event) => {
+              event.preventDefault();
+              runCommand(command);
+              setCommand("");
+            }}
+          >
+            <span className="px-2 text-[var(--color-cyan)] text-[11px]">▸</span>
+            <input
+              value={command}
+              onChange={(event) => setCommand(event.target.value)}
+              placeholder="COMMAND"
+              list="portwatch-commands"
+              className="min-w-0 flex-1 bg-transparent py-1.5 pr-2 text-[10px] tracking-[0.14em] text-[var(--color-foreground)] outline-none placeholder:text-[var(--color-muted-foreground)]"
+            />
+            <datalist id="portwatch-commands">
+              {[
+                "RADAR",
+                "PORT CHENNAI",
+                "WX CHENNAI",
+                "SAR CHENNAI",
+                "NLP HORMUZ",
+                "MODEL CHENNAI",
+                "SIM CYCLONE_EAST 1.5",
+                "FLEET",
+              ].map((item) => (
+                <option key={item} value={item} />
+              ))}
+            </datalist>
+          </form>
         </div>
 
         <div className="flex items-stretch">
@@ -133,12 +216,12 @@ export function TerminalShell({ children }: { children: React.ReactNode }) {
         </div>
         <div className="flex-1 overflow-hidden whitespace-nowrap">
           <div className="animate-ticker inline-flex gap-8 pl-4 text-[10px] tabular-nums">
-            {[...NLP_HEADLINES, ...NLP_HEADLINES].map((n, i) => (
+            {[...tickerEvents, ...tickerEvents].map((n, i) => (
               <span key={i} className="inline-flex items-center gap-2">
-                <span className="text-[var(--color-cyan)]">{n.t}</span>
-                <Chip tone={n.sev === "severe" ? "red" : "amber"}>{n.tag}</Chip>
+                <span className="text-[var(--color-cyan)]">{n.timestamp}</span>
+                <Chip tone={n.severity === "severe" ? "red" : "amber"}>{n.tag}</Chip>
                 <span className="text-[var(--color-foreground)]">{n.text}</span>
-                <span className="text-[var(--color-muted-foreground)]">— {n.src}</span>
+                <span className="text-[var(--color-muted-foreground)]">— {n.source}</span>
                 <span className="text-[var(--color-line-strong)]">◆</span>
               </span>
             ))}

@@ -1,35 +1,35 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Panel, Chip, Bar } from "@/components/terminal/ui";
-import { NLP_HEADLINES } from "@/data/portwatch";
+import { listEntitySentiment, listNewsEvents } from "@/services/newsService";
 
 export const Route = createFileRoute("/nlp")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    entity: typeof search.entity === "string" ? search.entity : "HORMUZ",
+  }),
   component: NlpPage,
 });
 
-const entities = [
-  { e: "HORMUZ", n: 42, s: -0.42 },
-  { e: "RED SEA", n: 31, s: -0.36 },
-  { e: "CHENNAI", n: 24, s: -0.28 },
-  { e: "MUMBAI", n: 19, s: -0.14 },
-  { e: "MUNDRA", n: 12, s: +0.08 },
-  { e: "SUEZ", n: 8, s: -0.06 },
-  { e: "MALACCA", n: 6, s: +0.02 },
-];
-
 function NlpPage() {
+  const { entity } = Route.useSearch();
+  const normalizedEntity = entity.toUpperCase();
+  const events = listNewsEvents();
+  const focusedEvents = events.filter((event) => event.entity.includes(normalizedEntity) || event.tag.includes(normalizedEntity));
+  const feedEvents = focusedEvents.length ? [...focusedEvents, ...events.filter((event) => !focusedEvents.includes(event))] : events;
+  const entities = listEntitySentiment();
+
   return (
     <div className="h-full grid grid-cols-[1.4fr_1fr_1fr] gap-2">
-      <Panel title="NLP FEED · GDELT + REUTERS + LLOYD'S · Δ 45s">
+      <Panel title={`NLP FEED · ${normalizedEntity} · GDELT + REUTERS + LLOYD'S · Δ 45s`}>
         <div className="p-2 space-y-2">
-          {NLP_HEADLINES.concat(NLP_HEADLINES).map((n,i)=>(
-            <div key={i} className="panel p-2">
+          {feedEvents.concat(feedEvents).map((n,i)=>(
+            <div key={`${n.id}-${i}`} className="panel p-2">
               <div className="flex items-center justify-between text-[9px] tracking-widest text-[var(--color-muted-foreground)]">
                 <div className="flex items-center gap-2">
-                  <span className="tabular-nums">{n.t}Z</span>
-                  <Chip tone={n.sev==="severe"?"red":n.sev==="elevated"?"amber":"amber"}>{n.tag}</Chip>
-                  <span>{n.src}</span>
+                  <span className="tabular-nums">{n.timestamp}Z</span>
+                  <Chip tone={n.severity==="severe"?"red":n.severity==="elevated"?"amber":"amber"}>{n.tag}</Chip>
+                  <span>{n.source}</span>
                 </div>
-                <span>SENT {(Math.random()*-0.6).toFixed(2)}</span>
+                <span>SENT {n.sentiment >= 0 ? "+" : ""}{n.sentiment.toFixed(2)}</span>
               </div>
               <div className="text-[11px] text-[var(--color-foreground)] leading-snug mt-1">{n.text}</div>
             </div>
@@ -41,10 +41,10 @@ function NlpPage() {
         <Panel title="ENTITY SALIENCE">
           <div className="p-3 space-y-1.5 text-[11px]">
             {entities.map(e=>(
-              <div key={e.e} className="grid grid-cols-[80px_1fr_46px] items-center gap-2">
-                <span className="text-[var(--color-cyan)]">{e.e}</span>
-                <Bar value={e.n/50} tone={e.s<-0.2?"red":e.s<0?"amber":"mint"} />
-                <span className={"text-right tabular-nums " + (e.s<-0.2?"text-[var(--color-red)]":e.s<0?"text-[var(--color-amber)]":"text-[var(--color-mint)]")}>{e.s>=0?"+":""}{e.s.toFixed(2)}</span>
+              <div key={e.entity} className="grid grid-cols-[80px_1fr_46px] items-center gap-2">
+                <span className="text-[var(--color-cyan)]">{e.entity}</span>
+                <Bar value={e.mentions/50} tone={e.sentiment<-0.2?"red":e.sentiment<0?"amber":"mint"} />
+                <span className={"text-right tabular-nums " + (e.sentiment<-0.2?"text-[var(--color-red)]":e.sentiment<0?"text-[var(--color-amber)]":"text-[var(--color-mint)]")}>{e.sentiment>=0?"+":""}{e.sentiment.toFixed(2)}</span>
               </div>
             ))}
           </div>

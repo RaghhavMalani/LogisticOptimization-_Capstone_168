@@ -17,6 +17,11 @@ data/sample/
 *.sqlite
 *.sqlite3
 
+# --- Frontend generated artifacts ---
+india-portwatch-terminal/node_modules/
+india-portwatch-terminal/.output/
+india-portwatch-terminal/.wrangler/
+
 # --- Model artifacts / large binaries ---
 *.ckpt
 *.pt

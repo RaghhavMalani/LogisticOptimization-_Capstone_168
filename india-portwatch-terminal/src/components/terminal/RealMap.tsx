@@ -1,7 +1,9 @@
 import { MapContainer, TileLayer, CircleMarker, Tooltip, Polyline, Circle, Pane, LayerGroup } from "react-leaflet";
 import L from "leaflet";
-import { PORTS, CHOKEPOINTS, ROUTES, VESSELS } from "@/data/portwatch";
 import { useEffect, useState } from "react";
+import { riskColorHex } from "@/data/ports";
+import { listChokepointRoutes, listChokepoints, listPortOperationalSnapshots } from "@/services/portService";
+import { listVesselProxies } from "@/services/sarService";
 
 // Convert schematic x/y (used previously for chokepoints/vessels) to approximate lat/lon
 // The old coordinate system covered ~ lat 5..35, lon 60..95 across x:-140..1160, y:100..900
@@ -11,25 +13,12 @@ function xyToLatLon(x: number, y: number): [number, number] {
   return [lat, lon];
 }
 
-const CHOKE_LATLON: Record<string, [number, number]> = {
-  HRMZ: [26.57, 56.25],
-  BAB: [12.58, 43.33],
-  SUEZ: [30.0, 32.55],
-  MLC: [2.5, 101.5],
-};
-
-const RISK_COLOR_HEX: Record<string, string> = {
-  normal: "#7ef0b4",
-  congested: "#ffb347",
-  severe: "#ff5566",
-  lowconf: "#c58cff",
-};
-
 const VESSEL_COLOR: Record<string, string> = {
   CONT: "#7dd3fc",
   TANKER: "#ffb347",
   BULK: "#7ef0b4",
   LNG: "#c58cff",
+  OTHER: "#7dd3fc",
 };
 
 interface Props {
@@ -38,13 +27,17 @@ interface Props {
 
 export default function RealMap({ focus }: Props) {
   const [tick, setTick] = useState(0);
+  const ports = listPortOperationalSnapshots();
+  const chokepoints = listChokepoints();
+  const routes = listChokepointRoutes();
+  const vessels = listVesselProxies();
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 2500);
     return () => clearInterval(id);
   }, []);
 
-  const focusPort = focus ? PORTS.find((p) => p.code === focus || p.short === focus) : undefined;
-  const center: [number, number] = focusPort ? [focusPort.lat, focusPort.lon] : [17, 82];
+  const focusPort = focus ? ports.find((p) => p.code === focus || p.short === focus) : undefined;
+  const center: [number, number] = focusPort ? [focusPort.location.lat, focusPort.location.lon] : [17, 82];
 
   return (
     <MapContainer
@@ -75,27 +68,26 @@ export default function RealMap({ focus }: Props) {
       </LayerGroup>
 
       {/* Routes port -> chokepoint */}
-      {ROUTES.map((r, i) => {
-        const from = PORTS.find((p) => p.code === r.from);
-        const to = CHOKE_LATLON[r.to];
+      {routes.map((r, i) => {
+        const from = ports.find((p) => p.code === r.fromPortCode);
+        const to = chokepoints.find((choke) => choke.code === r.toChokepointCode);
         if (!from || !to) return null;
         const color = r.risk === "elevated" ? "#ff5566" : r.risk === "watch" ? "#ffb347" : "#7ef0b4";
         return (
           <Polyline
             key={i}
-            positions={[[from.lat, from.lon], to]}
+            positions={[[from.location.lat, from.location.lon], [to.location.lat, to.location.lon]]}
             pathOptions={{ color, weight: 1.1, opacity: 0.75, dashArray: "6 6" }}
           />
         );
       })}
 
       {/* Chokepoints */}
-      {Object.entries(CHOKE_LATLON).map(([code, ll]) => {
-        const meta = CHOKEPOINTS.find((c) => c.code === code)!;
+      {chokepoints.map((meta) => {
         return (
           <CircleMarker
-            key={code}
-            center={ll}
+            key={meta.code}
+            center={[meta.location.lat, meta.location.lon]}
             radius={5}
             pathOptions={{ color: "#7dd3fc", fillColor: "#0a1420", fillOpacity: 1, weight: 1.5 }}
           >
@@ -107,39 +99,39 @@ export default function RealMap({ focus }: Props) {
       })}
 
       {/* Vessels — plot from schematic x/y projected to lat/lon */}
-      {VESSELS.map((v) => {
-        const jitter = Math.sin((tick + v.x) / 3) * 0.03;
-        const [lat, lon] = xyToLatLon(v.x, v.y);
+      {vessels.map((v) => {
+        const jitter = Math.sin((tick + v.schematic.x) / 3) * 0.03;
+        const [lat, lon] = xyToLatLon(v.schematic.x, v.schematic.y);
         return (
           <CircleMarker
             key={v.id}
             center={[lat + jitter, lon - jitter]}
             radius={2.4}
-            pathOptions={{ color: VESSEL_COLOR[v.type], fillColor: VESSEL_COLOR[v.type], fillOpacity: 0.9, weight: 0.5 }}
+            pathOptions={{ color: VESSEL_COLOR[v.vesselType], fillColor: VESSEL_COLOR[v.vesselType], fillOpacity: 0.9, weight: 0.5 }}
           />
         );
       })}
 
       {/* Ports */}
-      {PORTS.map((p) => {
-        const color = RISK_COLOR_HEX[p.risk];
+      {ports.map((p) => {
+        const color = riskColorHex[p.risk];
         const haloR = 30000 + p.congestion * 90000;
         return (
           <LayerGroup key={p.code}>
             <Circle
-              center={[p.lat, p.lon]}
+              center={[p.location.lat, p.location.lon]}
               radius={haloR}
               pathOptions={{ color, fillColor: color, fillOpacity: 0.10, weight: 0.6, opacity: 0.5 }}
             />
             {p.risk === "severe" && (
               <Circle
-                center={[p.lat, p.lon]}
+                center={[p.location.lat, p.location.lon]}
                 radius={haloR * 1.2}
                 pathOptions={{ color: "#ff5566", weight: 0.6, opacity: 0.5, fillOpacity: 0, dashArray: "2 3" }}
               />
             )}
             <CircleMarker
-              center={[p.lat, p.lon]}
+              center={[p.location.lat, p.location.lon]}
               radius={focusPort?.code === p.code ? 6 : 3.5}
               pathOptions={{ color, fillColor: "#0a1420", fillOpacity: 1, weight: 1.4 }}
             >

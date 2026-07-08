@@ -1,6 +1,10 @@
 import { getJson } from "./api";
-import { getWeatherSignal, listWeatherSignals } from "./weatherService";
-import type { WeatherSignal } from "@/types/portwatch";
+import {
+  getMarineWeatherIntelligence,
+  getWeatherSignal,
+  listWeatherSignals,
+} from "./weatherService";
+import type { MarineWeatherIntelligence, WeatherSignal } from "@/types/portwatch";
 
 function normalizeWeather(signal: WeatherSignal): WeatherSignal {
   return signal;
@@ -18,5 +22,11 @@ export async function fetchWeatherSignal(
 ): Promise<WeatherSignal> {
   return getJson<WeatherSignal>(`/weather/${portCode}`, () =>
     getWeatherSignal(portCode),
+  );
+}
+
+export async function fetchMarineWeatherIntelligence(): Promise<MarineWeatherIntelligence> {
+  return getJson<MarineWeatherIntelligence>("/weather/intelligence", () =>
+    getMarineWeatherIntelligence(),
   );
 }

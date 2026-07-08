@@ -84,7 +84,7 @@ function RadarPage() {
               ◆ Minor Port
             </span>
             <span className="text-[var(--color-muted-foreground)]">
-              + Vessel (Proxy)
+              AIS/SAR Vessel
             </span>
             <span className="text-[var(--color-muted-foreground)]">
               — Route

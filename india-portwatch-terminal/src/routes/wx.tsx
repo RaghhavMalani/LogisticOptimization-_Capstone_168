@@ -3,8 +3,16 @@ import { useQuery } from "@tanstack/react-query";
 import { Panel, Metric, Chip, Bar, Sparkline } from "@/components/terminal/ui";
 import { getPortSnapshot } from "@/services/portService";
 import { fetchPortSnapshot } from "@/services/ports";
-import { getWeatherSignal } from "@/services/weatherService";
-import { fetchWeatherSignal } from "@/services/weather";
+import {
+  getMarineWeatherIntelligence,
+  getWeatherSignal,
+  listWeatherFeedAdapters,
+} from "@/services/weatherService";
+import {
+  fetchMarineWeatherIntelligence,
+  fetchWeatherSignal,
+} from "@/services/weather";
+import type { GeoPoint, MarineWeatherIntelligence, WindVector } from "@/types/portwatch";
 
 export const Route = createFileRoute("/wx")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -28,7 +36,15 @@ function WxPage() {
     initialData: () => getWeatherSignal(port.code),
     staleTime: 30_000,
   });
+  const marineQuery = useQuery({
+    queryKey: ["marine-weather-intelligence"],
+    queryFn: fetchMarineWeatherIntelligence,
+    initialData: getMarineWeatherIntelligence,
+    staleTime: 30_000,
+  });
   const weather = weatherQuery.data;
+  const marine = marineQuery.data;
+  const adapters = listWeatherFeedAdapters();
 
   return (
     <div className="h-full grid grid-cols-1 grid-rows-[auto_1fr_auto] gap-2">
@@ -84,19 +100,30 @@ function WxPage() {
 
       <div className="min-h-0 grid grid-cols-[1.4fr_1fr] grid-rows-2 gap-2">
         <Panel title="WIND FIELD · MSL · +12H" className="row-span-2">
-          <MarineWeatherMap weather={weather} portName={port.name} />
+          <MarineWeatherMap weather={weather} portName={port.name} marine={marine} />
         </Panel>
 
         <Panel title="PRECIPITATION · 24H ACC">
           <div className="p-3">
-            <div className="grid grid-cols-12 gap-[2px]">
+            <div className="grid grid-cols-12 gap-[2px] border border-[var(--color-line)]/40 p-1 bg-[oklch(0.05_0.02_240_/_0.55)]">
               {Array.from({ length: 96 }).map((_, i) => {
-                const v = Math.abs(Math.sin(i * 0.3) + Math.cos(i * 0.18)) / 2;
+                const column = i % 12;
+                const row = Math.floor(i / 12);
+                const core = Math.max(0, 1 - Math.hypot(column - 7.2, row - 3.6) / 6);
+                const band = Math.max(0, 1 - Math.abs(row - column * 0.45 - 1.8) / 3.2);
+                const v = Math.min(1, core * 0.85 + band * 0.45);
                 return (
                   <div
                     key={i}
                     className="h-4"
-                    style={{ background: `oklch(0.82 0.18 195 / ${v})` }}
+                    style={{
+                      background:
+                        v > 0.68
+                          ? `oklch(0.68 0.24 25 / ${v})`
+                          : v > 0.42
+                            ? `oklch(0.82 0.18 75 / ${v})`
+                            : `oklch(0.82 0.18 195 / ${v})`,
+                    }}
                   />
                 );
               })}
@@ -107,9 +134,19 @@ function WxPage() {
               <span>50 mm</span>
               <span>100+</span>
             </div>
-            <div className="mt-3 label-xs">6H FORECAST</div>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-[10px]">
+              {marine.radarCells.slice(0, 4).map((cell) => (
+                <div key={cell.id} className="border-l border-[var(--color-cyan)]/40 pl-2">
+                  <div className="text-[var(--color-foreground)]">{cell.label}</div>
+                  <div className="text-[var(--color-muted-foreground)] tabular-nums">
+                    {cell.source} · {cell.precipitationRateMmH} mm/h
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 label-xs">6H FORECAST · COASTAL RAIN RATE</div>
             <Sparkline
-              data={[4, 6, 9, 12, 14, 17, 20, 18, 14, 10, 7, 5]}
+              data={[8, 12, 16, 23, 31, 34, 30, 24, 19, 14, 10, 8]}
               tone="cyan"
               height={36}
             />
@@ -121,7 +158,7 @@ function WxPage() {
             <div>
               <div className="label-xs mb-1">SIG WAVE HEIGHT (m)</div>
               <Sparkline
-                data={[1.4, 1.6, 1.9, 2.2, 2.5, 2.8, 2.6, 2.4, 2.1, 1.9]}
+                data={[1.8, 2.0, 2.2, 2.5, marine.swell.heightM, 3.0, 2.9, 2.6, 2.3, 2.1]}
                 tone="amber"
                 height={44}
               />
@@ -164,6 +201,9 @@ function WxPage() {
                   );
                 })}
               </svg>
+              <div className="mt-1 text-[9px] text-[var(--color-muted-foreground)] tabular-nums">
+                {marine.swell.source} · {marine.swell.heightM}m · {marine.swell.direction} · {marine.swell.periodSec}s period
+              </div>
             </div>
           </div>
         </Panel>
@@ -199,12 +239,12 @@ function WxPage() {
             <Advisory
               sev="red"
               t="IMD"
-              text="Cyclogenesis prob 34% · centre 12.4N/88.1E · T+72h landfall Kakinada corridor"
+              text={`${marine.cyclone.name} prob ${Math.round(marine.cyclone.probability72h * 100)}% · centre ${marine.cyclone.center.lat.toFixed(1)}N/${marine.cyclone.center.lon.toFixed(1)}E · ${marine.cyclone.riskWindow}`}
             />
             <Advisory
               sev="amber"
               t="INCOIS"
-              text="Storm surge 1.6–2.2m expected north Andhra coast"
+              text={`Swell ${marine.swell.heightM}m from ${marine.swell.direction}; pilot boarding windows compressed`}
             />
             <Advisory
               sev="amber"
@@ -216,6 +256,13 @@ function WxPage() {
               t="Mumbai MET"
               text="West coast improving; monsoon trough receding"
             />
+            <div className="pt-1 border-t border-[var(--color-line)]/60 grid grid-cols-2 gap-1 text-[9px]">
+              {adapters.slice(0, 4).map((adapter) => (
+                <span key={adapter.key} className="text-[var(--color-muted-foreground)]">
+                  {adapter.provider} · {adapter.layer}
+                </span>
+              ))}
+            </div>
           </div>
         </Panel>
       </div>
@@ -223,27 +270,35 @@ function WxPage() {
   );
 }
 
+function projectWxPoint(point: GeoPoint): [number, number] {
+  const lonMin = 72;
+  const lonMax = 96;
+  const latMin = 4;
+  const latMax = 22;
+  const x = ((point.lon - lonMin) / (lonMax - lonMin)) * 640;
+  const y = ((latMax - point.lat) / (latMax - latMin)) * 500;
+  return [Math.max(-40, Math.min(680, x)), Math.max(-30, Math.min(530, y))];
+}
+
+function svgWindCurve(vector: WindVector) {
+  const [sx, sy] = projectWxPoint(vector.start);
+  const [cx, cy] = projectWxPoint(vector.control);
+  const [ex, ey] = projectWxPoint(vector.end);
+  return `M ${sx} ${sy} C ${cx} ${cy} ${cx + (ex - sx) * 0.24} ${cy + (ey - sy) * 0.24} ${ex} ${ey}`;
+}
+
 function MarineWeatherMap({
   weather,
   portName,
+  marine,
 }: {
   weather: ReturnType<typeof getWeatherSignal>;
   portName: string;
+  marine: MarineWeatherIntelligence;
 }) {
-  const streamlines = [
-    "M 20 360 C 130 300 230 275 360 252 S 510 210 620 145",
-    "M 0 285 C 120 236 260 222 390 194 S 530 154 640 96",
-    "M 50 430 C 180 366 284 334 430 326 S 560 278 640 230",
-    "M 145 470 C 244 388 320 354 444 356 S 552 330 640 310",
-    "M 284 450 C 344 372 376 292 420 204 S 494 90 590 30",
-  ];
-  const cycloneTrack = [
-    [448, 302],
-    [432, 274],
-    [414, 248],
-    [392, 224],
-    [364, 204],
-  ];
+  const streamlines = marine.windField.slice(0, 7).map(svgWindCurve);
+  const cycloneTrack = marine.cyclone.forecastTrack.map(projectWxPoint);
+  const cycloneCenter = projectWxPoint(marine.cyclone.center);
 
   return (
     <div className="relative w-full h-full bg-[oklch(0.08_0.03_240)] overflow-hidden">
@@ -275,6 +330,11 @@ function MarineWeatherMap({
             <stop offset="60%" stopColor="#45b9ff" stopOpacity="0.22" />
             <stop offset="100%" stopColor="#45b9ff" stopOpacity="0" />
           </radialGradient>
+          <linearGradient id="swellBand" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0" stopColor="#7dd3fc" stopOpacity="0" />
+            <stop offset="48%" stopColor="#7dd3fc" stopOpacity="0.18" />
+            <stop offset="100%" stopColor="#ffb347" stopOpacity="0.12" />
+          </linearGradient>
         </defs>
 
         <path
@@ -290,19 +350,38 @@ function MarineWeatherMap({
           strokeWidth="1"
           strokeDasharray="4 6"
         />
+        <path
+          d="M 18 468 C 180 410 306 382 456 346 S 584 302 640 268"
+          fill="none"
+          stroke="url(#swellBand)"
+          strokeWidth="34"
+          opacity="0.72"
+        />
+        <path
+          d="M 0 408 C 154 366 282 330 436 300 S 572 252 640 216"
+          fill="none"
+          stroke="url(#swellBand)"
+          strokeWidth="22"
+          opacity="0.55"
+        />
 
         <g filter="url(#wxBlur)" className="animate-halo">
-          <ellipse cx="438" cy="282" rx="138" ry="92" fill="url(#rainCore)" />
-          <ellipse cx="358" cy="222" rx="112" ry="58" fill="url(#rainSoft)" />
-          <ellipse cx="248" cy="352" rx="118" ry="48" fill="url(#rainSoft)" />
-          <ellipse
-            cx="492"
-            cy="164"
-            rx="98"
-            ry="52"
-            fill="#45b9ff"
-            opacity="0.20"
-          />
+          {marine.radarCells.map((cell) => {
+            const [x, y] = projectWxPoint(cell.center);
+            const severe = cell.intensity === "severe";
+            return (
+              <ellipse
+                key={cell.id}
+                cx={x}
+                cy={y}
+                rx={cell.radiusKm * (severe ? 0.58 : 0.46)}
+                ry={cell.radiusKm * (severe ? 0.32 : 0.24)}
+                fill={severe ? "url(#rainCore)" : "url(#rainSoft)"}
+                opacity={severe ? 0.86 : 0.58}
+                transform={`rotate(${cell.movementDeg} ${x} ${y})`}
+              />
+            );
+          })}
         </g>
 
         {streamlines.map((d, index) => (
@@ -318,7 +397,7 @@ function MarineWeatherMap({
           />
         ))}
 
-        <g transform="translate(438 282)" className="animate-sweep">
+        <g transform={`translate(${cycloneCenter[0]} ${cycloneCenter[1]})`} className="animate-sweep">
           <path
             d="M 0 -44 C 44 -34 58 -4 35 20 C 15 42 -22 30 -22 4 C -22 -18 10 -20 18 -4"
             fill="none"
@@ -353,6 +432,15 @@ function MarineWeatherMap({
           />
         ))}
 
+        <path
+          d={`M ${cycloneTrack[0][0]} ${cycloneTrack[0][1]} L ${cycloneTrack[1][0] - 30} ${cycloneTrack[1][1] - 8} L ${cycloneTrack[4][0] - 54} ${cycloneTrack[4][1] + 34} L ${cycloneTrack[3][0] + 40} ${cycloneTrack[3][1] + 42} Z`}
+          fill="#ffb347"
+          opacity="0.08"
+          stroke="#ffb347"
+          strokeDasharray="4 6"
+          strokeWidth="1"
+        />
+
         <g transform="translate(318 286)">
           <circle r="5" fill="#7dd3fc" />
           <circle
@@ -378,7 +466,7 @@ function MarineWeatherMap({
       </svg>
 
       <div className="absolute top-2 left-2 border border-[var(--color-cyan)]/35 bg-[oklch(0.08_0.02_240_/_0.72)] px-2 py-1 text-[9px] tracking-widest text-[var(--color-cyan)]">
-        BAY OF BENGAL · MARINE WX RADAR · +12H
+        BAY OF BENGAL · MARINE WX RADAR · {marine.timestamp}
       </div>
       <div className="absolute top-2 right-2 grid grid-cols-2 gap-x-3 gap-y-1 border border-[var(--color-line)] bg-[oklch(0.08_0.02_240_/_0.72)] px-2 py-1 text-[9px]">
         <span className="text-[var(--color-muted-foreground)]">WIND</span>
@@ -391,8 +479,19 @@ function MarineWeatherMap({
         </span>
         <span className="text-[var(--color-muted-foreground)]">CYCLONE</span>
         <span className="text-[var(--color-red)] tabular-nums">
-          {Math.round(weather.cycloneRisk7d * 100)}%
+          {Math.round(marine.cyclone.probability72h * 100)}%
         </span>
+        <span className="text-[var(--color-muted-foreground)]">SWELL</span>
+        <span className="text-[var(--color-amber)] tabular-nums">
+          {marine.swell.heightM} m
+        </span>
+      </div>
+      <div className="absolute bottom-2 left-2 grid grid-cols-3 gap-1 border border-[var(--color-line)] bg-[oklch(0.08_0.02_240_/_0.72)] px-2 py-1 text-[8px] tracking-widest">
+        {marine.sources.slice(0, 6).map((source) => (
+          <span key={source.key} className="text-[var(--color-muted-foreground)]">
+            <span className="text-[var(--color-mint)]">●</span> {source.key} {source.latencyMin}m
+          </span>
+        ))}
       </div>
       <div className="absolute bottom-2 right-2 w-[170px] border border-[var(--color-line)] bg-[oklch(0.08_0.02_240_/_0.78)] p-2">
         <div className="label-xs mb-1">DIAGNOSTIC WIND BARBS</div>

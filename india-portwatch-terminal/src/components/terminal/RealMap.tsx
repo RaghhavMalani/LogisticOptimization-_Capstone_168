@@ -18,6 +18,10 @@ const VESSEL_COLOR: Record<string, string> = {
   TANKER: "#ffb347",
   BULK: "#7ef0b4",
   LNG: "#c58cff",
+  GENERAL_CARGO: "#7dd3fc",
+  PATROL: "#ff5566",
+  SERVICE: "#7ef0b4",
+  TUG: "#7ef0b4",
   OTHER: "#7dd3fc",
 };
 

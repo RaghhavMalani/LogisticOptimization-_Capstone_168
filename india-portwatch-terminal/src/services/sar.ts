@@ -1,5 +1,11 @@
 import { getJson } from "./api";
-import { getSARSignal, listSARSignals, listVesselProxies } from "./sarService";
+import {
+  getSARSignal,
+  listSARSignals,
+  listVesselFeedAdapters,
+  listVesselProxies,
+  type VesselFeedAdapter,
+} from "./sarService";
 import type { SARSignal, VesselProxy } from "@/types/portwatch";
 
 interface VesselBundle {
@@ -40,5 +46,11 @@ export async function fetchSARSignal(portCode: string): Promise<SARSignal> {
 export async function fetchSARSignals(): Promise<SARSignal[]> {
   return Promise.all(
     listSARSignals().map((signal) => fetchSARSignal(signal.portCode)),
+  );
+}
+
+export async function fetchVesselFeedAdapters(): Promise<VesselFeedAdapter[]> {
+  return getJson<VesselFeedAdapter[]>("/sar/feed-adapters", () =>
+    listVesselFeedAdapters(),
   );
 }

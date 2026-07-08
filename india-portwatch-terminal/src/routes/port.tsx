@@ -18,7 +18,10 @@ import { listNewsEvents } from "@/services/newsService";
 import { fetchNewsEvents } from "@/services/news";
 import { getPortSnapshot } from "@/services/portService";
 import { fetchPortSnapshot } from "@/services/ports";
-import { getWeatherSignal } from "@/services/weatherService";
+import {
+  getMarineWeatherIntelligence,
+  getWeatherSignal,
+} from "@/services/weatherService";
 import { fetchWeatherSignal } from "@/services/weather";
 
 export const Route = createFileRoute("/port")({
@@ -40,6 +43,40 @@ const berthOcc = [
   ["B9", 40, "mint"],
   ["B10", 30, "mint"],
 ] as const;
+
+const chennaiHarborVessels = {
+  berth: [
+    { id: "B1", x: 218, y: 186, heading: 92, color: "#ff5566", label: "CONT", status: "Restricted" },
+    { id: "B2", x: 218, y: 214, heading: 92, color: "#7ef0b4", label: "TUG", status: "At berth" },
+    { id: "B3", x: 219, y: 246, heading: 94, color: "#ffb347", label: "BULK", status: "Delayed" },
+    { id: "B4", x: 218, y: 278, heading: 91, color: "#7ef0b4", label: "CONT", status: "At berth" },
+    { id: "B5", x: 220, y: 316, heading: 93, color: "#7dd3fc", label: "GEN", status: "Working" },
+    { id: "B6", x: 220, y: 354, heading: 91, color: "#ffb347", label: "TANK", status: "Weather hold" },
+  ],
+  anchorage: [
+    { id: "A1", x: 516, y: 154, heading: 302, color: "#ffb347", label: "CONT", status: "Waiting" },
+    { id: "A2", x: 592, y: 176, heading: 286, color: "#7dd3fc", label: "LNG", status: "Anchored" },
+    { id: "A3", x: 672, y: 210, heading: 274, color: "#ff5566", label: "TANK", status: "Restricted" },
+    { id: "A4", x: 474, y: 232, heading: 318, color: "#7dd3fc", label: "CONT", status: "Anchored" },
+    { id: "A5", x: 568, y: 262, heading: 300, color: "#ffb347", label: "BULK", status: "Waiting" },
+    { id: "A6", x: 646, y: 300, heading: 284, color: "#c58cff", label: "SAR", status: "Low conf" },
+    { id: "A7", x: 520, y: 342, heading: 302, color: "#ffb347", label: "GEN", status: "Waiting" },
+    { id: "A8", x: 704, y: 366, heading: 276, color: "#7dd3fc", label: "CONT", status: "Anchored" },
+    { id: "A9", x: 604, y: 408, heading: 292, color: "#ffb347", label: "TANK", status: "Delayed" },
+  ],
+  approach: [
+    { id: "P1", x: 768, y: 218, heading: 282, color: "#7dd3fc", label: "CONT", status: "Approach" },
+    { id: "P2", x: 694, y: 244, heading: 284, color: "#7dd3fc", label: "CONT", status: "Pilot inbound" },
+    { id: "P3", x: 628, y: 272, heading: 288, color: "#ffb347", label: "TANK", status: "Slow steam" },
+    { id: "P4", x: 770, y: 378, heading: 268, color: "#ff5566", label: "PAT", status: "Restricted box" },
+    { id: "P5", x: 684, y: 386, heading: 274, color: "#c58cff", label: "SAR", status: "Proxy track" },
+  ],
+  service: [
+    { id: "S1", x: 292, y: 202, heading: 148, color: "#7ef0b4", label: "TUG", status: "Assist" },
+    { id: "S2", x: 318, y: 298, heading: 34, color: "#7ef0b4", label: "TUG", status: "Assist" },
+    { id: "S3", x: 358, y: 382, heading: 256, color: "#7ef0b4", label: "SRV", status: "Pilot" },
+  ],
+} as const;
 
 function PortPage() {
   const { port } = Route.useSearch();
@@ -87,6 +124,7 @@ function PortPage() {
     staleTime: 30_000,
   });
   const weather = weatherQuery.data;
+  const marine = getMarineWeatherIntelligence();
   const regime = regimeQuery.data;
   const forecastDays = forecastQuery.data;
   const recommendation = recommendationQuery.data;
@@ -406,83 +444,6 @@ function PortPage() {
                   strokeWidth="0.8"
                 />
 
-                {/* Vessels at berth — ship silhouettes with wake */}
-                {Array.from({ length: 22 }).map((_, i) => {
-                  const x = 216 + i * 5.5;
-                  const y = 180 + Math.sin(i * 0.9) * 4 + (i % 3) * 22;
-                  const c =
-                    i % 5 === 0
-                      ? "#ff5566"
-                      : i % 3 === 0
-                        ? "#ffb347"
-                        : i % 4 === 0
-                          ? "#c58cff"
-                          : "#7ef0b4";
-                  const r = 90 + ((i * 37) % 20) - 10;
-                  return (
-                    <g
-                      key={"b" + i}
-                      transform={`translate(${x} ${y}) rotate(${r})`}
-                      style={{
-                        animation: `vessel-drift ${4 + (i % 4)}s ease-in-out infinite`,
-                      }}
-                    >
-                      <path
-                        d="M 0 -7 L 4.4 4.5 L 1.2 7 L 0 5.2 L -1.2 7 L -4.4 4.5 Z"
-                        fill={c}
-                        opacity="0.98"
-                        stroke="#000"
-                        strokeWidth="0.45"
-                        filter="url(#vShip)"
-                      />
-                      <rect
-                        x="-1.4"
-                        y="-1.2"
-                        width="2.8"
-                        height="3.3"
-                        fill="#0a1420"
-                        opacity="0.72"
-                      />
-                    </g>
-                  );
-                })}
-                {/* Anchored vessels — smaller ships in outer roads */}
-                {Array.from({ length: 26 }).map((_, i) => {
-                  const angle = (i / 26) * Math.PI * 1.1 - 0.4;
-                  const r = 200 + (i % 4) * 26;
-                  const x = 500 + Math.cos(angle) * r;
-                  const y = 260 + Math.sin(angle) * r * 0.55;
-                  const c = i % 6 === 0 ? "#ffb347" : "#7dd3fc";
-                  const rot = (i * 47) % 360;
-                  return (
-                    <g
-                      key={"a" + i}
-                      transform={`translate(${x} ${y}) rotate(${rot})`}
-                      style={{
-                        animation: `vessel-drift ${5 + (i % 5)}s ease-in-out infinite`,
-                      }}
-                    >
-                      <line
-                        x1="-14"
-                        y1="0"
-                        x2="-6"
-                        y2="0"
-                        stroke={c}
-                        strokeWidth="0.4"
-                        strokeDasharray="1.4 2"
-                        opacity="0.5"
-                      />
-                      <path
-                        d="M 0 -6 L 3.8 4 L 0 6 L -3.8 4 Z"
-                        fill={c}
-                        opacity="0.94"
-                        stroke="#000"
-                        strokeWidth="0.38"
-                        filter="url(#vShip)"
-                      />
-                    </g>
-                  );
-                })}
                 {/* Approach lanes with glow */}
                 <path
                   d="M 800 220 Q 600 260 380 300"
@@ -521,6 +482,19 @@ function PortPage() {
                   strokeDasharray="2 5"
                   fill="none"
                 />
+                {/* Deterministic Chennai AIS/SAR vessel placements */}
+                {chennaiHarborVessels.berth.map((vessel) => (
+                  <HarborVessel key={vessel.id} vessel={vessel} berth />
+                ))}
+                {chennaiHarborVessels.anchorage.map((vessel) => (
+                  <HarborVessel key={vessel.id} vessel={vessel} anchored />
+                ))}
+                {chennaiHarborVessels.approach.map((vessel) => (
+                  <HarborVessel key={vessel.id} vessel={vessel} underway />
+                ))}
+                {chennaiHarborVessels.service.map((vessel) => (
+                  <HarborVessel key={vessel.id} vessel={vessel} service />
+                ))}
               </svg>
 
               {/* Legend */}
@@ -694,44 +668,63 @@ function PortPage() {
                   l="WIND (10m)"
                   v={`${weather.windKnots} kt`}
                   sub={weather.windDirection}
+                  tone="amber"
                 />
-                <WxCell l="GUSTS" v={`${weather.gustKnots} kt`} />
-                <WxCell l="RAINFALL (24h)" v={`${weather.rainfallMm24h} mm`} />
+                <WxCell l="GUSTS" v={`${weather.gustKnots} kt`} tone="red" />
+                <WxCell
+                  l="RAINFALL (24h)"
+                  v={`${weather.rainfallMm24h} mm`}
+                  sub={`${weather.precipRateMmH} mm/h`}
+                  tone="cyan"
+                />
                 <WxCell
                   l="WAVE HEIGHT"
                   v={`${weather.waveHeightM} m`}
-                  sub="S"
+                  sub={`${marine.swell.direction} swell`}
+                  tone="amber"
                 />
                 <WxCell l="SEA STATE" v={weather.seaState} />
                 <WxCell
                   l="VISIBILITY"
                   v={`${weather.visibilityKm} km`}
-                  sub="Good"
-                  tone="mint"
+                  sub={weather.visibilityKm < 8 ? "Reduced in squalls" : "Usable"}
+                  tone={weather.visibilityKm < 8 ? "amber" : "mint"}
                 />
                 <div className="col-span-3 mt-1 border-t border-[var(--color-line)] pt-2">
-                  <div className="label-xs mb-1">MONSOON OUTLOOK</div>
+                  <div className="label-xs mb-1">CYCLONE / MONSOON OPERATIONAL CONTEXT</div>
                   <div className="grid grid-cols-3 gap-2 text-[10px]">
                     <div>
                       <div className="text-[var(--color-muted-foreground)]">
                         SW Monsoon
                       </div>
-                      <div className="text-[var(--color-mint)]">Active</div>
+                      <div className="text-[var(--color-amber)]">Active surge</div>
                     </div>
                     <div>
                       <div className="text-[var(--color-muted-foreground)]">
                         Cyclone Risk (7D)
                       </div>
-                      <div className="text-[var(--color-mint)]">Low</div>
+                      <div className="text-[var(--color-red)]">
+                        {Math.round(marine.cyclone.probability72h * 100)}% · {marine.cyclone.riskWindow}
+                      </div>
                     </div>
                     <div>
                       <div className="text-[var(--color-muted-foreground)]">
                         Next Tide
                       </div>
                       <div className="text-[var(--color-foreground)]">
-                        07:42
+                        07:42 · flood +0.8m
                       </div>
                     </div>
+                  </div>
+                </div>
+                <div className="col-span-3 border-t border-[var(--color-line)] pt-2">
+                  <div className="grid grid-cols-[1fr_1fr_1fr] gap-2">
+                    <WxOut k="pilotage_window" v="22:00-04:00Z" tone="red" />
+                    <WxOut k="outer_band_eta" v="T+18h" />
+                    <WxOut k="berth_productivity" v="-18%" tone="red" />
+                  </div>
+                  <div className="mt-2 text-[10px] leading-relaxed text-[var(--color-foreground)]">
+                    Outer Bay rain bands and {marine.swell.heightM}m {marine.swell.direction} swell are holding deep-draft entries outside the inner harbor. Slow steaming and berth resequencing explain the elevated anchorage queue.
                   </div>
                 </div>
                 <div className="col-span-3 mt-1 border-t border-[var(--color-line)] pt-2">
@@ -973,6 +966,96 @@ function PortPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+type HarborVesselMeta = {
+  readonly id: string;
+  readonly x: number;
+  readonly y: number;
+  readonly heading: number;
+  readonly color: string;
+  readonly label: string;
+  readonly status: string;
+};
+
+function HarborVessel({
+  vessel,
+  berth,
+  anchored,
+  underway,
+  service,
+}: {
+  vessel: HarborVesselMeta;
+  berth?: boolean;
+  anchored?: boolean;
+  underway?: boolean;
+  service?: boolean;
+}) {
+  const scale = service ? 0.74 : berth ? 0.92 : 0.82;
+  const hull =
+    vessel.label === "TUG" || vessel.label === "SRV"
+      ? "M 0 -7 C 4 -4 5 3 2 7 L 0 9 L -2 7 C -5 3 -4 -4 0 -7 Z"
+      : "M 0 -10 C 6 -6 7 5 3 10 L 0 12 L -3 10 C -7 5 -6 -6 0 -10 Z";
+
+  return (
+    <g
+      transform={`translate(${vessel.x} ${vessel.y}) rotate(${vessel.heading}) scale(${scale})`}
+      style={{ animation: anchored || service ? "vessel-drift 5.8s ease-in-out infinite" : undefined }}
+    >
+      <title>
+        {vessel.id} · {vessel.label} · {vessel.status}
+      </title>
+      {anchored && (
+        <circle
+          r="16"
+          fill="none"
+          stroke={vessel.color}
+          strokeWidth="0.45"
+          strokeDasharray="2 5"
+          opacity="0.35"
+        />
+      )}
+      {(underway || service) && (
+        <line
+          x1="0"
+          y1="14"
+          x2="0"
+          y2="28"
+          stroke={vessel.color}
+          strokeWidth="0.7"
+          strokeDasharray="2 4"
+          opacity="0.45"
+        />
+      )}
+      {berth && (
+        <line
+          x1="-11"
+          y1="0"
+          x2="-21"
+          y2="0"
+          stroke={vessel.color}
+          strokeWidth="0.55"
+          strokeDasharray="1 3"
+          opacity="0.48"
+        />
+      )}
+      <path
+        d={hull}
+        fill={vessel.color}
+        opacity="0.98"
+        stroke="#020711"
+        strokeWidth="0.72"
+        filter="url(#vShip)"
+      />
+      <path
+        d="M -2.8 -1.8 H 2.8 M -2.4 2 H 2.4 M 0 -6 V 7"
+        stroke="#07111d"
+        strokeWidth="0.72"
+        strokeLinecap="round"
+        opacity="0.75"
+      />
+    </g>
   );
 }
 

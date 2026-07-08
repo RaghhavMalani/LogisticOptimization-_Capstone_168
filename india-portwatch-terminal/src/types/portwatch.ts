@@ -1,7 +1,25 @@
 export type RiskLevel = "normal" | "congested" | "severe" | "lowconf";
 export type OperationalRiskLevel = "normal" | "medium" | "high" | "severe";
 export type Coast = "west" | "east";
-export type VesselKind = "TANKER" | "BULK" | "CONT" | "LNG" | "OTHER";
+export type VesselKind =
+  | "TANKER"
+  | "BULK"
+  | "CONT"
+  | "LNG"
+  | "GENERAL_CARGO"
+  | "PATROL"
+  | "SERVICE"
+  | "TUG"
+  | "OTHER";
+export type VesselOperationalStatus =
+  | "underway"
+  | "anchored"
+  | "approach"
+  | "berthed"
+  | "waiting"
+  | "delayed"
+  | "restricted"
+  | "rerouted";
 export type ScenarioKey =
   | "STORM_W"
   | "CYC_E"
@@ -52,12 +70,75 @@ export interface VesselProxy {
   radar: RadarPoint;
   schematic: RadarPoint;
   destinationPortCode?: string;
-  status?: "underway" | "anchored" | "approach" | "berthed" | "rerouted";
+  status?: VesselOperationalStatus;
+  eta?: string;
+  routeId?: string;
+  berthId?: string;
+  anchorageZone?: string;
+  approachLane?: string;
+  lengthM?: number;
+  riskExposure?: "low" | "medium" | "high" | "severe" | "proxy";
   heading: number;
   speedKnots: number;
   flag: string;
   source: "AIS" | "SAR" | "AIS_SAR";
   confidence: number;
+}
+
+export interface WeatherRadarCell {
+  id: string;
+  label: string;
+  center: GeoPoint;
+  radiusKm: number;
+  intensity: "light" | "moderate" | "heavy" | "severe";
+  precipitationRateMmH: number;
+  movementDeg: number;
+  driftHours: number;
+  source: "IMD" | "INSAT" | "HIMAWARI" | "ECMWF" | "GFS";
+}
+
+export interface WindVector {
+  id: string;
+  label: string;
+  start: GeoPoint;
+  control: GeoPoint;
+  end: GeoPoint;
+  speedKnots: number;
+  gustKnots: number;
+  directionDeg: number;
+  source: "ECMWF" | "GFS" | "INCOIS";
+}
+
+export interface CycloneOutlook {
+  id: string;
+  name: string;
+  center: GeoPoint;
+  pressureHpa: number;
+  maxWindKnots: number;
+  movement: string;
+  probability72h: number;
+  riskWindow: string;
+  forecastTrack: GeoPoint[];
+  source: "IMD" | "ECMWF" | "GFS";
+}
+
+export interface MarineWeatherIntelligence {
+  timestamp: string;
+  sources: Array<{
+    key: "IMD" | "INCOIS" | "ECMWF" | "GFS" | "INSAT" | "SAR";
+    label: string;
+    status: "live" | "mock-fallback" | "degraded";
+    latencyMin: number;
+  }>;
+  radarCells: WeatherRadarCell[];
+  windField: WindVector[];
+  cyclone: CycloneOutlook;
+  swell: {
+    heightM: number;
+    direction: string;
+    periodSec: number;
+    source: "INCOIS" | "ECMWF";
+  };
 }
 
 export interface WeatherSignal {

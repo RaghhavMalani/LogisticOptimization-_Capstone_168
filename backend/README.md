@@ -35,5 +35,3 @@ Primary endpoints:
 - `GET /api/scenarios`
 - `POST /api/scenarios/simulate`
 - `GET /api/fleet`
-
-The older Rust backend in `india-portwatch/backend/` remains a valid reference and was not deleted.

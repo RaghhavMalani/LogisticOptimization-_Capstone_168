@@ -13,6 +13,7 @@ env/
 outputs/
 data/cache/
 data/sample/
+work/
 *.db
 *.sqlite
 *.sqlite3

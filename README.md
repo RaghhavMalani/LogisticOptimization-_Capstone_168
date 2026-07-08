@@ -191,8 +191,8 @@ Outputs include per-state probabilities and a `regime_confidence`.
 
 **Forecasting** (`src/forecasting/`). `tft_dataset.py` builds the supervised /
 inference matrices and the column-role metadata a `TimeSeriesDataSet` needs.
-`tft_model.py` is the **TFT scaffold** with a clearly-marked `TODO(tft)` plug-in
-point. `forecast_runner.py` is the always-available **quantile baseline**: direct
+`tft_model.py` is the trainable **TFT wrapper** built on
+`pytorch-forecasting`. `forecast_runner.py` is the always-available **quantile baseline**: direct
 multi-horizon gradient-boosted regressors produce `q10/q50/q90` for the primary
 target (congestion) and point forecasts for delay/throughput, then package
 everything — with `risk_level` and `confidence_score` — into the final forecast

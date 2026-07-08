@@ -2,79 +2,65 @@
 
 Audit date: 2026-07-08
 
-This repository contains three overlapping product generations:
+This checkout currently has three useful tracks:
 
-1. The accepted Lovable terminal UI in `india-portwatch-terminal/`.
-2. A prior Rust/API plus React/MapLibre product in `india-portwatch/`.
-3. The research and modelling pipeline in root `src/`, `app/`, `data/`, and `outputs/`.
+1. `india-portwatch-terminal/` - the accepted Lovable terminal UI. Preserve the dark command-terminal visual baseline.
+2. `src/`, `app/`, `data/`, `features/`, `outputs/` - the Python research/modeling pipeline.
+3. `backend/` - a FastAPI demo/API shell that currently reads local/demo data and selected generated outputs.
 
-No files were deleted during this audit. Cleanup should happen only after these boundaries are confirmed.
+No separate `india-portwatch/` Rust or React reference app exists in this checkout.
 
-## Keep As Active Product
-
-| Path | Role | Notes |
-|---|---|---|
-| `india-portwatch-terminal/` | Current frontend product | Lovable visual baseline. Preserve terminal shell, dark styling, panels, typography, navigation, and page structure. |
-| `india-portwatch-terminal/src/types/` | Frontend typed models | Canonical TypeScript contract for the terminal demo/application layer. |
-| `india-portwatch-terminal/src/data/` | Frontend demo data | Local deterministic fallback until backend APIs are fully live. |
-| `india-portwatch-terminal/src/services/` | Frontend service boundary | Local and backend-ready access layer for UI pages. |
-| `india-portwatch-terminal/src/components/map/` | Active geospatial map boundary | Real lat/lon Leaflet radar layers belong here. |
-| `data/portwatch/` | PortWatch-derived public maritime data | Port activity, chokepoints, disruptions, and historical port series. |
-| `data/preprocessed/` | Preprocessed historical features | Useful for training, backtesting, expert feature engineering, and docs. |
-| `outputs/` | Generated model and analytics outputs | Backend fallback source for regimes, forecasts, decisions, and analytics. |
-| `src/experts/` | Expert feature modules | Weather, news, port ops, trade demand, macro signals. |
-| `src/regimes/` | Regime modelling | Existing HSMM/HMM-style regime machinery. |
-| `src/forecasting/` | Forecast modelling | Baseline quantile forecast and optional TFT path. |
-| `src/decision/` | Decision/scenario logic | Decision layer, route optimization, scenario impacts. |
-| `src/evaluation/` | Evaluation utilities | Walk-forward and metric helpers. |
-| `app/data/portwatch.py` | PortWatch data adapter | Live ArcGIS public data refresh path. |
-
-## Keep As Backend Reference
+## Active Product Boundary
 
 | Path | Role | Notes |
 |---|---|---|
-| `india-portwatch/backend/` | Existing Rust backend | Already exposes many relevant API endpoints over local CSV/output data. Treat as reference or parallel option. |
-| `india-portwatch/frontend-react/` | Earlier React/MapLibre frontend | Useful component/API reference, not the accepted visual baseline. Do not copy visual design wholesale. |
-| `india-portwatch/data/geo/india_ports.geojson` | India port geospatial reference | Useful lat/lon source for map correctness. |
-| `docs/DATA_SOURCES.md` | Data source catalogue | Already documents live versus planned feeds. Keep and extend. |
+| `india-portwatch-terminal/` | Current frontend product | Lovable terminal UI, now MapLibre-based on the radar route. |
+| `india-portwatch-terminal/src/types/` | Frontend typed models | TypeScript contracts for ports, vessels, weather, SAR, news, regimes, forecasts, decisions, fleet, scenarios, and pipeline status. |
+| `india-portwatch-terminal/src/data/` | Frontend demo data | Deterministic local fallback data until backend/model outputs are wired. |
+| `india-portwatch-terminal/src/services/` | Frontend service boundary | API-first wrappers plus local fallback helpers. |
+| `india-portwatch-terminal/src/components/map/` | Active geospatial map boundary | Live map is `MaritimeMap.tsx`; keep `MapControls.tsx`, `mapUtils.ts`, and `types.ts`. |
+| `backend/` | FastAPI demo backend | Useful API contract shell, but not yet the production model runtime. |
 
-## Legacy Prototype Candidates
+## Model Pipeline Boundary
 
-These are not deleted. They are candidates for archive after the active terminal/backend path is stable.
+| Path | Role | Status |
+|---|---|---|
+| `src/experts/` | Expert feature modules | Weather, news, port ops/AIS proxy, trade demand, and macro signals. |
+| `src/regimes/regime_features.py` | HSMM feature builder | Selects and cleans the feature matrix consumed by the regime model. |
+| `src/regimes/hsmm_model.py` | HSMM-style regime model | Uses `hmmlearn.GaussianHMM` when available, otherwise `sklearn.mixture.GaussianMixture`, then adds semi-Markov dwell/duration outputs. |
+| `src/forecasting/tft_dataset.py` | TFT dataset builder | Builds supervised and inference frames with known-future and unknown-real covariates. |
+| `src/forecasting/tft_model.py` | Trainable TFT wrapper | Uses `pytorch-forecasting` TemporalFusionTransformer when the heavy stack is installed. |
+| `src/forecasting/forecast_runner.py` | Forecast selector | `model="tft"` trains/uses TFT if available; `model="auto"` falls back to the baseline if torch/TFT dependencies are missing. |
+| `requirements-tft.txt` | TFT dependency set | Install only for the real TFT path: torch, pytorch-forecasting, lightning. |
+| `src/decision/` | Decision/scenario logic | Consumes regimes and forecasts to produce recommendations, route options, and scenario impacts. |
+| `outputs/` | Generated artifacts | Regimes, forecasts, decisions, metrics, and analytics. Ignored in Git because it is regeneratable. |
+
+## Current Integration Reality
+
+- The frontend currently shows deterministic demo data from `india-portwatch-terminal/src/data/`.
+- The FastAPI backend currently exposes local/demo endpoints and some output readers.
+- The real HSMM/TFT implementation is in the root Python `src/` pipeline, not inside the frontend.
+- The backend is not yet directly training/running `src/regimes/hsmm_model.py` or `src/forecasting/tft_model.py` on request.
+
+## Cleanup Notes
+
+- Tracked local Vite logs under `work/` were removed; `work/` is now ignored.
+- Unused Leaflet-era map components were removed after verifying no active route imported them.
+- Leaflet packages were removed from the terminal app; MapLibre remains the active map dependency.
+- Do not delete `src/regimes/`, `src/forecasting/`, `requirements-tft.txt`, or model output schemas. Those are the model assets we will wire next.
+
+## Legacy Candidates To Revisit Later
 
 | Path | Why It Looks Legacy | Suggested Action |
 |---|---|---|
-| `src/dashboard/` | Streamlit/static dashboard prototypes; not the Lovable terminal. | Archive after final terminal routes cover same value. |
-| `src/webapp/` | Older lightweight HTML data app. | Archive after backend API and terminal are stable. |
-| `app/ui/` | Generated static UI snapshot. | Archive once docs confirm no missing data transform. |
-| `india-portwatch/frontend/` | Earlier static frontend. | Archive after Rust backend/API references are harvested. |
-| `india-portwatch/frontend-react/dist/` | Built artifacts. | Usually removable from source control after confirming deployment needs. |
-| `lightning_logs/` | Training run outputs. | Keep for reproducibility only if tied to a model card; otherwise move to artifact storage. |
+| `src/dashboard/` | Streamlit/static dashboard prototype, not the accepted terminal UI. | Archive only after terminal/backend coverage is confirmed. |
+| `src/webapp/` | Older lightweight static web app. | Archive after its useful transforms are checked. |
+| `app/` | Data adapters and older support code. | Keep until PortWatch refresh/data-loading ownership is settled. |
+| `features/` | Exploratory notebooks/scripts. | Keep for project evidence unless user wants a lean app-only repo. |
 
-## Current Architecture Target
+## Immediate Rules
 
-The engineering-ready application should use these boundaries:
-
-```
-india-portwatch-terminal/
-  src/types/          TypeScript app/domain contracts
-  src/data/           deterministic local fallback data
-  src/services/       API-first frontend service functions
-  src/components/map/ Leaflet lat/lon radar layers
-  src/routes/         preserved Lovable terminal pages
-
-backend/
-  app/main.py         FastAPI application entrypoint
-  app/routers/        REST endpoints
-  app/services/       data connectors and fallback readers
-  app/engines/        expert, regime, forecast, scenario, decision logic
-  training/           dataset build, walk-forward eval, training scripts
-```
-
-## Immediate Cleanup Rules
-
-- Do not delete legacy dashboards before the backend API and terminal pages are verified.
-- Do not redesign `india-portwatch-terminal`; only modularize and wire data.
-- Prefer local demo data and `outputs/` readers as deterministic fallbacks.
-- Keep external API connectors disabled by default unless explicitly refreshed.
-- Mark mock/demo values in service responses and docs so backend integration is unambiguous.
+- Do not redesign `india-portwatch-terminal`.
+- Treat `src/regimes/` and `src/forecasting/` as protected model code.
+- Keep API/backend work separate from frontend visual cleanup unless explicitly requested.
+- Mark demo/mock values clearly until the Python model outputs are wired into services.

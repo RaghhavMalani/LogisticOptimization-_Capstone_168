@@ -1,0 +1,428 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { Chip, Sparkline } from "@/components/terminal/ui";
+import { cn } from "@/lib/utils";
+
+export const Route = createFileRoute("/sim")({
+  component: DecisionRoom,
+});
+
+const SCENARIOS = [
+  { key: "STORM_W",  name: "Storm near west coast",     desc: "Severe monsoon storm tracking along Arabian Sea", icon: "storm" },
+  { key: "CYC_E",    name: "Cyclone near east coast",   desc: "Bay of Bengal cyclone approaching Chennai–Vizag", icon: "cyc" },
+  { key: "LABOUR",   name: "Labour strike",              desc: "Port workers' strike reducing gate & yard ops",   icon: "worker" },
+  { key: "CAPDROP",  name: "Port capacity drop",         desc: "Unplanned berth/crane outage (~20% handling)",    icon: "crane" },
+  { key: "DEMAND",   name: "Demand surge",               desc: "Festival/quarter-end surge (+15% cargo demand)",  icon: "cargo" },
+  { key: "HORMUZ",   name: "Hormuz closure",             desc: "Strait of Hormuz closed · Gulf crude/LNG halt",   icon: "gate" },
+  { key: "REDSEA",   name: "Red Sea disruption",         desc: "Bab-el-Mandeb/Suez route disruption",             icon: "drop" },
+  { key: "FUEL",     name: "Fuel price shock",           desc: "Brent spike > $25/bbl · cost pressure",           icon: "fuel" },
+];
+
+const AFFECTED_PORTS = [
+  ["1", "JNPT (Nhava Sheva)", 92, "SEVERE", "red"],
+  ["2", "Mundra (APSEZ)",     81, "SEVERE", "red"],
+  ["3", "Paradip",             74, "SEVERE", "red"],
+  ["4", "Visakhapatnam",       69, "SEVERE", "red"],
+  ["5", "Deendayal (Kandla)",  63, "HIGH",   "amber"],
+  ["6", "Chennai",             58, "HIGH",   "amber"],
+  ["7", "Kochi",               49, "MEDIUM", "cyan"],
+  ["8", "Mangaluru",           42, "MEDIUM", "cyan"],
+] as const;
+
+const CHOKES = [
+  ["Strait of Hormuz", "HIGH",   "red"],
+  ["Bab-el-Mandeb",    "MEDIUM", "amber"],
+  ["Malacca Strait",   "LOW",    "mint"],
+  ["Suez Canal",       "LOW",    "mint"],
+  ["Cape of Good Hope","LOW",    "mint"],
+] as const;
+
+const SEA_ROUTES = [
+  ["West Coast Route",   "+9.6h"],
+  ["East Coast Route",   "+6.3h"],
+  ["India → Europe",     "+11.2h"],
+  ["India → US East Coast", "+8.1h"],
+  ["India → GCC",        "+5.4h"],
+] as const;
+
+const EXPERTS = [
+  ["Weather Expert",    "Storm cell over Arabian Sea coast. High waves & strong winds.", 0.82, "Wx Impact Index", "0.71", "red"],
+  ["News / NLP Expert", "Shipping advisories & port alerts signal operational stress.",  0.74, "Event Risk",       "0.68", "amber"],
+  ["Port Ops Expert",   "Berth occupancy high. Yard utilisation at 92%.",                0.81, "Ops Impact",       "0.73", "amber"],
+  ["Demand Expert",     "Festival backed demand surge anticipated (+15%).",              0.76, "Demand Index",     "0.66", "cyan"],
+  ["HSMM Regime",       "Detected regime: SEVERE. Congestion Risk.",                     0.83, "Regime Prob.",     "0.83", "red"],
+  ["TFT Forecast",      "10-day congestion forecast with probabilistic bands.",          0.77, "P90 Cong. Index",  "0.91", "red"],
+] as const;
+
+const STAGES = [
+  ["DATA",         "Multimodal Fusion", "cyan"],
+  ["EXPERTS",      "Domain Reasoning",  "amber"],
+  ["HSMM REGIME",  "State Detection",   "amber"],
+  ["TFT FORECAST", "Probabilistic",     "red"],
+  ["DECISION",     "Optimization",      "mint"],
+  ["ANALYTICS",    "Insights & What to do", "cyan"],
+] as const;
+
+function DecisionRoom() {
+  const [sel, setSel] = useState("STORM_W");
+  const [intensity, setIntensity] = useState(1.5);
+  const [runId, setRunId] = useState(0);
+
+  return (
+    <div className="h-full overflow-auto">
+      <div className="min-h-full p-3 space-y-3">
+        {/* Focus header */}
+        <div className="panel px-4 py-2 flex items-center gap-4 text-[11px]">
+          <span className="flex items-center gap-2 text-[10px] tracking-widest text-[var(--color-muted-foreground)]">
+            What-if · <span className="text-[var(--color-foreground)]">Why</span> · What to do
+          </span>
+          <span className="text-[var(--color-muted-foreground)]">Current focus:</span>
+          <span className="text-[var(--color-foreground)]">Jawaharlal Nehru (Nhava Sheva)</span>
+          <span className="text-[var(--color-muted-foreground)]">— Severe Congestion (High Confidence)</span>
+          <Chip tone="red">SEVERE</Chip>
+          <div className="ml-auto flex items-center gap-2 text-[10px]">
+            <span className="text-[var(--color-muted-foreground)]">Select Port</span>
+            <div className="border border-[var(--color-line-strong)] px-2 py-1 flex items-center gap-2 min-w-[180px] justify-between">JNPT (Nhava Sheva) <span className="text-[var(--color-cyan)]">▾</span></div>
+            <button className="border border-[var(--color-line-strong)] px-2 py-1 text-[var(--color-cyan)]">↗ Share Scenario</button>
+            <button className="border border-[var(--color-line-strong)] px-2 py-1 text-[var(--color-cyan)]">↥ Export</button>
+            <button className="border border-[var(--color-line-strong)] px-2 py-1 text-[var(--color-muted-foreground)]">···</button>
+          </div>
+        </div>
+
+        {/* THREE-COLUMN */}
+        <div className="grid grid-cols-[1.05fr_1.4fr_1.35fr] gap-3">
+          {/* 1 · SCENARIO SIMULATOR */}
+          <div className="panel">
+            <div className="panel-header"><span className="flex items-center gap-2"><NumBadge n={1}/> SCENARIO SIMULATOR</span></div>
+            <div className="p-3 text-[10px] text-[var(--color-muted-foreground)]">Explore what-if situations and their impact</div>
+            <div className="px-3 pb-3 grid grid-cols-2 gap-2">
+              {SCENARIOS.map(sc => (
+                <button key={sc.key} onClick={()=>setSel(sc.key)} className={cn(
+                  "panel text-left p-2 transition-colors",
+                  sel === sc.key ? "border-[var(--color-cyan)] shadow-[0_0_0_1px_var(--color-cyan)_inset,0_0_18px_-6px_var(--color-cyan)]" : "hover:border-[var(--color-line-strong)]"
+                )}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <ScIcon k={sc.icon}/>
+                    <span className="text-[11px] text-[var(--color-foreground)] font-medium">{sc.name}</span>
+                  </div>
+                  <div className="text-[10px] text-[var(--color-muted-foreground)] leading-snug">{sc.desc}</div>
+                </button>
+              ))}
+            </div>
+            <div className="px-3 pb-2">
+              <div className="flex items-center justify-between text-[10px]"><span className="label-xs">SCENARIO INTENSITY</span><span className="text-[var(--color-cyan)] tabular-nums">{intensity.toFixed(1)}x</span></div>
+              <input type="range" min={0.5} max={2} step={0.1} value={intensity} onChange={e=>setIntensity(parseFloat(e.target.value))}
+                className="w-full mt-2 accent-[var(--color-cyan)]" />
+              <div className="grid grid-cols-4 text-[9px] tabular-nums text-[var(--color-muted-foreground)] mt-1">
+                <span>0.5x<br/><span className="opacity-70">Low</span></span>
+                <span>1.0x<br/><span className="opacity-70">Base</span></span>
+                <span className="text-[var(--color-cyan)]">1.5x<br/>High</span>
+                <span className="text-right">2.0x<br/><span className="opacity-70">Extreme</span></span>
+              </div>
+            </div>
+            <div className="p-3">
+              <button
+                onClick={() => setRunId(id => id + 1)}
+                className="w-full py-3 bg-[var(--color-red)] text-white tracking-[0.24em] text-[13px] font-semibold rounded-sm shadow-[0_0_20px_-4px_var(--color-red)] hover:brightness-110 active:brightness-95 transition-all">
+                ▶ RUN SIMULATION
+              </button>
+              <div className="text-[9px] text-[var(--color-muted-foreground)] text-center mt-2">AI will propagate impact across ports, routes & operations</div>
+            </div>
+          </div>
+
+          {/* 2 · DECISION IMPACT VIEW */}
+          <div className="panel">
+            <div className="panel-header">
+              <span className="flex items-center gap-2"><NumBadge n={2}/> DECISION IMPACT VIEW</span>
+              <span className="flex items-center gap-2 text-[10px]">
+                <span className="text-[var(--color-mint)] flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-[var(--color-mint)] animate-blink"/>RUN #{String(1247+runId).padStart(4,"0")}</span>
+                <span className="text-[var(--color-muted-foreground)]">View:</span>
+                <span className="border border-[var(--color-line-strong)] px-2 py-0.5">Impact Summary ▾</span>
+              </span>
+            </div>
+            <div className="p-2 text-[10px] text-[var(--color-muted-foreground)]">Before vs After impact on affected ports, routes & operations</div>
+            <div className="px-2 grid grid-cols-5 gap-2" key={runId}>
+              <ImpactCard label="Congestion Increase" avg="+64%" tone="red" data={[45,50,58,62,64,64]} sub="(56.2 → 92.1)" delay={0} />
+              <ImpactCard label="Delay Increase"      avg="+11.2h" tone="red" data={[6,8,9,10,11,11.2]} sub="(9.1h → 20.3h)" delay={80} />
+              <ImpactCard label="Throughput Drop"     avg="-18%" tone="mint" data={[100,95,90,85,82,82]} sub="(100 → 82 TEU/day)" invert delay={160} />
+              <ImpactCard label="Freight Impact"      avg="+8.7%" tone="red" data={[100,102,104,106,108,108.7]} sub="($2,184 → $2,374/TEU)" delay={240} />
+              <div className="panel p-2 flex flex-col gap-1 text-[10px] animate-impact" style={{ animationDelay: "320ms" }}>
+                <div className="label-xs">Recommended Operational Response</div>
+                <ul className="text-[10px] leading-snug space-y-0.5 text-[var(--color-foreground)]">
+                  <li className="text-[var(--color-mint)]">● Prioritise berth allocation</li>
+                  <li className="text-[var(--color-mint)]">● Stagger vessel arrivals</li>
+                  <li className="text-[var(--color-mint)]">● Activate yard re-plan</li>
+                  <li className="text-[var(--color-amber)]">● Pre-position empties</li>
+                  <li className="text-[var(--color-amber)]">● Reroute via alternate ports</li>
+                </ul>
+                <button className="mt-1 text-[10px] text-[var(--color-cyan)] border border-[var(--color-cyan)]/40 px-2 py-1">View Full Playbook →</button>
+              </div>
+            </div>
+
+            {/* Affected ports + map + chokepoints */}
+            <div className="p-2 grid grid-cols-[1fr_1fr_0.9fr] gap-2">
+              <div className="panel">
+                <div className="panel-header"><span>AFFECTED PORTS</span><span>(Top 8)</span></div>
+                <div className="grid grid-cols-[16px_1fr_36px_54px] px-2 py-1 border-b border-[var(--color-line)]/60 text-[9px] tracking-widest text-[var(--color-muted-foreground)]">
+                  <span></span><span>PORT</span><span className="text-right">IMPACT SCORE</span><span></span>
+                </div>
+                <div className="p-1 text-[10px]">
+                  {AFFECTED_PORTS.map(([n,name,s,sev,tone])=>(
+                    <div key={n as string} className="grid grid-cols-[16px_1fr_36px_54px] items-center px-1 py-1 gap-1">
+                      <span className="text-[var(--color-muted-foreground)] tabular-nums">{n}.</span>
+                      <span className="text-[var(--color-foreground)] truncate">{name}</span>
+                      <span className="text-right tabular-nums text-[var(--color-foreground)]">{s}</span>
+                      <Chip tone={tone as any}>{sev}</Chip>
+                    </div>
+                  ))}
+                  <div className="text-[10px] text-[var(--color-cyan)] px-1 py-1">View all 121 ports →</div>
+                </div>
+                <div className="p-2 border-t border-[var(--color-line)]">
+                  <div className="label-xs mb-1">Risk Level</div>
+                  <div className="flex items-center gap-2 text-[9px] flex-wrap">
+                    <LegendDot c="#ff5566" t="Severe"/><LegendDot c="#ffb347" t="High"/><LegendDot c="#c58cff" t="Medium"/><LegendDot c="#7dd3fc" t="Low"/><LegendDot c="#7ef0b4" t="Normal"/>
+                    <span className="w-full flex items-center gap-2 mt-1"><span className="w-4 border-t border-[var(--color-cyan)]" /> Sea Route Impact <span className="ml-2 text-[var(--color-red)]">⚠</span> Chokepoint Impact</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mini India map */}
+              <div className="panel relative overflow-hidden min-h-[240px]">
+                <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 40% 45%, oklch(0.24 0.05 220 / 0.5) 0%, oklch(0.14 0.02 240) 70%)" }} />
+                <svg viewBox="0 0 240 320" className="absolute inset-0 w-full h-full">
+                  <defs>
+                    <linearGradient id="landG" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stopColor="oklch(0.26 0.04 220)"/>
+                      <stop offset="1" stopColor="oklch(0.18 0.03 240)"/>
+                    </linearGradient>
+                    <filter id="miniShadow"><feDropShadow dx="0" dy="1" stdDeviation="1" floodColor="#000" floodOpacity="0.6"/></filter>
+                  </defs>
+                  <path d="M 90 30 Q 120 20 150 40 L 175 90 L 195 150 L 175 210 L 140 275 L 100 300 L 70 260 L 50 210 L 45 160 L 55 100 Z"
+                    fill="url(#landG)" stroke="oklch(0.55 0.09 195 / 0.7)" strokeWidth="1"/>
+                  {/* subtle lat/long grid */}
+                  {[80,140,200,260].map(y => <line key={y} x1="0" y1={y} x2="240" y2={y} stroke="oklch(0.35 0.05 200 / 0.15)" strokeWidth="0.4" strokeDasharray="2 4" />)}
+                  {[60,120,180].map(x => <line key={x} x1={x} y1="0" x2={x} y2="320" stroke="oklch(0.35 0.05 200 / 0.15)" strokeWidth="0.4" strokeDasharray="2 4" />)}
+                  {/* Routes (behind ports) */}
+                  <path d="M 75 155 Q 30 100 -10 40" stroke="#7dd3fc" strokeWidth="1" fill="none" strokeDasharray="3 3" style={{ animation: "dash-flow 4s linear infinite" }} />
+                  <path d="M 155 220 Q 220 260 240 300" stroke="#ff5566" strokeWidth="1.4" fill="none" strokeDasharray="4 4" style={{ animation: "dash-flow 3s linear infinite" }} />
+                  <path d="M 175 155 Q 230 130 240 100" stroke="#ffb347" strokeWidth="1" fill="none" strokeDasharray="3 3" style={{ animation: "dash-flow 4s linear infinite" }} />
+                  {/* ports */}
+                  {[
+                    ["Kandla", 60, 90, "amber"], ["Mundra", 55, 100, "red"], ["JNPT", 75, 155, "red"],
+                    ["Marmagao", 90, 190, "cyan"], ["Mangaluru", 95, 220, "cyan"], ["Kochi", 110, 255, "cyan"],
+                    ["Chennai", 155, 220, "amber"], ["Visakhapatnam", 175, 155, "red"], ["Paradip", 175, 115, "red"], ["Kolkata", 190, 70, "amber"],
+                  ].map(([n,x,y,t])=>{
+                    const c = t==="red"?"#ff5566":t==="amber"?"#ffb347":"#7dd3fc";
+                    return (
+                      <g key={n as string}>
+                        <circle cx={x as number} cy={y as number} r="12" fill={`${c}18`} className="animate-halo" style={{ transformBox: "fill-box", transformOrigin: "center" }} />
+                        <circle cx={x as number} cy={y as number} r="7" fill="none" stroke={c} strokeWidth="0.8" opacity="0.7"/>
+                        <circle cx={x as number} cy={y as number} r="2.4" fill={c} filter="url(#miniShadow)"/>
+                        <text x={(x as number)+8} y={(y as number)+3} fontSize="7.5" fill="oklch(0.95 0 0)" className="label-halo" fontWeight="600">{n}</text>
+                      </g>
+                    );
+                  })}
+                  <g>
+                    <rect x="4" y="10" width="70" height="14" fill="oklch(0.10 0.02 240 / 0.75)" stroke="#ffb347" strokeWidth="0.5"/>
+                    <text x="10" y="20" fontSize="7" fill="#ffb347" letterSpacing="1.4" fontWeight="600">◆ HORMUZ</text>
+                  </g>
+                  <g>
+                    <rect x="166" y="282" width="70" height="14" fill="oklch(0.10 0.02 240 / 0.75)" stroke="#ff5566" strokeWidth="0.5"/>
+                    <text x="172" y="292" fontSize="7" fill="#ff5566" letterSpacing="1.4" fontWeight="600">◆ MALACCA</text>
+                  </g>
+                </svg>
+              </div>
+
+              <div className="panel">
+                <div className="panel-header"><span>AFFECTED CHOKEPOINTS</span><span>RISK</span></div>
+                <div className="p-2 text-[10px] space-y-1">
+                  {CHOKES.map(([n,r,t])=>(
+                    <div key={n as string} className="flex items-center justify-between border-b border-[var(--color-line)]/50 py-1">
+                      <span className="text-[var(--color-foreground)]">{n}</span>
+                      <Chip tone={t as any}>{r}</Chip>
+                    </div>
+                  ))}
+                </div>
+                <div className="panel-header border-t border-[var(--color-line)]"><span>SEA ROUTE IMPACT</span><span>DELAY (HRS)</span></div>
+                <div className="p-2 text-[10px] space-y-1">
+                  {SEA_ROUTES.map(([n,d])=>(
+                    <div key={n as string} className="flex items-center justify-between border-b border-[var(--color-line)]/50 py-1">
+                      <span className="text-[var(--color-foreground)]">{n}</span>
+                      <span className="text-[var(--color-red)] tabular-nums">{d}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 3 · MODEL INTELLIGENCE LAYER */}
+          <div className="panel">
+            <div className="panel-header"><span className="flex items-center gap-2"><NumBadge n={3}/> MODEL INTELLIGENCE LAYER</span></div>
+            <div className="p-2 text-[10px] text-[var(--color-muted-foreground)]">End-to-end AI pipeline powering this decision</div>
+            <div className="px-2 pb-2 grid grid-cols-6 gap-1">
+              {STAGES.map(([k,s,t])=>(
+                <div key={k as string} className={"border px-2 py-1.5 flex flex-col " + (
+                  t==="red" ? "border-[var(--color-red)]/50 bg-[var(--color-red)]/5" :
+                  t==="amber" ? "border-[var(--color-amber)]/50 bg-[var(--color-amber)]/5" :
+                  t==="mint" ? "border-[var(--color-mint)]/50 bg-[var(--color-mint)]/5" :
+                  "border-[var(--color-cyan)]/50 bg-[var(--color-cyan)]/5"
+                )}>
+                  <span className={"text-[9px] tracking-widest font-semibold " + (
+                    t==="red" ? "text-[var(--color-red)]" :
+                    t==="amber" ? "text-[var(--color-amber)]" :
+                    t==="mint" ? "text-[var(--color-mint)]" :
+                    "text-[var(--color-cyan)]"
+                  )}>{k}</span>
+                  <span className="text-[9px] text-[var(--color-muted-foreground)]">{s}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="panel-header border-t border-[var(--color-line)]"><span>EXPERT CHAIN — JNPT (NHAVA SHEVA)</span><span>Confidence (Overall) <span className="text-[var(--color-mint)] tabular-nums">0.78</span></span></div>
+            <div className="p-2 grid grid-cols-6 gap-2">
+              {EXPERTS.map(([name, note, conf, ki, kv, tone])=>(
+                <div key={name as string} className="border border-[var(--color-line)] p-2 flex flex-col gap-1 min-h-[186px]">
+                  <div className="w-10 h-10 border border-[var(--color-line-strong)] flex items-center justify-center text-[var(--color-cyan)] text-[16px] self-center">◉</div>
+                  <div className="text-[10px] text-[var(--color-foreground)] font-medium text-center">{name}</div>
+                  <div className="text-[9px] text-[var(--color-muted-foreground)] leading-snug text-center flex-1">{note}</div>
+                  <div className="text-[9px] text-[var(--color-muted-foreground)] tabular-nums">Conf. <span className="text-[var(--color-foreground)]">{(conf as number).toFixed(2)}</span></div>
+                  <div className="text-[9px] text-[var(--color-muted-foreground)]">{ki}</div>
+                  <div className={"text-[13px] tabular-nums " + (tone==="red"?"text-[var(--color-red)]":tone==="amber"?"text-[var(--color-amber)]":"text-[var(--color-cyan)]")}>{kv}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* BOTTOM ROW: NEWS · ASK · AI RESPONSE */}
+        <div className="grid grid-cols-[1.4fr_1fr_1.2fr] gap-3">
+          <div className="panel">
+            <div className="panel-header"><span>NEWS / NLP INTELLIGENCE</span><span>Real-time maritime disruptions & extracted insights</span></div>
+            <div className="grid grid-cols-2 gap-2 p-2">
+              <div className="space-y-2">
+                {[
+                  ["HIGH","red","Iran threatens to close Strait of Hormuz","in response to escalation","2h ago"],
+                  ["HIGH","red","Red Sea attacks continue; two vessels hit","near Bab-el-Mandeb","3h ago"],
+                  ["MEDIUM","amber","IMD: Heavy rainfall along Maharashtra","coast over next 48 hours","4h ago"],
+                  ["MEDIUM","amber","JNPT issues advisory: Gate congestion","expected this week","5h ago"],
+                  ["LOW","mint","OPEC+ to gradually raise output from Sep","Market watch","6h ago"],
+                ].map(([sev,t,title,sub,ago],i)=>(
+                  <div key={i} className="border-l-2 pl-2 py-1" style={{ borderColor: t==="red"?"var(--color-red)":t==="amber"?"var(--color-amber)":"var(--color-mint)" }}>
+                    <div className="flex items-center gap-2"><Chip tone={t as any}>{sev}</Chip><span className="text-[10px] text-[var(--color-foreground)]">{title}</span><span className="ml-auto text-[9px] text-[var(--color-muted-foreground)]">{ago}</span></div>
+                    <div className="text-[9px] text-[var(--color-muted-foreground)]">{sub}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="panel p-2 text-[10px] space-y-1.5">
+                <div className="flex justify-between text-[9px] tracking-widest text-[var(--color-muted-foreground)]"><span>SELECTED EVENT</span><span className="text-[var(--color-cyan)]">OPEN IN FULL ⧉</span></div>
+                <div className="text-[11px] text-[var(--color-foreground)] font-medium">Iran threatens to close Strait of Hormuz in response to escalation</div>
+                <div className="grid grid-cols-[80px_1fr] gap-y-1 text-[10px] mt-1">
+                  <span className="text-[var(--color-muted-foreground)]">Event Type</span><span className="text-[var(--color-foreground)]">Geopolitical Threat</span>
+                  <span className="text-[var(--color-muted-foreground)]">Sentiment / Risk</span><span className="text-[var(--color-foreground)] flex items-center gap-2"><Chip tone="red">High</Chip><span className="tabular-nums">0.86</span></span>
+                  <span className="text-[var(--color-muted-foreground)]">Affected Ports</span><span className="text-[var(--color-foreground)]">Mundra, Kandla, JNPT, Kochi, Hazira</span>
+                  <span className="text-[var(--color-muted-foreground)]">Impact</span><span className="text-[var(--color-foreground)]">Crude/LNG flow disruption risk; freight spike likely</span>
+                  <span className="text-[var(--color-muted-foreground)]">Entities</span><span className="text-[var(--color-foreground)]">Strait of Hormuz; Iran; Oil, LNG, Shipping</span>
+                </div>
+                <div className="pt-1 flex items-center gap-2 text-[9px]">
+                  <span className="text-[var(--color-muted-foreground)]">NLP Confidence</span>
+                  <div className="flex-1 h-1 bg-[var(--color-panel-2)]"><div className="h-full bg-[var(--color-mint)]" style={{ width: "91%" }}/></div>
+                  <span className="text-[var(--color-mint)] tabular-nums">0.91</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-header"><span>ASK PORTWATCH</span><span>Ask questions in natural language</span></div>
+            <div className="p-3 space-y-2 text-[10px]">
+              {[
+                "Why is Chennai marked medium risk?",
+                "Which ports are most exposed to Hormuz closure?",
+                "What changed since yesterday?",
+                "What is the best arrival day for MV Coromandel?",
+                "Which routes have highest delay risk?",
+              ].map(q=>(
+                <button key={q} className="w-full text-left px-3 py-2 border border-[var(--color-line-strong)] hover:border-[var(--color-cyan)] hover:text-[var(--color-cyan)] text-[var(--color-foreground)]">
+                  {q}
+                </button>
+              ))}
+              <div className="mt-2 flex items-center gap-2">
+                <input placeholder="Type your question…" className="flex-1 bg-[var(--color-panel-2)] border border-[var(--color-line-strong)] px-2 py-2 outline-none focus:border-[var(--color-cyan)] text-[11px]"/>
+                <button className="w-9 h-9 border border-[var(--color-cyan)]/60 text-[var(--color-cyan)] flex items-center justify-center">▸</button>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative border border-[var(--color-cyan)]/40 bg-gradient-to-br from-[oklch(0.20_0.04_220)] via-[oklch(0.16_0.03_240)] to-[oklch(0.14_0.02_240)] shadow-[0_0_0_1px_oklch(0.82_0.18_195/0.10),0_0_24px_-6px_oklch(0.82_0.18_195/0.45)]">
+            <span className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-[var(--color-cyan)] via-[var(--color-mint)] to-transparent" />
+            <div className="flex items-center justify-between px-3 py-1.5 border-b border-[var(--color-cyan)]/25 bg-gradient-to-r from-[oklch(0.82_0.18_195/0.12)] to-transparent">
+              <span className="text-[10px] tracking-[0.2em] text-[var(--color-cyan)] font-semibold flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-cyan)] animate-blink"/>
+                AI RESPONSE
+              </span>
+              <span className="text-[9px] tracking-widest text-[var(--color-muted-foreground)]">MULTI-EXPERT SYNTHESIS · 0.88 CONF</span>
+            </div>
+            <div className="p-3 text-[11px] leading-relaxed text-[var(--color-foreground)] space-y-2">
+              <div className="text-[var(--color-muted-foreground)] text-[10px] tracking-wide">Q · Why is Chennai marked medium risk?</div>
+              <div className="text-[12px]">Chennai is under <span className="text-[var(--color-amber)] font-semibold">MEDIUM</span> risk primarily due to elevated rainfall forecast (48–72h) and moderate congestion outlook.</div>
+              <ul className="space-y-1 text-[10px] border-l border-[var(--color-cyan)]/30 pl-3">
+                <li><span className="text-[var(--color-muted-foreground)]">Weather Impact</span> <span className="text-[var(--color-foreground)] tabular-nums">0.62</span> — moderate rainfall, wind &lt; 35 kt</li>
+                <li><span className="text-[var(--color-muted-foreground)]">Port Ops</span> Yard util. <span className="tabular-nums">74%</span>, berth occ. <span className="tabular-nums">65%</span></li>
+                <li><span className="text-[var(--color-muted-foreground)]">Demand</span> Expected surge <span className="text-[var(--color-amber)] tabular-nums">+11%</span> vs baseline</li>
+                <li><span className="text-[var(--color-muted-foreground)]">HSMM Regime</span> Moderate Congestion <span className="tabular-nums">(0.61)</span></li>
+                <li><span className="text-[var(--color-muted-foreground)]">TFT Forecast</span> P90 congestion <span className="tabular-nums">0.68</span> (7d)</li>
+              </ul>
+              <div className="text-[10px] text-[var(--color-mint)] border-t border-[var(--color-line)] pt-2">▸ Conditions are manageable with proactive planning.</div>
+              <div className="flex items-center gap-2 pt-1 text-[9px] text-[var(--color-muted-foreground)]">
+                <span>Sources: 6 experts · 4 news events</span>
+                <span className="ml-auto flex gap-1">
+                  <button className="px-2 py-0.5 border border-[var(--color-line-strong)] hover:border-[var(--color-mint)] hover:text-[var(--color-mint)]">Helpful</button>
+                  <button className="px-2 py-0.5 border border-[var(--color-line-strong)] hover:border-[var(--color-red)]">Improve</button>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NumBadge({ n }: { n: number }) {
+  return <span className="w-5 h-5 rounded-full bg-[var(--color-cyan)] text-[oklch(0.10_0.02_240)] text-[11px] font-bold flex items-center justify-center">{n}</span>;
+}
+
+function ImpactCard({ label, avg, tone, data, sub, invert, delay = 0 }: { label: string; avg: string; tone: "red"|"mint"|"amber"|"cyan"; data: number[]; sub: string; invert?: boolean; delay?: number }) {
+  const c = tone === "red" ? "text-[var(--color-red)] glow-red" : tone === "mint" ? "text-[var(--color-mint)]" : tone === "amber" ? "text-[var(--color-amber)]" : "text-[var(--color-cyan)]";
+  const accent = tone === "red" ? "var(--color-red)" : tone === "mint" ? "var(--color-mint)" : tone === "amber" ? "var(--color-amber)" : "var(--color-cyan)";
+  return (
+    <div className="panel relative p-2 flex flex-col gap-1 overflow-hidden animate-impact" style={{ animationDelay: `${delay}ms` }}>
+      <span className="absolute left-0 top-0 bottom-0 w-[2px]" style={{ background: `linear-gradient(180deg, ${accent}, transparent)`, opacity: 0.9 }} />
+      <div className="text-[9px] tracking-widest text-[var(--color-muted-foreground)] leading-tight">{label}<br/><span className="text-[8px] opacity-70">(Avg)</span></div>
+      <div className={`text-[22px] leading-none tabular-nums font-semibold ${c}`}>{avg}</div>
+      <div className="text-[8px] text-[var(--color-muted-foreground)]">{sub}</div>
+      <Sparkline data={invert ? data.map(v => 200 - v) : data} tone={tone === "mint" ? "mint" : "red"} height={22} />
+    </div>
+  );
+}
+
+function ScIcon({ k }: { k: string }) {
+  const p = { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.5 } as const;
+  const c = "text-[var(--color-cyan)]";
+  switch (k) {
+    case "storm": return <svg {...p} className={c}><path d="M4 15a5 5 0 019.5-1.5A4 4 0 1117 20H7a4 4 0 01-3-5z"/><path d="M11 22l2-4h-3l2-4"/></svg>;
+    case "cyc":   return <svg {...p} className={c}><path d="M12 3a9 9 0 019 9h-9V3z M12 21a9 9 0 01-9-9h9v9z"/><circle cx="12" cy="12" r="2"/></svg>;
+    case "worker":return <svg {...p} className={c}><circle cx="12" cy="6" r="2.5"/><path d="M6 20l3-8h6l3 8"/></svg>;
+    case "crane": return <svg {...p} className={c}><path d="M4 20V4h4v6l10-3v3l-10 3v7"/></svg>;
+    case "cargo": return <svg {...p} className={c}><rect x="3" y="8" width="18" height="10"/><path d="M3 13h18M9 8v10M15 8v10"/></svg>;
+    case "gate":  return <svg {...p} className={c}><rect x="3" y="4" width="18" height="16"/><path d="M9 4v16M15 4v16"/></svg>;
+    case "drop":  return <svg {...p} className={c}><path d="M12 3s6 7 6 12a6 6 0 01-12 0c0-5 6-12 6-12z"/></svg>;
+    case "fuel":  return <svg {...p} className={c}><rect x="4" y="4" width="10" height="16" rx="1"/><path d="M14 8h3v10a2 2 0 01-2 2"/></svg>;
+    default: return null;
+  }
+}
+
+function LegendDot({ c, t }: { c: string; t: string }) {
+  return <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full" style={{ background: c }}/>{t}</span>;
+}

@@ -23,6 +23,14 @@ india-portwatch-terminal/node_modules/
 india-portwatch-terminal/.output/
 india-portwatch-terminal/.wrangler/
 
+# --- Local secrets / environment ---
+.env
+.env.*
+!.env.example
+india-portwatch-terminal/.env
+india-portwatch-terminal/.env.*
+!india-portwatch-terminal/.env.example
+
 # --- Model artifacts / large binaries ---
 *.ckpt
 *.pt

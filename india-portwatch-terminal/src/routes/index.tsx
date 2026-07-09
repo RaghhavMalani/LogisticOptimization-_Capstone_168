@@ -2,24 +2,11 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Chip, Sparkline } from "@/components/terminal/ui";
 import { MaritimeMap } from "@/components/map/MaritimeMap";
-import { listModelPipelineStatuses } from "@/services/modelService";
-import { fetchModelPipelineStatuses } from "@/services/model";
 import { fetchRadarOverview, localRadarOverview } from "@/services/ports";
-import type { NewsEvent } from "@/types/portwatch";
 
 export const Route = createFileRoute("/")({
   component: RadarPage,
 });
-
-function toHeadline(event: NewsEvent) {
-  return {
-    t: event.timestamp,
-    src: event.source,
-    tag: event.tag,
-    sev: event.severity,
-    text: event.text,
-  };
-}
 
 function RadarPage() {
   const navigate = useNavigate();
@@ -28,12 +15,6 @@ function RadarPage() {
     queryFn: fetchRadarOverview,
     initialData: localRadarOverview,
     staleTime: 30_000,
-  });
-  const pipelineQuery = useQuery({
-    queryKey: ["model-pipeline"],
-    queryFn: fetchModelPipelineStatuses,
-    initialData: listModelPipelineStatuses,
-    staleTime: 60_000,
   });
   const {
     ports,
@@ -44,8 +25,6 @@ function RadarPage() {
     weatherSignals,
     sarSignals,
   } = radarQuery.data;
-  const headlines = radarQuery.data.headlines.map(toHeadline);
-  const pipeline = pipelineQuery.data;
   const severe = ports.filter((p) => p.risk === "severe").length;
   const congested = ports.filter((p) => p.risk === "congested").length;
   const meanCong =
@@ -70,107 +49,6 @@ function RadarPage() {
             sarSignals={sarSignals}
             onPortSelect={openPortCockpit}
           />
-          {/* Legend bar */}
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-4 px-4 py-1.5 border border-[var(--color-line)] bg-[oklch(0.10_0.02_240_/_0.85)] backdrop-blur text-[10px] tracking-widest">
-            <span className="text-[var(--color-muted-foreground)]">LEGEND</span>
-            <LegendDot color="#7ef0b4" label="Normal" />
-            <LegendDot color="#ffb347" label="Congested" />
-            <LegendDot color="#ff5566" label="Severe" />
-            <LegendDot color="#c58cff" label="Low Confidence" />
-            <span className="text-[var(--color-muted-foreground)]">
-              ✦ Major Port
-            </span>
-            <span className="text-[var(--color-muted-foreground)]">
-              ◆ Minor Port
-            </span>
-            <span className="text-[var(--color-muted-foreground)]">
-              AIS/SAR Vessel
-            </span>
-            <span className="text-[var(--color-muted-foreground)]">
-              — Route
-            </span>
-            <span className="text-[var(--color-muted-foreground)]">
-              ● Chokepoint
-            </span>
-          </div>
-
-          {/* Floating NLP intel — integrated glass panel */}
-          <div className="absolute bottom-40 left-3 w-[300px] z-30 border border-[var(--color-cyan)]/25 bg-[oklch(0.10_0.02_240_/_0.72)] backdrop-blur-md shadow-[0_0_0_1px_oklch(0.82_0.18_195/0.08),0_8px_24px_-8px_oklch(0_0_0/0.6)]">
-            <div className="flex items-center justify-between px-2 py-1 border-b border-[var(--color-cyan)]/20 bg-gradient-to-r from-[oklch(0.82_0.18_195/0.10)] to-transparent">
-              <span className="text-[10px] tracking-[0.18em] text-[var(--color-cyan)] flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-cyan)] animate-blink" />
-                NLP · NEWS INTELLIGENCE
-              </span>
-              <span className="text-[9px] tracking-widest text-[var(--color-muted-foreground)]">
-                03:05 UTC
-              </span>
-            </div>
-            <div className="p-2 space-y-1.5 max-h-[190px] overflow-auto">
-              {headlines.slice(0, 3).map((n, i) => (
-                <div
-                  key={i}
-                  className="border-l-2 pl-2 py-0.5"
-                  style={{
-                    borderColor:
-                      n.sev === "severe"
-                        ? "var(--color-red)"
-                        : "var(--color-amber)",
-                  }}
-                >
-                  <div className="flex items-center gap-1.5 text-[9px] text-[var(--color-muted-foreground)]">
-                    <Chip tone={n.sev === "severe" ? "red" : "amber"}>
-                      {n.sev === "severe" ? "HIGH" : "MED"}
-                    </Chip>
-                    <span>{n.tag} · Maritime</span>
-                  </div>
-                  <div className="text-[10px] text-[var(--color-foreground)] mt-0.5">
-                    {n.text}
-                  </div>
-                  <div className="text-[9px] text-[var(--color-muted-foreground)] mt-0.5">
-                    AFFECTED PORTS{" "}
-                    <span className="text-[var(--color-foreground)]">
-                      JNPT, Mundra, Mumbai
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Model pipeline strip — integrated glass */}
-          <div className="absolute bottom-3 right-3 w-[520px] z-30 border border-[var(--color-cyan)]/25 bg-[oklch(0.10_0.02_240_/_0.72)] backdrop-blur-md shadow-[0_0_0_1px_oklch(0.82_0.18_195/0.08),0_8px_24px_-8px_oklch(0_0_0/0.6)]">
-            <div className="flex items-center justify-between px-2 py-1 border-b border-[var(--color-cyan)]/20 bg-gradient-to-r from-[oklch(0.82_0.18_195/0.10)] to-transparent">
-              <span className="text-[10px] tracking-[0.18em] text-[var(--color-cyan)]">
-                MODEL PIPELINE
-              </span>
-              <span className="text-[10px] text-[var(--color-mint)] flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-mint)] animate-blink" />
-                All systems operational
-              </span>
-            </div>
-            <div className="flex items-stretch">
-              {pipeline.map((s, i) => (
-                <div
-                  key={s.key}
-                  className="flex-1 px-2 py-1.5 border-r border-[var(--color-line)] last:border-r-0 relative"
-                >
-                  <div className="flex flex-col items-center gap-1">
-                    <div className="w-7 h-7 rounded-sm border border-[var(--color-line-strong)] flex items-center justify-center text-[var(--color-cyan)] text-[10px]">
-                      ◈
-                    </div>
-                    <div className="text-[8px] tracking-widest text-[var(--color-muted-foreground)] text-center leading-tight">
-                      {s.name.split(" ").slice(0, 2).join(" ")}
-                    </div>
-                  </div>
-                  {i < pipeline.length - 1 && (
-                    <span className="absolute right-[-6px] top-1/2 -translate-y-1/2 text-[var(--color-line-strong)] text-[10px] z-10">
-                      ▸
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* RIGHT RAIL */}
@@ -410,18 +288,6 @@ function BottomStat({
         {sub}
       </div>
     </div>
-  );
-}
-
-function LegendDot({ color, label }: { color: string; label: string }) {
-  return (
-    <span className="flex items-center gap-1.5 text-[var(--color-muted-foreground)]">
-      <span
-        className="h-2 w-2 rounded-full"
-        style={{ background: color, boxShadow: `0 0 6px ${color}` }}
-      />{" "}
-      {label}
-    </span>
   );
 }
 

@@ -7,39 +7,108 @@ router = APIRouter()
 
 SCENARIOS = [
     {
-        "id": "STORM_W",
+        "key": "STORM_W",
+        "commandAlias": "storm-west",
         "name": "Storm near west coast",
-        "description": "Severe monsoon storm tracking along Arabian Sea.",
-        "severity": 0.85,
+        "desc": "Severe monsoon storm tracking along Arabian Sea.",
+        "icon": "cloud-rain",
+        "affectedCoasts": ["west"],
+        "baseCongestionDelta": 22,
+        "baseDelayDeltaHours": 5.8,
+        "baseThroughputDelta": -9,
+        "baseFreightDelta": 4.2,
         "affectedPorts": ["INNSA", "INMUN", "INCOK"],
     },
     {
-        "id": "CYCLONE_E",
+        "key": "CYC_E",
+        "commandAlias": "cyclone-east",
         "name": "Cyclone near east coast",
-        "description": "Bay of Bengal cyclone approaching Chennai-Vizag corridor.",
-        "severity": 0.90,
+        "desc": "Bay of Bengal cyclone approaching Chennai-Vizag corridor.",
+        "icon": "cyclone",
+        "affectedCoasts": ["east"],
+        "baseCongestionDelta": 28,
+        "baseDelayDeltaHours": 7.0,
+        "baseThroughputDelta": -13,
+        "baseFreightDelta": 5.1,
         "affectedPorts": ["INMAA", "INVTZ", "INKAT"],
     },
     {
-        "id": "HORMUZ",
+        "key": "LABOUR",
+        "commandAlias": "labour-strike",
+        "name": "Labour strike",
+        "desc": "Port workers' strike reducing gate and yard operations.",
+        "icon": "user-x",
+        "affectedCoasts": ["west", "east"],
+        "baseCongestionDelta": 18,
+        "baseDelayDeltaHours": 4.2,
+        "baseThroughputDelta": -10,
+        "baseFreightDelta": 2.7,
+        "affectedPorts": ["INNSA", "INMAA"],
+    },
+    {
+        "key": "CAPDROP",
+        "commandAlias": "capacity-drop",
+        "name": "Port capacity drop",
+        "desc": "Unplanned berth/crane outage reducing handling capacity.",
+        "icon": "crane",
+        "affectedCoasts": ["west", "east"],
+        "baseCongestionDelta": 20,
+        "baseDelayDeltaHours": 5.0,
+        "baseThroughputDelta": -20,
+        "baseFreightDelta": 3.5,
+        "affectedPorts": ["INNSA", "INMUN", "INMAA"],
+    },
+    {
+        "key": "DEMAND",
+        "commandAlias": "demand-surge",
+        "name": "Demand surge",
+        "desc": "Festival or quarter-end cargo demand surge.",
+        "icon": "bar-chart",
+        "affectedCoasts": ["west", "east"],
+        "baseCongestionDelta": 15,
+        "baseDelayDeltaHours": 3.2,
+        "baseThroughputDelta": -5,
+        "baseFreightDelta": 2.5,
+        "affectedPorts": ["INNSA", "INMUN", "INMAA", "INVTZ"],
+    },
+    {
+        "key": "HORMUZ",
+        "commandAlias": "hormuz",
         "name": "Hormuz closure",
-        "description": "Strait of Hormuz closure affecting Gulf crude/LNG traffic.",
-        "severity": 0.90,
+        "desc": "Strait of Hormuz closure affecting Gulf crude/LNG traffic.",
+        "icon": "route",
+        "affectedCoasts": ["west"],
+        "baseCongestionDelta": 26,
+        "baseDelayDeltaHours": 6.4,
+        "baseThroughputDelta": -11,
+        "baseFreightDelta": 6.0,
         "affectedPorts": ["INMUN", "INNSA", "INCOK"],
     },
     {
-        "id": "RED_SEA",
+        "key": "REDSEA",
+        "commandAlias": "red-sea",
         "name": "Red Sea disruption",
-        "description": "Bab-el-Mandeb/Suez route disruption.",
-        "severity": 0.80,
+        "desc": "Bab-el-Mandeb/Suez route disruption.",
+        "icon": "ship",
+        "affectedCoasts": ["west"],
+        "baseCongestionDelta": 24,
+        "baseDelayDeltaHours": 6.0,
+        "baseThroughputDelta": -10,
+        "baseFreightDelta": 5.5,
         "affectedPorts": ["INNSA", "INMUN", "INCOK"],
     },
     {
-        "id": "DEMAND_SURGE",
-        "name": "Demand surge",
-        "description": "Festival or quarter-end cargo demand surge.",
-        "severity": 0.60,
-        "affectedPorts": ["INNSA", "INMUN", "INMAA", "INVTZ"],
+        "key": "FUEL",
+        "commandAlias": "fuel-price",
+        "name": "Fuel price shock",
+        "desc": "Brent spike increasing bunker and freight cost pressure.",
+        "icon": "fuel",
+        "affectedCoasts": ["west", "east"],
+        "baseCongestionDelta": 8,
+        "baseDelayDeltaHours": 1.5,
+        "baseThroughputDelta": -2,
+        "baseFreightDelta": 7.5,
+        "affectedPorts": ["INNSA", "INMUN", "INMAA"],
     },
 ]
 
@@ -54,6 +123,16 @@ PORT_NAMES = {
 }
 
 
+def risk_level(score: float) -> str:
+    if score >= 75:
+        return "severe"
+    if score >= 55:
+        return "high"
+    if score >= 30:
+        return "medium"
+    return "normal"
+
+
 @router.get("/scenarios")
 def list_scenarios() -> list[dict]:
     return SCENARIOS
@@ -61,8 +140,9 @@ def list_scenarios() -> list[dict]:
 
 @router.post("/scenarios/simulate")
 def simulate_scenario(payload: dict) -> dict:
-    scenario_id = (
-        payload.get("scenarioId")
+    scenario_key = (
+        payload.get("scenarioKey")
+        or payload.get("scenarioId")
         or payload.get("id")
         or payload.get("scenario")
         or "STORM_W"
@@ -75,130 +155,109 @@ def simulate_scenario(payload: dict) -> dict:
         or 1.0
     )
 
-    scenario = next((s for s in SCENARIOS if s["id"] == scenario_id), None)
+    run_id = int(payload.get("runId") or 1247)
 
+    scenario = next((s for s in SCENARIOS if s["key"] == scenario_key), None)
     if scenario is None:
-        scenario = {
-            "id": scenario_id,
-            "name": "Custom Scenario",
-            "description": "Custom user-defined scenario.",
-            "severity": 0.60,
-            "affectedPorts": ["INNSA", "INMAA"],
-        }
+        scenario = SCENARIOS[0]
 
-    severity = float(scenario.get("severity", 0.6))
-    scaled = max(0.1, min(severity * intensity, 2.0))
+    congestion_delta = round(float(scenario["baseCongestionDelta"]) * intensity, 1)
+    delay_delta_hours = round(float(scenario["baseDelayDeltaHours"]) * intensity, 1)
+    throughput_delta = round(float(scenario["baseThroughputDelta"]) * intensity, 1)
+    freight_delta = round(float(scenario["baseFreightDelta"]) * intensity, 1)
 
-    congestion_increase_pct = round(30.0 * scaled, 1)
-    delay_increase_hours = round(7.0 * scaled, 1)
-    throughput_drop_pct = round(15.0 * scaled, 1)
-    freight_impact_pct = round(5.5 * scaled, 1)
+    overall_score = min(99.0, max(0.0, congestion_delta * 2.0))
+    overall_risk = risk_level(overall_score)
 
     affected_ports = []
-    for index, code in enumerate(scenario.get("affectedPorts", []), start=1):
-        score = int(max(35, min(99, congestion_increase_pct * 1.9 - index * 2)))
-        risk = "SEVERE" if score >= 75 else "HIGH" if score >= 55 else "MEDIUM"
+    for idx, code in enumerate(scenario["affectedPorts"], start=1):
+        scale = max(0.55, 1.0 - idx * 0.08)
+        port_congestion = round(congestion_delta * scale, 1)
+        port_delay = round(delay_delta_hours * scale, 1)
+        port_throughput = round(throughput_delta * scale, 1)
+        impact_score = int(min(99, max(20, port_congestion * 2.0)))
 
         affected_ports.append(
             {
-                "rank": index,
                 "portCode": code,
-                "code": code,
                 "name": PORT_NAMES.get(code, code),
-                "impactScore": score,
-                "score": score,
-                "severity": risk,
-                "risk": risk,
-                "delayHours": round(delay_increase_hours * (1 - index * 0.04), 1),
-                "congestionIncreasePct": congestion_increase_pct,
+                "impactScore": impact_score,
+                "riskLevel": risk_level(impact_score),
+                "congestionDelta": port_congestion,
+                "delayDeltaHours": port_delay,
+                "throughputDelta": port_throughput,
             }
         )
-
-    affected_chokepoints = [
-        {
-            "name": "Strait of Hormuz",
-            "risk": "MEDIUM" if scenario["id"] == "HORMUZ" else "WATCH",
-            "riskLevel": "MEDIUM" if scenario["id"] == "HORMUZ" else "WATCH",
-            "delayHours": round(delay_increase_hours * 0.8, 1),
-        },
-        {
-            "name": "Bab-el-Mandeb",
-            "risk": "MEDIUM" if scenario["id"] in {"RED_SEA", "HORMUZ"} else "WATCH",
-            "riskLevel": "MEDIUM" if scenario["id"] in {"RED_SEA", "HORMUZ"} else "WATCH",
-            "delayHours": round(delay_increase_hours * 0.6, 1),
-        },
-        {
-            "name": "Malacca Strait",
-            "risk": "LOW",
-            "riskLevel": "LOW",
-            "delayHours": round(delay_increase_hours * 0.3, 1),
-        },
-        {
-            "name": "Suez Canal",
-            "risk": "WATCH" if scenario["id"] == "RED_SEA" else "LOW",
-            "riskLevel": "WATCH" if scenario["id"] == "RED_SEA" else "LOW",
-            "delayHours": round(delay_increase_hours * 0.5, 1),
-        },
-    ]
 
     route_impacts = [
         {
             "name": "West Coast Route",
-            "route": "West Coast Route",
-            "delayHours": round(delay_increase_hours * 0.8, 1),
-            "impact": "HIGH" if scaled > 1.0 else "MEDIUM",
+            "delayDeltaHours": round(delay_delta_hours * 0.85, 1),
+            "riskLevel": overall_risk if "west" in scenario["affectedCoasts"] else "medium",
         },
         {
             "name": "East Coast Route",
-            "route": "East Coast Route",
-            "delayHours": round(delay_increase_hours * 0.6, 1),
-            "impact": "HIGH" if scenario["id"] in {"CYCLONE_E", "STORM_W"} else "MEDIUM",
+            "delayDeltaHours": round(delay_delta_hours * 0.65, 1),
+            "riskLevel": overall_risk if "east" in scenario["affectedCoasts"] else "medium",
         },
     ]
 
-    recommendations = [
-        "Move discretionary east-coast calls to later tide windows.",
-        "Stagger inbound ETA by 24-48h for high-risk vessels.",
-        "Reserve yard capacity for priority cargo classes.",
-        "Push updated delay guidance to fleet operators.",
+    chokepoint_impacts = [
+        {
+            "name": "Strait of Hormuz",
+            "riskLevel": "high" if scenario["key"] == "HORMUZ" else "medium",
+        },
+        {
+            "name": "Bab-el-Mandeb",
+            "riskLevel": "high" if scenario["key"] == "REDSEA" else "medium",
+        },
+        {
+            "name": "Malacca Strait",
+            "riskLevel": "medium",
+        },
+        {
+            "name": "Suez Canal",
+            "riskLevel": "high" if scenario["key"] == "REDSEA" else "normal",
+        },
     ]
 
-    metrics = {
-        "congestionIncreasePct": congestion_increase_pct,
-        "congestionIncrease": congestion_increase_pct,
-        "delayIncreaseHours": delay_increase_hours,
-        "delayIncrease": delay_increase_hours,
-        "throughputDropPct": throughput_drop_pct,
-        "throughputDrop": throughput_drop_pct,
-        "freightImpactPct": freight_impact_pct,
-        "freightImpact": freight_impact_pct,
+    recommendation = {
+        "id": f"REC-{scenario['key']}-{run_id}",
+        "scenarioKey": scenario["key"],
+        "severity": overall_risk,
+        "title": "Protect critical calls and update ETA guidance",
+        "actions": [
+            "Move discretionary calls to safer operating windows.",
+            "Stagger inbound ETA by 24-48h for high-risk vessels.",
+            "Reserve yard capacity for priority cargo classes.",
+            "Push updated delay guidance to fleet operators.",
+        ],
+        "rationale": (
+            f"{scenario['name']} at {intensity:.1f}x intensity increases "
+            f"congestion by {congestion_delta:.1f} points and delay by "
+            f"{delay_delta_hours:.1f} hours."
+        ),
+        "confidence": 0.82,
+        "timestamp": "live",
     }
 
     return {
-        "scenarioId": scenario["id"],
-        "id": scenario["id"],
-        "name": scenario["name"],
-        "status": "simulated",
-        "summary": f"{scenario['name']} simulated at {intensity:.1f}x intensity.",
-
-        "congestionIncreasePct": congestion_increase_pct,
-        "congestionIncrease": congestion_increase_pct,
-        "delayIncreaseHours": delay_increase_hours,
-        "delayIncrease": delay_increase_hours,
-        "throughputDropPct": throughput_drop_pct,
-        "throughputDrop": throughput_drop_pct,
-        "freightImpactPct": freight_impact_pct,
-        "freightImpact": freight_impact_pct,
-
-        "metrics": metrics,
-        "impact": metrics,
-
+        "scenarioKey": scenario["key"],
+        "scenarioName": scenario["name"],
+        "intensity": intensity,
+        "runId": run_id,
         "affectedPorts": affected_ports,
-        "affectedChokepoints": affected_chokepoints,
+        "congestionDelta": congestion_delta,
+        "delayDeltaHours": delay_delta_hours,
+        "throughputDelta": throughput_delta,
+        "freightDelta": freight_delta,
+        "riskLevel": overall_risk,
+        "recommendation": recommendation,
         "routeImpacts": route_impacts,
-        "seaRouteImpact": route_impacts,
+        "chokepointImpacts": chokepoint_impacts,
 
-        "recommendedResponse": recommendations,
-        "recommendedOperationalResponse": recommendations,
-        "recommendations": recommendations,
+        # Extra aliases are harmless and useful for debugging.
+        "id": scenario["key"],
+        "name": scenario["name"],
+        "summary": f"{scenario['name']} simulated at {intensity:.1f}x intensity.",
     }

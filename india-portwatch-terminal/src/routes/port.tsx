@@ -3,12 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Chip, Sparkline, Bar } from "@/components/terminal/ui";
 import chennaiSat from "@/assets/chennai-port.jpg";
 import {
-  getDecisionRecommendation,
-  getForecastForPort,
-  getHSMMRegime,
-  listModelPipelineStatuses,
-} from "@/services/modelService";
-import {
   fetchDecisionRecommendation,
   fetchForecastForPort,
   fetchHSMMRegime,
@@ -16,12 +10,8 @@ import {
 } from "@/services/model";
 import { listNewsEvents } from "@/services/newsService";
 import { fetchNewsEvents } from "@/services/news";
-import { getPortSnapshot } from "@/services/portService";
 import { fetchPortSnapshot } from "@/services/ports";
-import {
-  getMarineWeatherIntelligence,
-  getWeatherSignal,
-} from "@/services/weatherService";
+import { getMarineWeatherIntelligence } from "@/services/weatherService";
 import { fetchWeatherSignal } from "@/services/weather";
 
 export const Route = createFileRoute("/port")({
@@ -80,56 +70,103 @@ const chennaiHarborVessels = {
 
 function PortPage() {
   const { port } = Route.useSearch();
+  const selectedPortCode = port || "INMAA";
+
   const portQuery = useQuery({
-    queryKey: ["port", port],
-    queryFn: () => fetchPortSnapshot(port),
-    initialData: () => getPortSnapshot(port),
+    queryKey: ["port", selectedPortCode],
+    queryFn: () => fetchPortSnapshot(selectedPortCode),
     staleTime: 30_000,
   });
+
   const chn = portQuery.data;
+  const activePortCode = chn?.code ?? selectedPortCode;
+
   const weatherQuery = useQuery({
-    queryKey: ["weather", chn.code],
-    queryFn: () => fetchWeatherSignal(chn.code),
-    initialData: () => getWeatherSignal(chn.code),
+    queryKey: ["weather", activePortCode],
+    queryFn: () => fetchWeatherSignal(activePortCode),
+    enabled: Boolean(chn),
     staleTime: 30_000,
   });
+
   const regimeQuery = useQuery({
-    queryKey: ["regime", chn.code],
-    queryFn: () => fetchHSMMRegime(chn.code),
-    initialData: () => getHSMMRegime(chn.code),
+    queryKey: ["regime", activePortCode],
+    queryFn: () => fetchHSMMRegime(activePortCode),
+    enabled: Boolean(chn),
     staleTime: 30_000,
   });
+
   const forecastQuery = useQuery({
-    queryKey: ["forecast", chn.code],
-    queryFn: () => fetchForecastForPort(chn.code),
-    initialData: () => getForecastForPort(chn.code),
+    queryKey: ["forecast", activePortCode],
+    queryFn: () => fetchForecastForPort(activePortCode),
+    enabled: Boolean(chn),
     staleTime: 30_000,
   });
+
   const recommendationQuery = useQuery({
-    queryKey: ["decision", chn.code],
-    queryFn: () => fetchDecisionRecommendation(chn.code),
-    initialData: () => getDecisionRecommendation(chn.code),
+    queryKey: ["decision", activePortCode],
+    queryFn: () => fetchDecisionRecommendation(activePortCode),
+    enabled: Boolean(chn),
     staleTime: 30_000,
   });
+
   const expertsQuery = useQuery({
     queryKey: ["model-pipeline"],
     queryFn: fetchModelPipelineStatuses,
-    initialData: listModelPipelineStatuses,
     staleTime: 60_000,
   });
+
   const newsQuery = useQuery({
     queryKey: ["news-events"],
     queryFn: fetchNewsEvents,
-    initialData: listNewsEvents,
     staleTime: 30_000,
   });
+
+  if (
+    portQuery.isLoading ||
+    weatherQuery.isLoading ||
+    regimeQuery.isLoading ||
+    forecastQuery.isLoading ||
+    recommendationQuery.isLoading ||
+    expertsQuery.isLoading ||
+    newsQuery.isLoading
+  ) {
+    return (
+      <div className="h-full grid place-items-center text-[var(--color-cyan)] text-[12px] tracking-[0.2em]">
+        LOADING LIVE PORT COCKPIT...
+      </div>
+    );
+  }
+
+  if (
+    portQuery.isError ||
+    weatherQuery.isError ||
+    regimeQuery.isError ||
+    forecastQuery.isError ||
+    recommendationQuery.isError ||
+    expertsQuery.isError ||
+    newsQuery.isError ||
+    !chn ||
+    !weatherQuery.data ||
+    !regimeQuery.data ||
+    !forecastQuery.data ||
+    !recommendationQuery.data ||
+    !expertsQuery.data
+  ) {
+    return (
+      <div className="h-full grid place-items-center text-[var(--color-red)] text-[12px] tracking-[0.2em]">
+        PORT COCKPIT API UNAVAILABLE
+      </div>
+    );
+  }
+
   const weather = weatherQuery.data;
   const marine = getMarineWeatherIntelligence();
   const regime = regimeQuery.data;
   const forecastDays = forecastQuery.data;
   const recommendation = recommendationQuery.data;
   const experts = expertsQuery.data;
-  const newsForPort = newsQuery.data.filter((event) =>
+  const newsEvents = newsQuery.data ?? [];
+  const newsForPort = newsEvents.filter((event) =>
     event.affectedPorts.includes(chn.code),
   );
   const portName = chn.name.toUpperCase();

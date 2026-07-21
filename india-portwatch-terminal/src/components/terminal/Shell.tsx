@@ -44,7 +44,7 @@ export function TerminalShell({ children }: { children: React.ReactNode }) {
     path.startsWith("/model")? { eyebrow: "MODEL INTELLIGENCE", chip: "TFT-HSMM v4.2" } :
     path.startsWith("/wx")   ? { eyebrow: "WEATHER INTELLIGENCE", chip: "IMD · INCOIS · ECMWF" } :
     path.startsWith("/sar")  ? { eyebrow: "SAR / AIS PROXY", chip: "SENTINEL-1 · S1-IW" } :
-    { eyebrow: "NEWS / NLP INTELLIGENCE", chip: "GDELT · REUTERS · SPLASH" };
+    { eyebrow: "NEWS / NLP INTELLIGENCE", chip: "BACKEND NEWS CACHE" };
 
   const runCommand = (raw: string) => {
     const cleaned = raw.trim().replace(/\s+/g, " ").toUpperCase();

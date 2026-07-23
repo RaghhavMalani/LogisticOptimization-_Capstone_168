@@ -8,9 +8,9 @@ import {
   fetchHSMMRegime,
   fetchModelPipelineStatuses,
 } from "@/services/model";
-import { listNewsEvents } from "@/services/newsService";
 import { fetchNewsEvents } from "@/services/news";
 import { fetchPorts, fetchPortSnapshot } from "@/services/ports";
+import { listNewsEvents } from "@/services/newsService";
 import { getMarineWeatherIntelligence } from "@/services/weatherService";
 import { fetchWeatherSignal } from "@/services/weather";
 
@@ -989,7 +989,7 @@ function PortPage() {
               <span>Impact · Confidence</span>
             </div>
             <div className="p-2 space-y-2 text-[11px]">
-              {(newsForPort.length ? newsForPort : listNewsEvents())
+              {newsForPort
                 .slice(0, 4)
                 .map((event, i) => (
                   <div

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Chip, Sparkline, Bar } from "@/components/terminal/ui";
 import chennaiSat from "@/assets/chennai-port.jpg";
@@ -10,7 +10,7 @@ import {
 } from "@/services/model";
 import { listNewsEvents } from "@/services/newsService";
 import { fetchNewsEvents } from "@/services/news";
-import { fetchPortSnapshot } from "@/services/ports";
+import { fetchPorts, fetchPortSnapshot } from "@/services/ports";
 import { getMarineWeatherIntelligence } from "@/services/weatherService";
 import { fetchWeatherSignal } from "@/services/weather";
 
@@ -71,6 +71,24 @@ const chennaiHarborVessels = {
 function PortPage() {
   const { port } = Route.useSearch();
   const selectedPortCode = port || "INMAA";
+  const navigate = useNavigate({ from: "/port" });
+
+  const portsQuery = useQuery({
+    queryKey: ["ports"],
+    queryFn: fetchPorts,
+    staleTime: 60_000,
+  });
+
+  const availablePorts = portsQuery.data ?? [];
+
+  const handlePortChange = (nextPort: string) => {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        port: nextPort,
+      }),
+    });
+  };
 
   const portQuery = useQuery({
     queryKey: ["port", selectedPortCode],
@@ -214,7 +232,25 @@ function PortPage() {
             chip={<Chip tone="mint">HIGH</Chip>}
             sub={`${Math.round(chn.confidence * 100)}%`}
           />
-          <HdrField label="SELECT PORT" value={`${portName} ▾`} />
+          <div className="panel p-4">
+            <div className="text-[10px] tracking-[0.35em] text-[var(--color-muted-foreground)] mb-2">
+              SELECT PORT
+            </div>
+            <select
+              value={selectedPortCode}
+              onChange={(event) => handlePortChange(event.target.value)}
+              className="w-full bg-transparent text-[13px] text-[var(--color-foreground)] uppercase tracking-wider outline-none"
+            >
+              {availablePorts.map((portOption) => (
+                <option
+                  key={portOption.portCode}
+                  value={portOption.portCode}
+                >
+                  {portOption.name ?? portOption.portCode}
+                </option>
+              ))}
+            </select>
+          </div>
           <HdrField
             label="LAST UPDATED"
             value="07 May 2025 06:15 UTC"

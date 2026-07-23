@@ -14,8 +14,8 @@ PROCESSED_DIR = ROOT / "data" / "processed"
 OUTPUT_DIR = ROOT / "outputs" / "forecasts"
 MODEL_DIR = ROOT / "models" / "tft"
 
-FEATURES_CSV = PROCESSED_DIR / "features_daily.csv"
-FEATURES_PARQUET = PROCESSED_DIR / "features_daily.parquet"
+FEATURES_CSV = PROCESSED_DIR / "features_daily_hsmm.csv"
+FEATURES_PARQUET = PROCESSED_DIR / "features_daily_hsmm.parquet"
 
 TARGET = "congestion_index"
 QUANTILES = [0.1, 0.5, 0.9]
@@ -28,7 +28,7 @@ def load_features() -> pd.DataFrame:
         df = pd.read_csv(FEATURES_CSV)
     else:
         raise FileNotFoundError(
-            "Could not find data/processed/features_daily.parquet or .csv. "
+            "Could not find data/processed/features_daily_hsmm.parquet or .csv. Run add_hsmm_regimes.py first. "
             "Run backend/pipeline/build_features.py first."
         )
 
@@ -122,6 +122,14 @@ def prepare_tft_panel(df: pd.DataFrame) -> tuple[pd.DataFrame, List[str], List[s
         "demand_pressure",
         "trade_connectivity",
         "trade_trend",
+        "p_normal",
+        "p_congested",
+        "p_severe",
+        "days_in_state",
+        "expected_remaining_days",
+        "transition_risk",
+        "regime_confidence",
+        "regime_code",
     ]
 
     unknown_reals = [c for c in unknown_candidates if c in df.columns]

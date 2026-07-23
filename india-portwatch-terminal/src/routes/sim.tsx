@@ -4,10 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Chip, Sparkline } from "@/components/terminal/ui";
 import { cn } from "@/lib/utils";
 import { listPortOperationalSnapshots } from "@/services/portService";
-import {
-  listScenarioDefinitions,
-  simulateScenario,
-} from "@/services/scenarioService";
 import { fetchScenarioDefinitions, runScenario } from "@/services/scenarios";
 import type { OperationalRiskLevel } from "@/types/portwatch";
 
@@ -113,29 +109,53 @@ function DecisionRoom() {
     Number.isFinite(search.intensity) ? search.intensity : 1.5,
   );
   const [runId, setRunId] = useState(0);
+
   const scenariosQuery = useQuery({
     queryKey: ["scenario-definitions"],
     queryFn: fetchScenarioDefinitions,
-    initialData: listScenarioDefinitions,
     staleTime: 60_000,
   });
+
   const ports = listPortOperationalSnapshots();
+
   const scenarioResultQuery = useQuery({
     queryKey: ["scenario-result", sel, intensity, runId],
     queryFn: () => runScenario(sel, intensity, 1247 + runId),
-    initialData: () => simulateScenario(sel, intensity, 1247 + runId),
+    enabled: Boolean(sel),
     staleTime: 5_000,
   });
-  const scenarios = scenariosQuery.data;
-  const result = scenarioResultQuery.data;
-  const impactByPort = new Map(
-    result.affectedPorts.map((impact) => [impact.portCode, impact]),
-  );
 
   useEffect(() => {
     setSel(search.scenario);
     setIntensity(Number.isFinite(search.intensity) ? search.intensity : 1.5);
   }, [search.scenario, search.intensity]);
+
+  if (scenariosQuery.isLoading || scenarioResultQuery.isLoading) {
+    return (
+      <div className="h-full grid place-items-center text-[var(--color-cyan)] text-[12px] tracking-[0.2em]">
+        LOADING LIVE SCENARIO SIMULATOR...
+      </div>
+    );
+  }
+
+  if (
+    scenariosQuery.isError ||
+    scenarioResultQuery.isError ||
+    !scenariosQuery.data ||
+    !scenarioResultQuery.data
+  ) {
+    return (
+      <div className="h-full grid place-items-center text-[var(--color-red)] text-[12px] tracking-[0.2em]">
+        SCENARIO API UNAVAILABLE
+      </div>
+    );
+  }
+
+  const scenarios = scenariosQuery.data;
+  const result = scenarioResultQuery.data;
+  const impactByPort = new Map(
+    result.affectedPorts.map((impact) => [impact.portCode, impact]),
+  );
 
   return (
     <div className="h-full overflow-auto overflow-x-hidden">

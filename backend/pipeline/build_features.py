@@ -13,7 +13,7 @@ PROCESSED_DIR = ROOT / "data" / "processed"
 
 
 DGQI_FILE = RAW_DIR / "DGQI_merged_2020_2022.csv"
-WEATHER_FILE = RAW_DIR / "weather_preprocessed_2020_2022.csv"
+WEATHER_FILE = RAW_DIR.parent / "preprocessed" / "weather_preprocessed_2020_2025.csv"
 NEWS_FILE = RAW_DIR / "maritime_news_preprocessed.csv"
 ECON_FILE = RAW_DIR / "final_economic_features.csv"
 

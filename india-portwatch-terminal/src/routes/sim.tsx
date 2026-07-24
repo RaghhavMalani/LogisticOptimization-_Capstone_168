@@ -127,6 +127,11 @@ function DecisionRoom() {
   });
 
   const ports = listPortOperationalSnapshots();
+  const defaultPortCode =
+    ports.find((port) => port.portCode === "INNSA")?.portCode ??
+    ports[0]?.portCode ??
+    "INMAA";
+  const [selectedPortCode, setSelectedPortCode] = useState(defaultPortCode);
 
   const scenarioResultQuery = useQuery({
     queryKey: ["scenario-result", sel, intensity, runId],
@@ -167,6 +172,13 @@ function DecisionRoom() {
     result.affectedPorts.map((impact) => [impact.portCode, impact]),
   );
 
+  const selectedPort =
+    ports.find((port) => port.portCode === selectedPortCode) ?? ports[0];
+  const selectedImpact = impactByPort.get(selectedPortCode);
+  const selectedRisk = (selectedImpact?.riskLevel ?? "medium") as OperationalRiskLevel;
+  const selectedRiskLabel = riskLabel(selectedRisk);
+  const selectedRiskTone = riskTone(selectedRisk);
+
   return (
     <div className="h-full overflow-auto overflow-x-hidden">
       <div className="min-h-full p-2 space-y-2">
@@ -181,20 +193,27 @@ function DecisionRoom() {
             Current focus:
           </span>
           <span className="text-[var(--color-foreground)]">
-            Jawaharlal Nehru (Nhava Sheva)
+            {selectedPort?.name ?? selectedPortCode}
           </span>
           <span className="text-[var(--color-muted-foreground)]">
-            — Severe Congestion (High Confidence)
+            — {selectedRiskLabel} scenario focus
           </span>
-          <Chip tone="red">SEVERE</Chip>
+          <Chip tone={selectedRiskTone}>{selectedRiskLabel}</Chip>
           <div className="ml-auto flex items-center gap-1.5 text-[9px] flex-wrap justify-end">
             <span className="text-[var(--color-muted-foreground)]">
               Select Port
             </span>
-            <div className="border border-[var(--color-line-strong)] px-2 py-1 flex items-center gap-2 min-w-[180px] justify-between">
-              JNPT (Nhava Sheva){" "}
-              <span className="text-[var(--color-cyan)]">▾</span>
-            </div>
+            <select
+              value={selectedPortCode}
+              onChange={(event) => setSelectedPortCode(event.target.value)}
+              className="border border-[var(--color-line-strong)] bg-[var(--color-panel)] px-2 py-1 min-w-[180px] text-[var(--color-foreground)] outline-none focus:border-[var(--color-cyan)]"
+            >
+              {ports.map((portOption) => (
+                <option key={portOption.portCode} value={portOption.portCode}>
+                  {portOption.name ?? portOption.portCode}
+                </option>
+              ))}
+            </select>
             <button className="border border-[var(--color-line-strong)] px-2 py-1 text-[var(--color-cyan)]">
               ↗ Share Scenario
             </button>

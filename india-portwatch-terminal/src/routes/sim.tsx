@@ -5,6 +5,7 @@ import { Chip, Sparkline } from "@/components/terminal/ui";
 import { cn } from "@/lib/utils";
 import { listPortOperationalSnapshots } from "@/services/portService";
 import { fetchScenarioDefinitions, runScenario } from "@/services/scenarios";
+import { fetchNewsBundle } from "@/services/news";
 import type { OperationalRiskLevel } from "@/types/portwatch";
 
 export const Route = createFileRoute("/sim")({
@@ -103,6 +104,15 @@ function signedHours(value: number): string {
 }
 
 function DecisionRoom() {
+  const newsBundleQuery = useQuery({
+    queryKey: ["decision-room-news"],
+    queryFn: fetchNewsBundle,
+    staleTime: 30_000,
+  });
+
+  const backendNewsEvents = newsBundleQuery.data?.events ?? [];
+  const selectedBackendNewsEvent = backendNewsEvents[0];
+
   const search = Route.useSearch();
   const [sel, setSel] = useState(search.scenario);
   const [intensity, setIntensity] = useState(
@@ -764,133 +774,149 @@ function DecisionRoom() {
         <div className="grid grid-cols-[1.35fr_0.9fr_1.15fr] gap-2">
           <div className="panel">
             <div className="panel-header">
-              <span>NEWS / NLP INTELLIGENCE</span>
-              <span>Real-time maritime disruptions & extracted insights</span>
+              <span>BACKEND NEWS / NLP CACHE</span>
+              <span>Historical sentiment events & TFT-linked alerts</span>
             </div>
             <div className="grid grid-cols-2 gap-2 p-2">
               <div className="space-y-2">
-                {[
-                  [
-                    "HIGH",
-                    "red",
-                    "Iran threatens to close Strait of Hormuz",
-                    "in response to escalation",
-                    "2h ago",
-                  ],
-                  [
-                    "HIGH",
-                    "red",
-                    "Red Sea attacks continue; two vessels hit",
-                    "near Bab-el-Mandeb",
-                    "3h ago",
-                  ],
-                  [
-                    "MEDIUM",
-                    "amber",
-                    "IMD: Heavy rainfall along Maharashtra",
-                    "coast over next 48 hours",
-                    "4h ago",
-                  ],
-                  [
-                    "MEDIUM",
-                    "amber",
-                    "JNPT issues advisory: Gate congestion",
-                    "expected this week",
-                    "5h ago",
-                  ],
-                  [
-                    "LOW",
-                    "mint",
-                    "OPEC+ to gradually raise output from Sep",
-                    "Market watch",
-                    "6h ago",
-                  ],
-                ].map(([sev, t, title, sub, ago], i) => (
-                  <div
-                    key={i}
-                    className="border-l-2 pl-2 py-1"
-                    style={{
-                      borderColor:
-                        t === "red"
-                          ? "var(--color-red)"
-                          : t === "amber"
-                            ? "var(--color-amber)"
-                            : "var(--color-mint)",
-                    }}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Chip tone={t as any}>{sev}</Chip>
-                      <span className="text-[10px] text-[var(--color-foreground)]">
-                        {title}
-                      </span>
-                      <span className="ml-auto text-[9px] text-[var(--color-muted-foreground)]">
-                        {ago}
-                      </span>
-                    </div>
-                    <div className="text-[9px] text-[var(--color-muted-foreground)]">
-                      {sub}
-                    </div>
+                {newsBundleQuery.isLoading ? (
+                  <div className="text-[10px] text-[var(--color-muted-foreground)]">
+                    Loading backend news cache...
                   </div>
-                ))}
+                ) : backendNewsEvents.length ? (
+                  backendNewsEvents.slice(0, 5).map((event) => {
+                    const sentiment = Number(event.sentiment ?? 0);
+                    const tone =
+                      event.severity === "severe"
+                        ? "red"
+                        : event.severity === "normal"
+                          ? "mint"
+                          : "amber";
+
+                    return (
+                      <div
+                        key={event.id}
+                        className="border-l-2 pl-2 py-1"
+                        style={{
+                          borderColor:
+                            tone === "red"
+                              ? "var(--color-red)"
+                              : tone === "amber"
+                                ? "var(--color-amber)"
+                                : "var(--color-mint)",
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Chip tone={tone as any}>
+                            {(event.severity ?? "event").toUpperCase()}
+                          </Chip>
+                          <span className="text-[10px] text-[var(--color-foreground)]">
+                            {event.tag}
+                          </span>
+                          <span className="ml-auto text-[9px] text-[var(--color-muted-foreground)]">
+                            {event.timestamp}Z
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-[var(--color-foreground)] leading-snug mt-1">
+                          {event.text}
+                        </div>
+                        <div className="text-[9px] text-[var(--color-muted-foreground)]">
+                          {event.source} · sentiment{" "}
+                          {sentiment >= 0 ? "+" : ""}
+                          {sentiment.toFixed(2)}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-[10px] text-[var(--color-muted-foreground)]">
+                    No backend news events available.
+                  </div>
+                )}
               </div>
+
               <div className="panel p-2 text-[10px] space-y-1.5">
                 <div className="flex justify-between text-[9px] tracking-widest text-[var(--color-muted-foreground)]">
-                  <span>SELECTED EVENT</span>
+                  <span>SELECTED BACKEND EVENT</span>
                   <span className="text-[var(--color-cyan)]">
-                    OPEN IN FULL ⧉
+                    CACHE SOURCE
                   </span>
                 </div>
-                <div className="text-[11px] text-[var(--color-foreground)] font-medium">
-                  Iran threatens to close Strait of Hormuz in response to
-                  escalation
-                </div>
-                <div className="grid grid-cols-[80px_1fr] gap-y-1 text-[10px] mt-1">
-                  <span className="text-[var(--color-muted-foreground)]">
-                    Event Type
-                  </span>
-                  <span className="text-[var(--color-foreground)]">
-                    Geopolitical Threat
-                  </span>
-                  <span className="text-[var(--color-muted-foreground)]">
-                    Sentiment / Risk
-                  </span>
-                  <span className="text-[var(--color-foreground)] flex items-center gap-2">
-                    <Chip tone="red">High</Chip>
-                    <span className="tabular-nums">0.86</span>
-                  </span>
-                  <span className="text-[var(--color-muted-foreground)]">
-                    Affected Ports
-                  </span>
-                  <span className="text-[var(--color-foreground)]">
-                    Mundra, Kandla, JNPT, Kochi, Hazira
-                  </span>
-                  <span className="text-[var(--color-muted-foreground)]">
-                    Impact
-                  </span>
-                  <span className="text-[var(--color-foreground)]">
-                    Crude/LNG flow disruption risk; freight spike likely
-                  </span>
-                  <span className="text-[var(--color-muted-foreground)]">
-                    Entities
-                  </span>
-                  <span className="text-[var(--color-foreground)]">
-                    Strait of Hormuz; Iran; Oil, LNG, Shipping
-                  </span>
-                </div>
-                <div className="pt-1 flex items-center gap-2 text-[9px]">
-                  <span className="text-[var(--color-muted-foreground)]">
-                    NLP Confidence
-                  </span>
-                  <div className="flex-1 h-1 bg-[var(--color-panel-2)]">
-                    <div
-                      className="h-full bg-[var(--color-mint)]"
-                      style={{ width: "91%" }}
-                    />
+
+                {selectedBackendNewsEvent ? (
+                  (() => {
+                    const sentiment = Number(selectedBackendNewsEvent.sentiment ?? 0);
+                    const confidence = Number(selectedBackendNewsEvent.confidence ?? 0);
+                    const tone =
+                      selectedBackendNewsEvent.severity === "severe"
+                        ? "red"
+                        : selectedBackendNewsEvent.severity === "normal"
+                          ? "mint"
+                          : "amber";
+
+                    return (
+                      <>
+                        <div className="text-[11px] text-[var(--color-foreground)] font-medium">
+                          {selectedBackendNewsEvent.text}
+                        </div>
+                        <div className="grid grid-cols-[86px_1fr] gap-y-1 text-[10px] mt-1">
+                          <span className="text-[var(--color-muted-foreground)]">
+                            Source
+                          </span>
+                          <span className="text-[var(--color-foreground)]">
+                            {selectedBackendNewsEvent.source}
+                          </span>
+                          <span className="text-[var(--color-muted-foreground)]">
+                            Tag / Entity
+                          </span>
+                          <span className="text-[var(--color-foreground)]">
+                            {selectedBackendNewsEvent.tag} / {selectedBackendNewsEvent.entity}
+                          </span>
+                          <span className="text-[var(--color-muted-foreground)]">
+                            Sentiment
+                          </span>
+                          <span className="text-[var(--color-foreground)] flex items-center gap-2">
+                            <Chip tone={tone as any}>
+                              {(selectedBackendNewsEvent.severity ?? "event").toUpperCase()}
+                            </Chip>
+                            <span className="tabular-nums">
+                              {sentiment >= 0 ? "+" : ""}
+                              {sentiment.toFixed(2)}
+                            </span>
+                          </span>
+                          <span className="text-[var(--color-muted-foreground)]">
+                            Affected Ports
+                          </span>
+                          <span className="text-[var(--color-foreground)]">
+                            {selectedBackendNewsEvent.affectedPorts?.length
+                              ? selectedBackendNewsEvent.affectedPorts.join(", ")
+                              : "Not mapped"}
+                          </span>
+                        </div>
+                        <div className="pt-1 flex items-center gap-2 text-[9px]">
+                          <span className="text-[var(--color-muted-foreground)]">
+                            NLP Confidence
+                          </span>
+                          <div className="flex-1 h-1 bg-[var(--color-panel-2)]">
+                            <div
+                              className="h-full bg-[var(--color-mint)]"
+                              style={{
+                                width: `${Math.round(confidence * 100)}%`,
+                              }}
+                            />
+                          </div>
+                          <span className="text-[var(--color-mint)] tabular-nums">
+                            {confidence.toFixed(2)}
+                          </span>
+                        </div>
+                      </>
+                    );
+                  })()
+                ) : (
+                  <div className="text-[var(--color-muted-foreground)]">
+                    No backend event selected.
                   </div>
-                  <span className="text-[var(--color-mint)] tabular-nums">
-                    0.91
-                  </span>
-                </div>
+                )}
               </div>
             </div>
           </div>
@@ -903,7 +929,7 @@ function DecisionRoom() {
             <div className="p-3 space-y-2 text-[10px]">
               {[
                 "Why is Chennai marked medium risk?",
-                "Which ports are most exposed to Hormuz closure?",
+                "Which ports are most exposed to this scenario?",
                 "What changed since yesterday?",
                 "What is the best arrival day for MV Coromandel?",
                 "Which routes have highest delay risk?",
@@ -995,7 +1021,7 @@ function DecisionRoom() {
                 ▸ Conditions are manageable with proactive planning.
               </div>
               <div className="flex items-center gap-2 pt-1 text-[9px] text-[var(--color-muted-foreground)]">
-                <span>Sources: 6 experts · 4 news events</span>
+                <span>Sources: scenario output · backend news cache</span>
                 <span className="ml-auto flex gap-1">
                   <button className="px-2 py-0.5 border border-[var(--color-line-strong)] hover:border-[var(--color-mint)] hover:text-[var(--color-mint)]">
                     Helpful
